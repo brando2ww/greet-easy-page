@@ -8,6 +8,7 @@ import i18n from "./i18n/config";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
+import { RoleBasedRedirect } from "./components/RoleBasedRedirect";
 import Estacoes from "./pages/Estacoes";
 import Dicas from "./pages/Dicas";
 import Carteira from "./pages/Carteira";
@@ -34,7 +35,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<ProtectedRoute><Estacoes /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
               <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
               <Route path="/iniciar-carga" element={<ProtectedRoute><IniciarCarga /></ProtectedRoute>} />
