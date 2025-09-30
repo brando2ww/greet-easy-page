@@ -18,19 +18,22 @@ export const BottomNavigation = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
       <div className="relative max-w-md mx-auto">
+        {/* Espaço para o botão elevado */}
+        <div className="h-8"></div>
+        
         {/* Barra de navegação com notch */}
-        <div className="relative bg-background/95 backdrop-blur-lg border-t border-border rounded-t-3xl">
-          {/* Curva esquerda do notch */}
-          <div className="absolute left-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
-            <div className="absolute bottom-0 right-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-br-3xl"></div>
+        <div className="relative bg-background/95 backdrop-blur-lg border-t border-border">
+          {/* Curva esquerda do notch - cria o recorte arredondado */}
+          <div className="absolute left-[calc(50%-60px)] -top-8 w-12 h-12">
+            <div className="absolute bottom-0 right-0 w-full h-full rounded-br-[40px] shadow-[8px_8px_0_0_hsl(var(--background)/0.95)]"></div>
           </div>
           
-          {/* Curva direita do notch */}
-          <div className="absolute right-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
-            <div className="absolute bottom-0 left-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-bl-3xl"></div>
+          {/* Curva direita do notch - cria o recorte arredondado */}
+          <div className="absolute right-[calc(50%-60px)] -top-8 w-12 h-12">
+            <div className="absolute bottom-0 left-0 w-full h-full rounded-bl-[40px] shadow-[-8px_8px_0_0_hsl(var(--background)/0.95)]"></div>
           </div>
           
-          <div className="flex justify-around items-center h-24 px-4 pb-8">
+          <div className="flex justify-around items-center h-20 px-4 pb-6">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
@@ -42,7 +45,7 @@ export const BottomNavigation = () => {
                   to={item.path}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group relative",
-                    isCharging && "-mt-6"
+                    isCharging && "-mt-12"
                   )}
                 >
                   {isCharging ? (
