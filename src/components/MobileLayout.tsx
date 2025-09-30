@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { BottomNavigation } from "./BottomNavigation";
 import { cn } from "@/lib/utils";
 
 interface MobileLayoutProps {
@@ -22,8 +21,6 @@ export const MobileLayout = ({ children, header }: MobileLayoutProps) => {
       )}>
         {children}
       </main>
-      
-      <BottomNavigation />
     </div>
   );
 };
