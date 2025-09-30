@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Users, Zap, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, Zap, BarChart3, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const AdminNavigation = () => {
@@ -27,6 +27,11 @@ export const AdminNavigation = () => {
       icon: BarChart3,
       label: t('admin.reports'),
       path: '/admin/relatorios'
+    },
+    {
+      icon: UserCircle,
+      label: t('profile.title'),
+      path: '/perfil'
     }
   ];
 
