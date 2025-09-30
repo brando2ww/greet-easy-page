@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import evChargingBg from "@/assets/ev-charging-bg.png";
 import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const AuthWelcome = () => {
   const navigate = useNavigate();
@@ -17,6 +18,11 @@ const AuthWelcome = () => {
       />
       {/* Dark overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black pointer-events-none" />
+      
+      {/* Language selector in top right */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSelector />
+      </div>
       
       {/* Content container */}
       <div className="w-full max-w-sm space-y-8 animate-fade-in relative z-10">
