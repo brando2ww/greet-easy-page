@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mail, Lock, Zap } from "lucide-react";
+import { ArrowLeft, Mail, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import evChargingBg from "@/assets/ev-charging-bg.png";
+import speedLogo from "@/assets/speed-logo.png";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Login = () => {
@@ -75,9 +76,8 @@ const Login = () => {
         {/* Logo with glow effect */}
         <div className="flex justify-center mb-8">
           <div 
-            className="w-24 h-24 rounded-3xl flex items-center justify-center relative"
+            className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center relative p-3"
             style={{
-              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))',
               boxShadow: `
                 0 0 60px 20px hsla(var(--primary) / 0.3),
                 0 0 100px 40px hsla(var(--primary) / 0.2),
@@ -85,7 +85,7 @@ const Login = () => {
               `
             }}
           >
-            <Zap className="w-12 h-12 text-white" fill="currentColor" />
+            <img src={speedLogo} alt="Speed Logo" className="w-full h-full object-contain" />
           </div>
         </div>
 
