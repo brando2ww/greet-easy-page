@@ -1,14 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
+import evChargingBg from "@/assets/ev-charging-bg.png";
 
 const AuthWelcome = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-end bg-black p-6 pb-8 relative overflow-hidden">
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-primary/5 to-black pointer-events-none" />
+      {/* Background image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${evChargingBg})` }}
+      />
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black pointer-events-none" />
       
       {/* Content container */}
       <div className="w-full max-w-sm space-y-8 animate-fade-in relative z-10">
