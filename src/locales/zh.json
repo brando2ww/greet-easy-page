@@ -20,8 +20,12 @@
     "signup": {
       "title": "创建账户",
       "subtitle": "开始您的电动汽车之旅",
+      "fullName": "全名",
       "email": "邮箱",
       "password": "密码",
+      "confirmPassword": "确认密码",
+      "passwordHint": "至少6个字符",
+      "passwordMismatch": "密码不匹配",
       "submit": "创建账户",
       "google": "使用 Google 继续",
       "hasAccount": "已有账户？",

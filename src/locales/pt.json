@@ -20,8 +20,12 @@
     "signup": {
       "title": "Criar Conta",
       "subtitle": "Comece sua jornada com veículos elétricos",
+      "fullName": "Nome Completo",
       "email": "E-mail",
       "password": "Senha",
+      "confirmPassword": "Confirmar Senha",
+      "passwordHint": "Mínimo de 6 caracteres",
+      "passwordMismatch": "As senhas não coincidem",
       "submit": "Criar Conta",
       "google": "Continuar com Google",
       "hasAccount": "Já tem uma conta?",

@@ -4,14 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mail, Lock, Zap } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Zap, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import evChargingBg from "@/assets/ev-charging-bg.png";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 const SignUp = () => {
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -19,6 +21,17 @@ const SignUp = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password match
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("auth.signup.passwordMismatch"),
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -28,7 +41,10 @@ const SignUp = () => {
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName
+          }
         }
       });
 
@@ -106,6 +122,20 @@ const SignUp = () => {
 
         {/* Form */}
         <form onSubmit={handleSignUp} className="space-y-4">
+          {/* Full Name field */}
+          <div className="relative">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Input
+              id="fullName"
+              type="text"
+              placeholder={t('auth.signup.fullName')}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200"
+            />
+          </div>
+
           {/* Email field */}
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
@@ -135,9 +165,24 @@ const SignUp = () => {
             />
           </div>
 
+          {/* Confirm Password field */}
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder={t('auth.signup.confirmPassword')}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200"
+            />
+          </div>
+
           {/* Password hint */}
           <p className="text-xs text-white/40 pl-1">
-            Mínimo de 6 caracteres
+            {t('auth.signup.passwordHint')}
           </p>
 
           {/* Submit button */}

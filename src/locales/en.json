@@ -20,8 +20,12 @@
     "signup": {
       "title": "Create Account",
       "subtitle": "Start your electric vehicle journey",
+      "fullName": "Full Name",
       "email": "Email",
       "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "passwordHint": "Minimum 6 characters",
+      "passwordMismatch": "Passwords don't match",
       "submit": "Create Account",
       "google": "Continue with Google",
       "hasAccount": "Already have an account?",
