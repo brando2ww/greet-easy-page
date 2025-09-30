@@ -73,18 +73,9 @@ const Login = () => {
       
       {/* Content container */}
       <div className="w-full max-w-sm space-y-8 animate-fade-in relative z-10">
-        {/* Logo with glow effect */}
+        {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div 
-            className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center relative p-3"
-            style={{
-              boxShadow: `
-                0 0 60px 20px hsla(var(--primary) / 0.3),
-                0 0 100px 40px hsla(var(--primary) / 0.2),
-                0 0 140px 60px hsla(var(--primary) / 0.1)
-              `
-            }}
-          >
+          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center relative p-3">
             <img src={speedLogo} alt="Speed Logo" className="w-full h-full object-contain" />
           </div>
         </div>
