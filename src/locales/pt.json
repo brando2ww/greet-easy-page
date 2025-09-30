@@ -87,5 +87,30 @@
     "delete": "Excluir",
     "edit": "Editar",
     "back": "Voltar"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "clients": "Clientes",
+    "chargers": "Carregadores",
+    "reports": "Relatórios",
+    "totalUsers": "Total de Usuários",
+    "activeChargers": "Carregadores Ativos",
+    "totalSessions": "Total de Sessões",
+    "revenue": "Receita",
+    "fromLastMonth": "em relação ao mês anterior",
+    "recentActivity": "Atividade Recente",
+    "noRecentActivity": "Nenhuma atividade recente",
+    "searchClients": "Buscar clientes...",
+    "clientList": "Lista de Clientes",
+    "noClientsFound": "Nenhum cliente encontrado",
+    "searchChargers": "Buscar carregadores...",
+    "chargerList": "Lista de Carregadores",
+    "noChargersFound": "Nenhum carregador encontrado",
+    "overview": "Visão Geral",
+    "usage": "Uso",
+    "revenueReport": "Receita",
+    "overviewReport": "Relatório de Visão Geral",
+    "usageReport": "Relatório de Uso",
+    "noDataAvailable": "Nenhum dado disponível"
   }
 }

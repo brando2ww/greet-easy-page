@@ -87,5 +87,30 @@
     "delete": "删除",
     "edit": "编辑",
     "back": "返回"
+  },
+  "admin": {
+    "dashboard": "仪表板",
+    "clients": "客户",
+    "chargers": "充电器",
+    "reports": "报告",
+    "totalUsers": "总用户数",
+    "activeChargers": "活跃充电器",
+    "totalSessions": "总会话数",
+    "revenue": "收入",
+    "fromLastMonth": "较上月",
+    "recentActivity": "最近活动",
+    "noRecentActivity": "无最近活动",
+    "searchClients": "搜索客户...",
+    "clientList": "客户列表",
+    "noClientsFound": "未找到客户",
+    "searchChargers": "搜索充电器...",
+    "chargerList": "充电器列表",
+    "noChargersFound": "未找到充电器",
+    "overview": "概览",
+    "usage": "使用情况",
+    "revenueReport": "收入",
+    "overviewReport": "概览报告",
+    "usageReport": "使用报告",
+    "noDataAvailable": "无可用数据"
   }
 }
