@@ -34,24 +34,30 @@ export const AdminHeader = () => {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300",
+                    "px-4 py-2 rounded-md transition-all duration-300",
+                    isChargerItem ? "flex flex-col items-center gap-1" : "flex items-center gap-2",
                     !isChargerItem && (isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground")
                   )}
                 >
                   {isChargerItem ? (
-                    <div className={cn(
-                      "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 w-14 h-14 flex items-center justify-center",
-                      "hover:scale-125 hover:shadow-2xl hover:shadow-purple-500/70",
-                      isActive && "scale-110 shadow-2xl shadow-purple-500/70"
-                    )}>
-                      <Icon className="w-7 h-7 text-white" strokeWidth={1.5} />
-                    </div>
-                ) : (
-                  <Icon className="w-5 h-5" strokeWidth={1.0} />
-                )}
-                <span className="font-medium">{item.label}</span>
+                    <>
+                      <div className={cn(
+                        "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 w-12 h-12 flex items-center justify-center",
+                        "hover:scale-125 hover:shadow-2xl hover:shadow-purple-500/70",
+                        isActive && "scale-110 shadow-2xl shadow-purple-500/70"
+                      )}>
+                        <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />
+                      </div>
+                      <span className="font-medium text-sm">{item.label}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon className="w-5 h-5" strokeWidth={1.0} />
+                      <span className="font-medium">{item.label}</span>
+                    </>
+                  )}
               </Link>
             );
           })}
