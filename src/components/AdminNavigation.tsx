@@ -54,7 +54,7 @@ export const AdminNavigation = () => {
                 >
                   {isChargerItem ? (
                     <div className={cn(
-                      "rounded-full bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 shadow-lg shadow-purple-500/50 transition-all duration-300 p-3",
+                      "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 p-3",
                       "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-purple-500/60",
                       isActive && "scale-110 shadow-xl shadow-purple-500/60"
                     )}>
