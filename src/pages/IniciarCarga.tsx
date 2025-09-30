@@ -2,11 +2,14 @@ import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap, MapPin, Car, Plug } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function IniciarCarga() {
+  const { t } = useTranslation();
+
   const header = (
     <div className="p-4">
-      <h1 className="text-xl font-bold">Iniciar Carregamento</h1>
+      <h1 className="text-xl font-bold">{t('charging.title')}</h1>
     </div>
   );
 

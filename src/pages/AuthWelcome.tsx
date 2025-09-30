@@ -2,9 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
 import evChargingBg from "@/assets/ev-charging-bg.png";
+import { useTranslation } from "react-i18next";
 
 const AuthWelcome = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-end bg-black p-6 pb-8 relative overflow-hidden">
@@ -28,10 +30,10 @@ const AuthWelcome = () => {
         {/* Headline */}
         <div className="space-y-4 mb-16">
           <h1 className="text-white text-4xl font-bold leading-tight tracking-tight">
-            SpeedCharger —
+            {t('auth.welcome.title')}
           </h1>
           <p className="text-white/90 text-xl leading-relaxed font-light">
-            sua plataforma para descobrir, gerenciar e otimizar o carregamento de veículos elétricos.
+            {t('auth.welcome.subtitle')}
           </p>
         </div>
 
@@ -41,14 +43,14 @@ const AuthWelcome = () => {
             className="w-full h-14 text-base font-medium bg-white hover:bg-white/90 text-black rounded-full transition-all duration-300"
             onClick={() => navigate("/auth/signup")}
           >
-            Sign up
+            {t('auth.welcome.signup')}
           </Button>
           <Button 
             variant="outline"
             className="w-full h-14 text-base font-medium bg-transparent hover:bg-white/10 text-white border-white/30 hover:border-white/50 rounded-full transition-all duration-300"
             onClick={() => navigate("/auth/login")}
           >
-            I have an account
+            {t('auth.welcome.login')}
           </Button>
         </div>
       </div>

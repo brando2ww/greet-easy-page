@@ -1,17 +1,19 @@
 import { MapPin, Lightbulb, Zap, Car, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { icon: MapPin, label: "Estações", path: "/" },
-  { icon: Lightbulb, label: "Dicas", path: "/dicas" },
-  { icon: Zap, label: "Iniciar Carga", path: "/iniciar-carga" },
-  { icon: Car, label: "Veículos", path: "/veiculos" },
-  { icon: User, label: "Perfil", path: "/perfil" },
-];
+import { useTranslation } from "react-i18next";
 
 export const Header = () => {
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { icon: MapPin, label: t('navigation.stations'), path: "/" },
+    { icon: Lightbulb, label: t('navigation.tips'), path: "/dicas" },
+    { icon: Zap, label: t('navigation.charging'), path: "/iniciar-carga" },
+    { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
+    { icon: User, label: t('navigation.profile'), path: "/perfil" },
+  ];
 
   return (
     <header className="sticky top-0 bg-background border-b border-border z-50">

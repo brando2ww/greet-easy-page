@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Chrome, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,14 +35,14 @@ const SignUp = () => {
       if (error) throw error;
 
       toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar sua conta.",
+        title: t('common.success'),
+        description: t('auth.signup.subtitle'),
       });
 
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "Erro ao criar conta",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -56,13 +58,13 @@ const SignUp = () => {
           <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
             <Zap className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Criar sua conta</CardTitle>
-          <CardDescription>Cadastre-se para começar a usar o SpeedCharger</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('auth.signup.title')}</CardTitle>
+          <CardDescription>{t('auth.signup.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.signup.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -73,7 +75,7 @@ const SignUp = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t('auth.signup.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -88,7 +90,7 @@ const SignUp = () => {
               </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Criando conta..." : "Criar Conta"}
+              {loading ? t('common.loading') : t('auth.signup.submit')}
             </Button>
           </form>
 
@@ -108,13 +110,13 @@ const SignUp = () => {
             disabled={loading}
           >
             <Chrome className="mr-2 h-4 w-4" />
-            Continuar com Google
+            {t('auth.signup.google')}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Já tem conta?{" "}
+            {t('auth.signup.hasAccount')}{" "}
             <Link to="/auth/login" className="text-primary hover:underline font-medium">
-              Entrar
+              {t('auth.signup.loginLink')}
             </Link>
           </p>
         </CardContent>

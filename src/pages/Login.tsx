@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Chrome, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +30,14 @@ const Login = () => {
       if (error) throw error;
 
       toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo de volta ao SpeedCharger.",
+        title: t('common.success'),
+        description: t('auth.login.title'),
       });
 
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "Erro ao fazer login",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -51,13 +53,13 @@ const Login = () => {
           <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
             <Zap className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
-          <CardDescription>Entre com sua conta para continuar</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('auth.login.title')}</CardTitle>
+          <CardDescription>{t('auth.login.subtitle')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.login.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -68,7 +70,7 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t('auth.login.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -81,11 +83,11 @@ const Login = () => {
             </div>
             <div className="text-right">
               <a href="#" className="text-sm text-primary hover:underline">
-                Esqueceu a senha?
+                {t('auth.login.forgotPassword')}
               </a>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? t('common.loading') : t('auth.login.submit')}
             </Button>
           </form>
 
@@ -105,13 +107,13 @@ const Login = () => {
             disabled={loading}
           >
             <Chrome className="mr-2 h-4 w-4" />
-            Continuar com Google
+            {t('auth.login.google')}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground mt-4">
-            Não tem conta?{" "}
+            {t('auth.login.noAccount')}{" "}
             <Link to="/auth/signup" className="text-primary hover:underline font-medium">
-              Criar conta
+              {t('auth.login.signupLink')}
             </Link>
           </p>
         </CardContent>

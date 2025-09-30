@@ -1,44 +1,46 @@
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Battery, Zap, DollarSign, Clock } from "lucide-react";
-
-const tips = [
-  {
-    id: 1,
-    icon: Battery,
-    title: "Economize bateria",
-    description: "Dicas para maximizar a autonomia do seu veículo elétrico",
-    color: "bg-green-500"
-  },
-  {
-    id: 2,
-    icon: Zap,
-    title: "Carga rápida",
-    description: "Quando e como usar estações de carga rápida",
-    color: "bg-blue-500"
-  },
-  {
-    id: 3,
-    icon: DollarSign,
-    title: "Economize dinheiro",
-    description: "Melhores horários e tarifas para carregar",
-    color: "bg-yellow-500"
-  },
-  {
-    id: 4,
-    icon: Clock,
-    title: "Planeje sua viagem",
-    description: "Como organizar paradas de recarga em viagens longas",
-    color: "bg-purple-500"
-  }
-];
+import { useTranslation } from "react-i18next";
 
 export default function Dicas() {
+  const { t } = useTranslation();
+
+  const tips = [
+    {
+      id: 1,
+      icon: Battery,
+      title: "Economize bateria",
+      description: "Dicas para maximizar a autonomia do seu veículo elétrico",
+      color: "bg-green-500"
+    },
+    {
+      id: 2,
+      icon: Zap,
+      title: "Carga rápida",
+      description: "Quando e como usar estações de carga rápida",
+      color: "bg-blue-500"
+    },
+    {
+      id: 3,
+      icon: DollarSign,
+      title: "Economize dinheiro",
+      description: "Melhores horários e tarifas para carregar",
+      color: "bg-yellow-500"
+    },
+    {
+      id: 4,
+      icon: Clock,
+      title: "Planeje sua viagem",
+      description: "Como organizar paradas de recarga em viagens longas",
+      color: "bg-purple-500"
+    }
+  ];
   const header = (
     <div className="p-4">
-      <h1 className="text-xl font-bold">Dicas e Tutoriais</h1>
+      <h1 className="text-xl font-bold">{t('tips.title')}</h1>
       <p className="text-sm text-muted-foreground">
-        Aprenda a aproveitar melhor seu veículo elétrico
+        {t('tips.subtitle')}
       </p>
     </div>
   );

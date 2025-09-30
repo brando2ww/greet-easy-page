@@ -13,18 +13,21 @@ import {
   LogOut,
   ChevronRight 
 } from "lucide-react";
-
-const menuItems = [
-  { icon: User, label: "Dados Pessoais", path: "/perfil/dados" },
-  { icon: History, label: "Histórico de Cargas", path: "/perfil/historico" },
-  { icon: CreditCard, label: "Formas de Pagamento", path: "/perfil/pagamento" },
-  { icon: Wallet, label: "Carteira", path: "/perfil/carteira" },
-  { icon: Bell, label: "Notificações", path: "/perfil/notificacoes" },
-  { icon: Settings, label: "Configurações", path: "/perfil/configuracoes" },
-  { icon: HelpCircle, label: "Ajuda e Suporte", path: "/perfil/ajuda" },
-];
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 export default function Perfil() {
+  const { t } = useTranslation();
+
+  const menuItems = [
+    { icon: User, label: t('profile.myAccount'), path: "/perfil/dados" },
+    { icon: History, label: "Histórico de Cargas", path: "/perfil/historico" },
+    { icon: CreditCard, label: "Formas de Pagamento", path: "/perfil/pagamento" },
+    { icon: Wallet, label: "Carteira", path: "/perfil/carteira" },
+    { icon: Bell, label: t('profile.notifications'), path: "/perfil/notificacoes" },
+    { icon: Settings, label: t('profile.settings'), path: "/perfil/configuracoes" },
+    { icon: HelpCircle, label: t('profile.help'), path: "/perfil/ajuda" },
+  ];
   return (
     <ResponsiveLayout>
       <div className="p-4 space-y-6">
@@ -41,6 +44,20 @@ export default function Perfil() {
                 <h2 className="text-xl font-bold">João da Silva</h2>
                 <p className="text-sm text-muted-foreground">joao@email.com</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-primary" />
+                </div>
+                <span className="font-medium">{t('profile.language')}</span>
+              </div>
+              <LanguageSelector />
             </div>
           </CardContent>
         </Card>
@@ -64,7 +81,7 @@ export default function Perfil() {
 
         <Button variant="destructive" className="w-full" size="lg">
           <LogOut className="w-5 h-5 mr-2" />
-          Sair da Conta
+          {t('profile.logout')}
         </Button>
       </div>
     </ResponsiveLayout>

@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "welcome": {
+      "title": "SpeedCharger —",
+      "subtitle": "tu plataforma para descubrir, gestionar y optimizar la carga de vehículos eléctricos.",
+      "signup": "Registrarse",
+      "login": "Ya tengo una cuenta"
+    },
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión en tu cuenta de SpeedCharger",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "submit": "Iniciar sesión",
+      "google": "Continuar con Google",
+      "noAccount": "¿No tienes una cuenta?",
+      "signupLink": "Registrarse"
+    },
+    "signup": {
+      "title": "Crear Cuenta",
+      "subtitle": "Comienza tu viaje con vehículos eléctricos",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Crear Cuenta",
+      "google": "Continuar con Google",
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "loginLink": "Iniciar sesión"
+    }
+  },
+  "navigation": {
+    "stations": "Estaciones",
+    "tips": "Consejos",
+    "charging": "Iniciar Carga",
+    "chargingShort": "Cargar",
+    "vehicles": "Vehículos",
+    "profile": "Perfil"
+  },
+  "stations": {
+    "title": "Estaciones",
+    "subtitle": "Encuentra puntos de carga cercanos",
+    "search": "Buscar estaciones...",
+    "filter": "Filtros",
+    "all": "Todas",
+    "available": "Disponibles",
+    "fast": "Rápido",
+    "ultrafastCharging": "Carga Ultra-Rápida",
+    "mapPlaceholder": "El mapa interactivo de estaciones se implementará aquí"
+  },
+  "tips": {
+    "title": "Consejos",
+    "subtitle": "Aprende a optimizar tu vehículo eléctrico"
+  },
+  "charging": {
+    "title": "Iniciar Carga",
+    "subtitle": "Gestiona tus sesiones de carga"
+  },
+  "vehicles": {
+    "title": "Mis Vehículos",
+    "subtitle": "Gestiona tu flota eléctrica"
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Gestiona tu cuenta",
+    "myAccount": "Mi Cuenta",
+    "settings": "Configuración",
+    "notifications": "Notificaciones",
+    "help": "Ayuda",
+    "logout": "Cerrar sesión",
+    "language": "Idioma"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar"
+  }
+}

@@ -1,17 +1,19 @@
 import { MapPin, Lightbulb, Zap, Car, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { icon: MapPin, label: "Estações", path: "/" },
-  { icon: Lightbulb, label: "Dicas", path: "/dicas" },
-  { icon: Zap, label: "Iniciar", path: "/iniciar-carga" },
-  { icon: Car, label: "Veículos", path: "/veiculos" },
-  { icon: User, label: "Perfil", path: "/perfil" },
-];
+import { useTranslation } from "react-i18next";
 
 export const BottomNavigation = () => {
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { icon: MapPin, label: t('navigation.stations'), path: "/" },
+    { icon: Lightbulb, label: t('navigation.tips'), path: "/dicas" },
+    { icon: Zap, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
+    { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
+    { icon: User, label: t('navigation.profile'), path: "/perfil" },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">

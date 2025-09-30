@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "welcome": {
+      "title": "SpeedCharger —",
+      "subtitle": "your platform to discover, manage and optimize electric vehicle charging.",
+      "signup": "Sign up",
+      "login": "I have an account"
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your SpeedCharger account",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in",
+      "google": "Continue with Google",
+      "noAccount": "Don't have an account?",
+      "signupLink": "Sign up"
+    },
+    "signup": {
+      "title": "Create Account",
+      "subtitle": "Start your electric vehicle journey",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Create Account",
+      "google": "Continue with Google",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    }
+  },
+  "navigation": {
+    "stations": "Stations",
+    "tips": "Tips",
+    "charging": "Start Charging",
+    "chargingShort": "Charge",
+    "vehicles": "Vehicles",
+    "profile": "Profile"
+  },
+  "stations": {
+    "title": "Stations",
+    "subtitle": "Find nearby charging points",
+    "search": "Search stations...",
+    "filter": "Filters",
+    "all": "All",
+    "available": "Available",
+    "fast": "Fast",
+    "ultrafastCharging": "Ultra-Fast Charging",
+    "mapPlaceholder": "Interactive station map will be implemented here"
+  },
+  "tips": {
+    "title": "Tips",
+    "subtitle": "Learn to optimize your electric vehicle"
+  },
+  "charging": {
+    "title": "Start Charging",
+    "subtitle": "Manage your charging sessions"
+  },
+  "vehicles": {
+    "title": "My Vehicles",
+    "subtitle": "Manage your electric fleet"
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account",
+    "myAccount": "My Account",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "help": "Help",
+    "logout": "Sign out",
+    "language": "Language"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit"
+  }
+}

@@ -4,16 +4,18 @@ import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-const filterChips = [
-  "Planejar viagem",
-  "Carga rápida",
-  "Disponíveis"
-];
+import { useTranslation } from "react-i18next";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const { t } = useTranslation();
+
+  const filterChips = [
+    t('stations.all'),
+    t('stations.fast'),
+    t('stations.available')
+  ];
 
   const toggleFilter = (filter: string) => {
     setActiveFilters(prev =>
@@ -30,7 +32,7 @@ export default function Estacoes() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Pesquisar endereço"
+            placeholder={t('stations.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-11"
@@ -63,9 +65,9 @@ export default function Estacoes() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">Mapa de Estações</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('stations.title')}</h3>
           <p className="text-sm text-muted-foreground">
-            O mapa interativo com pins de estações será implementado aqui
+            {t('stations.mapPlaceholder')}
           </p>
         </div>
       </div>

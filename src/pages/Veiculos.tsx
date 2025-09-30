@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Car, Battery, Plug } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const vehicles = [
   {
@@ -24,10 +25,12 @@ const vehicles = [
 ];
 
 export default function Veiculos() {
+  const { t } = useTranslation();
+
   const header = (
     <div className="p-4 flex items-center justify-between">
       <div>
-        <h1 className="text-xl font-bold">Meus Veículos</h1>
+        <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
         <p className="text-sm text-muted-foreground">
           {vehicles.length} {vehicles.length === 1 ? 'veículo' : 'veículos'} cadastrados
         </p>

@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "welcome": {
+      "title": "SpeedCharger —",
+      "subtitle": "sua plataforma para descobrir, gerenciar e otimizar o carregamento de veículos elétricos.",
+      "signup": "Criar Conta",
+      "login": "Já tenho uma conta"
+    },
+    "login": {
+      "title": "Bem-vindo de volta",
+      "subtitle": "Entre na sua conta SpeedCharger",
+      "email": "E-mail",
+      "password": "Senha",
+      "forgotPassword": "Esqueceu a senha?",
+      "submit": "Entrar",
+      "google": "Continuar com Google",
+      "noAccount": "Não tem uma conta?",
+      "signupLink": "Criar conta"
+    },
+    "signup": {
+      "title": "Criar Conta",
+      "subtitle": "Comece sua jornada com veículos elétricos",
+      "email": "E-mail",
+      "password": "Senha",
+      "submit": "Criar Conta",
+      "google": "Continuar com Google",
+      "hasAccount": "Já tem uma conta?",
+      "loginLink": "Entrar"
+    }
+  },
+  "navigation": {
+    "stations": "Estações",
+    "tips": "Dicas",
+    "charging": "Iniciar Carga",
+    "chargingShort": "Iniciar",
+    "vehicles": "Veículos",
+    "profile": "Perfil"
+  },
+  "stations": {
+    "title": "Estações",
+    "subtitle": "Encontre pontos de carregamento próximos",
+    "search": "Buscar estações...",
+    "filter": "Filtros",
+    "all": "Todas",
+    "available": "Disponíveis",
+    "fast": "Rápido",
+    "ultrafastCharging": "Carga Ultra-Rápida",
+    "mapPlaceholder": "Mapa interativo de estações será implementado aqui"
+  },
+  "tips": {
+    "title": "Dicas",
+    "subtitle": "Aprenda a otimizar seu veículo elétrico"
+  },
+  "charging": {
+    "title": "Iniciar Carga",
+    "subtitle": "Gerencie suas sessões de carregamento"
+  },
+  "vehicles": {
+    "title": "Meus Veículos",
+    "subtitle": "Gerencie sua frota elétrica"
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Gerencie sua conta",
+    "myAccount": "Minha Conta",
+    "settings": "Configurações",
+    "notifications": "Notificações",
+    "help": "Ajuda",
+    "logout": "Sair da Conta",
+    "language": "Idioma"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "edit": "Editar"
+  }
+}
