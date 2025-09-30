@@ -1,4 +1,4 @@
-import { MapPin, Lightbulb, Zap, Car, User } from "lucide-react";
+import { MapPin, Wallet, Zap, Car, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ export const Header = () => {
 
   const navItems = [
     { icon: MapPin, label: t('navigation.stations'), path: "/" },
-    { icon: Lightbulb, label: t('navigation.tips'), path: "/dicas" },
+    { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
     { icon: Zap, label: t('navigation.charging'), path: "/iniciar-carga" },
     { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
     { icon: User, label: t('navigation.profile'), path: "/perfil" },
@@ -39,7 +39,7 @@ export const Header = () => {
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5" strokeWidth={1.5} />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );

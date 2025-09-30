@@ -35,6 +35,7 @@
   "navigation": {
     "stations": "充电站",
     "tips": "提示",
+    "wallet": "钱包",
     "charging": "开始充电",
     "chargingShort": "充电",
     "vehicles": "车辆",
@@ -54,6 +55,10 @@
   "tips": {
     "title": "提示",
     "subtitle": "学习优化您的电动汽车"
+  },
+  "wallet": {
+    "title": "钱包",
+    "subtitle": "管理您的付款和积分"
   },
   "charging": {
     "title": "开始充电",

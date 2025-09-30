@@ -35,6 +35,7 @@
   "navigation": {
     "stations": "Estaciones",
     "tips": "Consejos",
+    "wallet": "Cartera",
     "charging": "Iniciar Carga",
     "chargingShort": "Cargar",
     "vehicles": "Vehículos",
@@ -54,6 +55,10 @@
   "tips": {
     "title": "Consejos",
     "subtitle": "Aprende a optimizar tu vehículo eléctrico"
+  },
+  "wallet": {
+    "title": "Cartera",
+    "subtitle": "Gestiona tus pagos y créditos"
   },
   "charging": {
     "title": "Iniciar Carga",

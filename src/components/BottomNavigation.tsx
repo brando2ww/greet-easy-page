@@ -1,4 +1,4 @@
-import { Navigation, Sparkles, Bolt, CarFront, UserCircle2 } from "lucide-react";
+import { Navigation, Wallet, Bolt, CarFront, UserCircle2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ export const BottomNavigation = () => {
 
   const navItems = [
     { icon: Navigation, label: t('navigation.stations'), path: "/" },
-    { icon: Sparkles, label: t('navigation.tips'), path: "/dicas" },
+    { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
     { icon: Bolt, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
     { icon: CarFront, label: t('navigation.vehicles'), path: "/veiculos" },
     { icon: UserCircle2, label: t('navigation.profile'), path: "/perfil" },
@@ -37,12 +37,15 @@ export const BottomNavigation = () => {
               )} />
               
               {/* Ícone com animação */}
-              <Icon className={cn(
-                "transition-all duration-300 ease-out",
-                isActive
-                  ? "w-7 h-7 scale-110 text-primary"
-                  : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
-              )} />
+              <Icon 
+                strokeWidth={1.5}
+                className={cn(
+                  "transition-all duration-300 ease-out",
+                  isActive
+                    ? "w-7 h-7 scale-110 text-primary"
+                    : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
+                )} 
+              />
               
               {/* Label */}
               <span className={cn(

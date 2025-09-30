@@ -35,6 +35,7 @@
   "navigation": {
     "stations": "Stations",
     "tips": "Tips",
+    "wallet": "Wallet",
     "charging": "Start Charging",
     "chargingShort": "Charge",
     "vehicles": "Vehicles",
@@ -54,6 +55,10 @@
   "tips": {
     "title": "Tips",
     "subtitle": "Learn to optimize your electric vehicle"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "subtitle": "Manage your payments and credits"
   },
   "charging": {
     "title": "Start Charging",

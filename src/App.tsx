@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Estacoes from "./pages/Estacoes";
 import Dicas from "./pages/Dicas";
+import Carteira from "./pages/Carteira";
 import IniciarCarga from "./pages/IniciarCarga";
 import Veiculos from "./pages/Veiculos";
 import Perfil from "./pages/Perfil";
@@ -30,6 +31,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<ProtectedRoute><Estacoes /></ProtectedRoute>} />
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
+              <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
               <Route path="/iniciar-carga" element={<ProtectedRoute><IniciarCarga /></ProtectedRoute>} />
               <Route path="/veiculos" element={<ProtectedRoute><Veiculos /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
