@@ -16,7 +16,7 @@ export const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-lg z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-black z-50">
       <div className="flex justify-around items-center h-20 max-w-md mx-auto px-6">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -27,13 +27,13 @@ export const BottomNavigation = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300",
+                "flex items-center justify-center transition-colors duration-300",
                 isActive
-                  ? "bg-[hsl(var(--active-nav))] text-white scale-110"
-                  : "text-muted-foreground hover:bg-muted/50"
+                  ? "text-[hsl(var(--active-nav))]"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon className="w-6 h-6" />
+              <Icon className="w-7 h-7" />
             </Link>
           );
         })}
