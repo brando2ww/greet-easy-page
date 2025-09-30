@@ -3,11 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Chrome, Zap } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import evChargingBg from "@/assets/ev-charging-bg.png";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -47,77 +47,114 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/10 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-            <Zap className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">{t('auth.login.title')}</CardTitle>
-          <CardDescription>{t('auth.login.subtitle')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.login.email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.login.password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            <div className="text-right">
-              <a href="#" className="text-sm text-primary hover:underline">
-                {t('auth.login.forgotPassword')}
-              </a>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? t('common.loading') : t('auth.login.submit')}
-            </Button>
-          </form>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black p-6 relative overflow-hidden">
+      {/* Background image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${evChargingBg})` }}
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 pointer-events-none" />
+      
+      {/* Back button */}
+      <button
+        onClick={() => navigate("/auth")}
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 animate-fade-in"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm font-medium">Back</span>
+      </button>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">OU</span>
-            </div>
+      {/* Language selector */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSelector variant="minimal" />
+      </div>
+      
+      {/* Content container */}
+      <div className="w-full max-w-sm space-y-8 animate-fade-in relative z-10">
+        {/* Logo with glow effect */}
+        <div className="flex justify-center mb-8">
+          <div 
+            className="w-24 h-24 rounded-3xl flex items-center justify-center relative"
+            style={{
+              background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))',
+              boxShadow: `
+                0 0 60px 20px hsla(var(--primary) / 0.3),
+                0 0 100px 40px hsla(var(--primary) / 0.2),
+                0 0 140px 60px hsla(var(--primary) / 0.1)
+              `
+            }}
+          >
+            <Zap className="w-12 h-12 text-white" fill="currentColor" />
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center space-y-2 mb-8">
+          <h1 className="text-white text-3xl font-bold tracking-tight">
+            {t('auth.login.title')}
+          </h1>
+          <p className="text-white/60 text-sm">
+            {t('auth.login.subtitle')}
+          </p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSignIn} className="space-y-4">
+          {/* Email field */}
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Input
+              id="email"
+              type="email"
+              placeholder={t('auth.login.email')}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200"
+            />
           </div>
 
+          {/* Password field */}
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <Input
+              id="password"
+              type="password"
+              placeholder={t('auth.login.password')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200"
+            />
+          </div>
+
+          {/* Forgot password link */}
+          <div className="text-right">
+            <a href="#" className="text-sm text-white/50 hover:text-white/80 transition-colors duration-200">
+              {t('auth.login.forgotPassword')}
+            </a>
+          </div>
+
+          {/* Submit button */}
           <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full"
+            type="submit" 
+            className="w-full h-14 text-base font-semibold bg-white hover:bg-white/90 text-black rounded-full transition-all duration-300 hover:scale-[1.02]" 
             disabled={loading}
           >
-            <Chrome className="mr-2 h-4 w-4" />
-            {t('auth.login.google')}
+            {loading ? t('common.loading') : t('auth.login.submit')}
           </Button>
+        </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-4">
-            {t('auth.login.noAccount')}{" "}
-            <Link to="/auth/signup" className="text-primary hover:underline font-medium">
-              {t('auth.login.signupLink')}
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+        {/* Sign up link */}
+        <p className="text-center text-sm text-white/50 mt-6">
+          {t('auth.login.noAccount')}{" "}
+          <Link to="/auth/signup" className="text-white hover:text-white/80 font-medium underline underline-offset-2 transition-colors duration-200">
+            {t('auth.login.signupLink')}
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
