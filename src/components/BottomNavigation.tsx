@@ -21,33 +21,58 @@ export const BottomNavigation = () => {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
+          const isCharging = item.path === "/iniciar-carga";
           
           return (
             <Link
               key={item.path}
               to={item.path}
-              className="flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group"
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group relative",
+                isCharging && "-mt-6"
+              )}
             >
-              {/* Ícone com animação */}
-              <Icon
-                strokeWidth={1.0}
-                className={cn(
-                  "transition-all duration-300 ease-out",
-                  isActive
-                    ? "w-7 h-7 scale-110 text-foreground"
-                    : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
-                )} 
-              />
-              
-              {/* Label */}
-              <span className={cn(
-                "text-[10px] transition-all duration-300 text-center leading-tight",
-                isActive 
-                  ? "font-semibold text-foreground" 
-                  : "text-muted-foreground group-hover:text-foreground"
-              )}>
-                {item.label}
-              </span>
+              {isCharging ? (
+                <>
+                  {/* Círculo animado para iniciar carga */}
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg animate-pulse group-hover:scale-110 transition-all duration-300">
+                      <Icon
+                        strokeWidth={1.5}
+                        className="w-8 h-8 text-background"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Label */}
+                  <span className="text-[10px] transition-all duration-300 text-center leading-tight mt-1 text-muted-foreground group-hover:text-foreground">
+                    {item.label}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {/* Ícone normal */}
+                  <Icon
+                    strokeWidth={1.0}
+                    className={cn(
+                      "transition-all duration-300 ease-out",
+                      isActive
+                        ? "w-7 h-7 scale-110 text-foreground"
+                        : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
+                    )} 
+                  />
+                  
+                  {/* Label */}
+                  <span className={cn(
+                    "text-[10px] transition-all duration-300 text-center leading-tight",
+                    isActive 
+                      ? "font-semibold text-foreground" 
+                      : "text-muted-foreground group-hover:text-foreground"
+                  )}>
+                    {item.label}
+                  </span>
+                </>
+              )}
             </Link>
           );
         })}
