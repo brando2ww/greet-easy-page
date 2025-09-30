@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n/config";
 import Estacoes from "./pages/Estacoes";
 import Dicas from "./pages/Dicas";
 import IniciarCarga from "./pages/IniciarCarga";
@@ -17,23 +19,25 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Estacoes />} />
-          <Route path="/dicas" element={<Dicas />} />
-          <Route path="/iniciar-carga" element={<IniciarCarga />} />
-          <Route path="/veiculos" element={<Veiculos />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/auth" element={<AuthWelcome />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/signup" element={<SignUp />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <I18nextProvider i18n={i18n}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Estacoes />} />
+            <Route path="/dicas" element={<Dicas />} />
+            <Route path="/iniciar-carga" element={<IniciarCarga />} />
+            <Route path="/veiculos" element={<Veiculos />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="/auth" element={<AuthWelcome />} />
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/signup" element={<SignUp />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </I18nextProvider>
   </QueryClientProvider>
 );
 
