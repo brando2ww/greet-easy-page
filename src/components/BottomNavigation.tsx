@@ -28,16 +28,8 @@ export const BottomNavigation = () => {
               to={item.path}
               className="flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group"
             >
-              {/* Indicador visual de página ativa */}
-              <div className={cn(
-                "w-1 h-1 rounded-full transition-all duration-300",
-                isActive 
-                  ? "bg-primary opacity-100 scale-100 animate-in fade-in zoom-in-95 duration-200" 
-                  : "opacity-0 scale-0"
-              )} />
-              
               {/* Ícone com animação */}
-              <Icon 
+              <Icon
                 strokeWidth={1.0}
                 className={cn(
                   "transition-all duration-300 ease-out",
