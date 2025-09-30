@@ -1,7 +1,8 @@
-import { MapPin, Wallet, Zap, Car, User } from "lucide-react";
+import { MapPin, Wallet, Zap, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { CarIcon } from "@/components/icons/CarIcon";
 
 export const Header = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ export const Header = () => {
     { icon: MapPin, label: t('navigation.stations'), path: "/" },
     { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
     { icon: Zap, label: t('navigation.charging'), path: "/iniciar-carga" },
-    { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
+    { icon: CarIcon, label: t('navigation.vehicles'), path: "/veiculos" },
     { icon: User, label: t('navigation.profile'), path: "/perfil" },
   ];
 

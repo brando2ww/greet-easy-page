@@ -1,7 +1,8 @@
-import { Navigation, Wallet, Bolt, CarFront, UserCircle2 } from "lucide-react";
+import { Navigation, Wallet, Bolt, UserCircle2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { CarIcon } from "@/components/icons/CarIcon";
 
 export const BottomNavigation = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ export const BottomNavigation = () => {
     { icon: Navigation, label: t('navigation.stations'), path: "/" },
     { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
     { icon: Bolt, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
-    { icon: CarFront, label: t('navigation.vehicles'), path: "/veiculos" },
+    { icon: CarIcon, label: t('navigation.vehicles'), path: "/veiculos" },
     { icon: UserCircle2, label: t('navigation.profile'), path: "/perfil" },
   ];
 
