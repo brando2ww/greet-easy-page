@@ -42,7 +42,6 @@ export const Header = () => {
                 <Icon 
                   className="w-5 h-5" 
                   strokeWidth={1.0}
-                  fill={isActive ? "currentColor" : "none"}
                 />
                 <span className="font-medium">{item.label}</span>
               </Link>
