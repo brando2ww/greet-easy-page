@@ -14,14 +14,14 @@ interface ResponsiveLayoutProps {
 
 export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false }: ResponsiveLayoutProps) => {
   const isMobile = useIsMobile();
-  const { isAdmin, isSupport } = useUserRole();
+  const { isAdmin, isSupport, roleLoading } = useUserRole();
 
   if (isMobile) {
     return (
       <>
         <MobileLayout header={mobileHeader}>{children}</MobileLayout>
-        {showBottomNav && (isAdmin || isSupport) && <AdminNavigation />}
-        {showBottomNav && !isAdmin && !isSupport && <BottomNavigation />}
+        {showBottomNav && !roleLoading && (isAdmin || isSupport) && <AdminNavigation />}
+        {showBottomNav && !roleLoading && !isAdmin && !isSupport && <BottomNavigation />}
       </>
     );
   }
@@ -32,8 +32,8 @@ export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}
       </main>
-      {showBottomNav && (isAdmin || isSupport) && <AdminNavigation />}
-      {showBottomNav && !isAdmin && !isSupport && <BottomNavigation />}
+      {showBottomNav && !roleLoading && (isAdmin || isSupport) && <AdminNavigation />}
+      {showBottomNav && !roleLoading && !isAdmin && !isSupport && <BottomNavigation />}
     </div>
   );
 };

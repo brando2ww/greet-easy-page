@@ -9,6 +9,7 @@ interface AuthContextType {
   session: Session | null;
   userRole: UserRole;
   loading: boolean;
+  roleLoading: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -19,6 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(true);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -56,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    setRoleLoading(true);
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -69,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setUserRole('user');
     }
+    setRoleLoading(false);
   };
 
   const signOut = async () => {
@@ -79,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, userRole, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, userRole, loading, roleLoading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
