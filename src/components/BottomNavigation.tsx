@@ -16,66 +16,81 @@ export const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-lg border-t border-border rounded-t-3xl z-50">
-      <div className="flex justify-around items-center h-24 max-w-md mx-auto px-4 pb-8">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
-          const isCharging = item.path === "/iniciar-carga";
+    <nav className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="relative max-w-md mx-auto">
+        {/* Barra de navegação com notch */}
+        <div className="relative bg-background/95 backdrop-blur-lg border-t border-border rounded-t-3xl">
+          {/* Curva esquerda do notch */}
+          <div className="absolute left-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
+            <div className="absolute bottom-0 right-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-br-3xl"></div>
+          </div>
           
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group relative",
-                isCharging && "-mt-6"
-              )}
-            >
-              {isCharging ? (
-                <>
-                  {/* Círculo animado para iniciar carga */}
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+          {/* Curva direita do notch */}
+          <div className="absolute right-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
+            <div className="absolute bottom-0 left-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-bl-3xl"></div>
+          </div>
+          
+          <div className="flex justify-around items-center h-24 px-4 pb-8">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              const Icon = item.icon;
+              const isCharging = item.path === "/iniciar-carga";
+              
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group relative",
+                    isCharging && "-mt-6"
+                  )}
+                >
+                  {isCharging ? (
+                    <>
+                      {/* Círculo animado para iniciar carga */}
+                      <div className="relative z-10">
+                        <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+                          <Icon
+                            strokeWidth={1.5}
+                            className="w-8 h-8 text-background"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Label */}
+                      <span className="text-[10px] transition-all duration-300 text-center leading-tight mt-1 text-muted-foreground group-hover:text-foreground">
+                        {item.label}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {/* Ícone normal */}
                       <Icon
-                        strokeWidth={1.5}
-                        className="w-8 h-8 text-background"
+                        strokeWidth={1.0}
+                        className={cn(
+                          "transition-all duration-300 ease-out",
+                          isActive
+                            ? "w-7 h-7 scale-110 text-foreground"
+                            : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
+                        )} 
                       />
-                    </div>
-                  </div>
-                  
-                  {/* Label */}
-                  <span className="text-[10px] transition-all duration-300 text-center leading-tight mt-1 text-muted-foreground group-hover:text-foreground">
-                    {item.label}
-                  </span>
-                </>
-              ) : (
-                <>
-                  {/* Ícone normal */}
-                  <Icon
-                    strokeWidth={1.0}
-                    className={cn(
-                      "transition-all duration-300 ease-out",
-                      isActive
-                        ? "w-7 h-7 scale-110 text-foreground"
-                        : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
-                    )} 
-                  />
-                  
-                  {/* Label */}
-                  <span className={cn(
-                    "text-[10px] transition-all duration-300 text-center leading-tight",
-                    isActive 
-                      ? "font-semibold text-foreground" 
-                      : "text-muted-foreground group-hover:text-foreground"
-                  )}>
-                    {item.label}
-                  </span>
-                </>
-              )}
-            </Link>
-          );
-        })}
+                      
+                      {/* Label */}
+                      <span className={cn(
+                        "text-[10px] transition-all duration-300 text-center leading-tight",
+                        isActive 
+                          ? "font-semibold text-foreground" 
+                          : "text-muted-foreground group-hover:text-foreground"
+                      )}>
+                        {item.label}
+                      </span>
+                    </>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </nav>
   );
