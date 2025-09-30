@@ -1,4 +1,4 @@
-import { MobileLayout } from "@/components/MobileLayout";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap, MapPin, Car, Plug } from "lucide-react";
@@ -11,7 +11,7 @@ export default function IniciarCarga() {
   );
 
   return (
-    <MobileLayout header={header}>
+    <ResponsiveLayout mobileHeader={header}>
       <div className="p-4 space-y-4">
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
@@ -66,6 +66,6 @@ export default function IniciarCarga() {
           </Card>
         </div>
       </div>
-    </MobileLayout>
+    </ResponsiveLayout>
   );
 }

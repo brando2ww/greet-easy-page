@@ -1,4 +1,4 @@
-import { MobileLayout } from "@/components/MobileLayout";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ const menuItems = [
 
 export default function Perfil() {
   return (
-    <MobileLayout>
+    <ResponsiveLayout>
       <div className="p-4 space-y-6">
         <Card>
           <CardContent className="p-6">
@@ -67,6 +67,6 @@ export default function Perfil() {
           Sair da Conta
         </Button>
       </div>
-    </MobileLayout>
+    </ResponsiveLayout>
   );
 }

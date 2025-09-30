@@ -1,4 +1,4 @@
-import { MobileLayout } from "@/components/MobileLayout";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ export default function Veiculos() {
   );
 
   return (
-    <MobileLayout header={header}>
+    <ResponsiveLayout mobileHeader={header}>
       <div className="p-4 space-y-4">
         {vehicles.map((vehicle) => (
           <Card key={vehicle.id} className="cursor-pointer hover:shadow-md transition-shadow">
@@ -85,6 +85,6 @@ export default function Veiculos() {
           </div>
         )}
       </div>
-    </MobileLayout>
+    </ResponsiveLayout>
   );
 }

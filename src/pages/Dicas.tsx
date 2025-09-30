@@ -1,4 +1,4 @@
-import { MobileLayout } from "@/components/MobileLayout";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Battery, Zap, DollarSign, Clock } from "lucide-react";
 
@@ -44,7 +44,7 @@ export default function Dicas() {
   );
 
   return (
-    <MobileLayout header={header}>
+    <ResponsiveLayout mobileHeader={header}>
       <div className="p-4 space-y-4">
         {tips.map((tip) => {
           const Icon = tip.icon;
@@ -67,6 +67,6 @@ export default function Dicas() {
           );
         })}
       </div>
-    </MobileLayout>
+    </ResponsiveLayout>
   );
 }

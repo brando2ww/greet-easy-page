@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { MobileLayout } from "@/components/MobileLayout";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,7 @@ export default function Estacoes() {
   );
 
   return (
-    <MobileLayout header={header}>
+    <ResponsiveLayout mobileHeader={header}>
       <div className="h-[calc(100vh-240px)] bg-muted flex items-center justify-center">
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -69,6 +69,6 @@ export default function Estacoes() {
           </p>
         </div>
       </div>
-    </MobileLayout>
+    </ResponsiveLayout>
   );
 }

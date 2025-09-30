@@ -8,6 +8,7 @@ import Dicas from "./pages/Dicas";
 import IniciarCarga from "./pages/IniciarCarga";
 import Veiculos from "./pages/Veiculos";
 import Perfil from "./pages/Perfil";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/iniciar-carga" element={<IniciarCarga />} />
           <Route path="/veiculos" element={<Veiculos />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
