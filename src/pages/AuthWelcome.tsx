@@ -21,7 +21,7 @@ const AuthWelcome = () => {
       
       {/* Language selector in top right */}
       <div className="absolute top-6 right-6 z-20">
-        <LanguageSelector />
+        <LanguageSelector variant="minimal" />
       </div>
       
       {/* Content container */}
