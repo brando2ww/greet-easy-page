@@ -44,21 +44,36 @@ export const AdminNavigation = () => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               
+              const isChargerItem = item.path === '/admin/carregadores';
+              
               return (
                 <Link
                   key={item.path}
                   to={item.path}
                   className="flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group"
                 >
-                  <Icon
-                    strokeWidth={1.0}
-                    className={cn(
-                      "transition-all duration-300 ease-out",
-                      isActive
-                        ? "w-7 h-7 scale-110 text-foreground"
-                        : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
-                    )} 
-                  />
+                  {isChargerItem ? (
+                    <div className={cn(
+                      "rounded-full bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 shadow-lg shadow-purple-500/50 transition-all duration-300 p-3",
+                      "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-purple-500/60",
+                      isActive && "scale-110 shadow-xl shadow-purple-500/60"
+                    )}>
+                      <Icon
+                        strokeWidth={1.5}
+                        className="w-6 h-6 text-white"
+                      />
+                    </div>
+                  ) : (
+                    <Icon
+                      strokeWidth={1.0}
+                      className={cn(
+                        "transition-all duration-300 ease-out",
+                        isActive
+                          ? "w-7 h-7 scale-110 text-foreground"
+                          : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
+                      )} 
+                    />
+                  )}
                   
                   <span className={cn(
                     "text-[10px] transition-all duration-300 text-center leading-tight",
