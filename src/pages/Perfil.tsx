@@ -15,9 +15,32 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Perfil() {
   const { t } = useTranslation();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: t('common.success'),
+        description: t('profile.logout'),
+      });
+      navigate("/auth/login");
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: "Erro ao sair",
+        variant: "destructive",
+      });
+    }
+  };
 
   const menuItems = [
     { icon: User, label: t('profile.myAccount'), path: "/perfil/dados" },
@@ -37,12 +60,12 @@ export default function Perfil() {
               <Avatar className="w-20 h-20">
                 <AvatarImage src="" />
                 <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  JD
+                  {user?.email?.substring(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <h2 className="text-xl font-bold">João da Silva</h2>
-                <p className="text-sm text-muted-foreground">joao@email.com</p>
+                <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || "Usuário"}</h2>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
               </div>
             </div>
           </CardContent>
@@ -79,7 +102,7 @@ export default function Perfil() {
           })}
         </div>
 
-        <Button variant="destructive" className="w-full" size="lg">
+        <Button variant="destructive" className="w-full" size="lg" onClick={handleLogout}>
           <LogOut className="w-5 h-5 mr-2" />
           {t('profile.logout')}
         </Button>
