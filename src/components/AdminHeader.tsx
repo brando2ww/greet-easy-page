@@ -29,25 +29,25 @@ export const AdminHeader = () => {
             const Icon = item.icon;
             const isChargerItem = item.special;
             
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300",
-                  !isChargerItem && (isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground")
-                )}
-              >
-                {isChargerItem ? (
-                  <div className={cn(
-                    "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 p-2",
-                    "hover:scale-110 hover:shadow-xl hover:shadow-purple-500/60",
-                    isActive && "scale-110 shadow-xl shadow-purple-500/60"
-                  )}>
-                    <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
-                  </div>
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300",
+                    !isChargerItem && (isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground")
+                  )}
+                >
+                  {isChargerItem ? (
+                    <div className={cn(
+                      "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 w-14 h-14 flex items-center justify-center",
+                      "hover:scale-125 hover:shadow-2xl hover:shadow-purple-500/70",
+                      isActive && "scale-110 shadow-2xl shadow-purple-500/70"
+                    )}>
+                      <Icon className="w-7 h-7 text-white" strokeWidth={1.5} />
+                    </div>
                 ) : (
                   <Icon className="w-5 h-5" strokeWidth={1.0} />
                 )}

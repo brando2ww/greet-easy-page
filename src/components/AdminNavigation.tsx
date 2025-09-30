@@ -39,6 +39,15 @@ export const AdminNavigation = () => {
     <nav className="fixed bottom-0 left-0 right-0 z-50">
       <div className="relative max-w-md mx-auto">
         <div className="relative bg-background/95 backdrop-blur-lg border-t border-border rounded-t-3xl">
+          {/* Left notch curve */}
+          <div className="absolute left-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
+            <div className="absolute bottom-0 left-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-br-[100%]" />
+          </div>
+          {/* Right notch curve */}
+          <div className="absolute right-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
+            <div className="absolute bottom-0 right-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-bl-[100%]" />
+          </div>
+          
           <div className="flex justify-around items-center h-24 px-4 pb-8">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -50,18 +59,23 @@ export const AdminNavigation = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className="flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group"
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group",
+                    isChargerItem && "-mt-6"
+                  )}
                 >
                   {isChargerItem ? (
-                    <div className={cn(
-                      "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 p-3",
-                      "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-purple-500/60",
-                      isActive && "scale-110 shadow-xl shadow-purple-500/60"
-                    )}>
-                      <Icon
-                        strokeWidth={1.5}
-                        className="w-6 h-6 text-white"
-                      />
+                    <div className="relative z-10">
+                      <div className={cn(
+                        "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 w-16 h-16 flex items-center justify-center",
+                        "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-purple-500/60",
+                        isActive && "scale-110 shadow-xl shadow-purple-500/60"
+                      )}>
+                        <Icon
+                          strokeWidth={1.5}
+                          className="w-8 h-8 text-white"
+                        />
+                      </div>
                     </div>
                   ) : (
                     <Icon
