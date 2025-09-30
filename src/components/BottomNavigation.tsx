@@ -1,19 +1,18 @@
-import { Navigation, Wallet, Bolt, UserCircle2 } from "lucide-react";
+import { MapPin, Wallet, Zap, Car, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { CarIcon } from "@/components/icons/CarIcon";
 
 export const BottomNavigation = () => {
   const location = useLocation();
   const { t } = useTranslation();
 
   const navItems = [
-    { icon: Navigation, label: t('navigation.stations'), path: "/" },
+    { icon: MapPin, label: t('navigation.stations'), path: "/" },
     { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
-    { icon: Bolt, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
-    { icon: CarIcon, label: t('navigation.vehicles'), path: "/veiculos" },
-    { icon: UserCircle2, label: t('navigation.profile'), path: "/perfil" },
+    { icon: Zap, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
+    { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
+    { icon: User, label: t('navigation.profile'), path: "/perfil" },
   ];
 
   return (
@@ -40,6 +39,7 @@ export const BottomNavigation = () => {
               {/* Ícone com animação */}
               <Icon 
                 strokeWidth={1.0}
+                fill={isActive ? "currentColor" : "none"}
                 className={cn(
                   "transition-all duration-300 ease-out",
                   isActive
