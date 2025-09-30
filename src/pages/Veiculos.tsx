@@ -42,7 +42,7 @@ export default function Veiculos() {
   );
 
   return (
-    <ResponsiveLayout mobileHeader={header}>
+    <ResponsiveLayout mobileHeader={header} showBottomNav>
       <div className="p-4 space-y-4">
         {vehicles.map((vehicle) => (
           <Card key={vehicle.id} className="cursor-pointer hover:shadow-md transition-shadow">

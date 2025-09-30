@@ -46,7 +46,7 @@ export default function Dicas() {
   );
 
   return (
-    <ResponsiveLayout mobileHeader={header}>
+    <ResponsiveLayout mobileHeader={header} showBottomNav>
       <div className="p-4 space-y-4">
         {tips.map((tip) => {
           const Icon = tip.icon;

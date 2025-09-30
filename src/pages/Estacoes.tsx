@@ -59,7 +59,7 @@ export default function Estacoes() {
   );
 
   return (
-    <ResponsiveLayout mobileHeader={header}>
+    <ResponsiveLayout mobileHeader={header} showBottomNav>
       <div className="h-[calc(100vh-240px)] bg-muted flex items-center justify-center">
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">

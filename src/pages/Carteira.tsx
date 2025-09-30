@@ -45,6 +45,7 @@ const Carteira = () => {
           <p className="text-sm text-muted-foreground">{t('wallet.subtitle')}</p>
         </div>
       }
+      showBottomNav
     >
       <div className="space-y-6">
         <div className="hidden md:block space-y-1">

@@ -52,7 +52,7 @@ export default function Perfil() {
     { icon: HelpCircle, label: t('profile.help'), path: "/perfil/ajuda" },
   ];
   return (
-    <ResponsiveLayout>
+    <ResponsiveLayout showBottomNav>
       <div className="p-4 space-y-6">
         <Card>
           <CardContent className="p-6">
