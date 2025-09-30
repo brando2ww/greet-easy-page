@@ -36,7 +36,7 @@ export const BottomNavigation = () => {
                 <>
                   {/* Círculo animado para iniciar carga */}
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg animate-pulse group-hover:scale-110 transition-all duration-300">
+                    <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
                       <Icon
                         strokeWidth={1.5}
                         className="w-8 h-8 text-background"
