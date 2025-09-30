@@ -34,7 +34,7 @@ export const BottomNavigation = () => {
                 className={cn(
                   "transition-all duration-300 ease-out",
                   isActive
-                    ? "w-7 h-7 scale-110 text-primary"
+                    ? "w-7 h-7 scale-110 text-foreground"
                     : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
                 )} 
               />
@@ -43,7 +43,7 @@ export const BottomNavigation = () => {
               <span className={cn(
                 "text-[10px] transition-all duration-300 text-center leading-tight",
                 isActive 
-                  ? "font-semibold text-primary" 
+                  ? "font-semibold text-foreground" 
                   : "text-muted-foreground group-hover:text-foreground"
               )}>
                 {item.label}
