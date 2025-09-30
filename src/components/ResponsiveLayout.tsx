@@ -4,6 +4,7 @@ import { MobileLayout } from "./MobileLayout";
 import { Header } from "./Header";
 import { BottomNavigation } from "./BottomNavigation";
 import { AdminNavigation } from "./AdminNavigation";
+import { AdminHeader } from "./AdminHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface ResponsiveLayoutProps {
@@ -28,12 +29,10 @@ export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      {(isAdmin || isSupport) ? <AdminHeader /> : <Header />}
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}
       </main>
-      {showBottomNav && !roleLoading && (isAdmin || isSupport) && <AdminNavigation />}
-      {showBottomNav && !roleLoading && !isAdmin && !isSupport && <BottomNavigation />}
     </div>
   );
 };

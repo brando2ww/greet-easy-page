@@ -9,7 +9,7 @@ const Carregadores = () => {
 
   return (
     <ResponsiveLayout showBottomNav>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-purple-500/10 pb-20">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-purple-500/10">
         <div className="container mx-auto px-4 pt-6 pb-8 max-w-4xl">
           <h1 className="text-3xl font-bold text-foreground mb-6 animate-fade-in">
             {t('admin.chargers')}
