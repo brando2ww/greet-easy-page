@@ -39,7 +39,7 @@ export const Header = () => {
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
-                <Icon className="w-5 h-5" strokeWidth={1.5} />
+                <Icon className="w-5 h-5" strokeWidth={1.0} />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );

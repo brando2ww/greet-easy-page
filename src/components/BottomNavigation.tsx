@@ -38,7 +38,7 @@ export const BottomNavigation = () => {
               
               {/* Ícone com animação */}
               <Icon 
-                strokeWidth={1.5}
+                strokeWidth={1.0}
                 className={cn(
                   "transition-all duration-300 ease-out",
                   isActive
