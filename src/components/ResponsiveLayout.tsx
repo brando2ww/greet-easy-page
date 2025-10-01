@@ -34,10 +34,22 @@ export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false
         <div className="flex min-h-screen w-full bg-background">
           <AdminSidebar />
           <div className="flex flex-col flex-1">
-            <header className="h-14 border-b border-border flex items-center px-4">
-              <SidebarTrigger />
+            <header className="sticky top-0 z-10 h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="flex h-full items-center justify-between px-6">
+                <div className="flex items-center gap-4">
+                  <SidebarTrigger className="hover:bg-accent hover:text-accent-foreground transition-colors" />
+                  <div className="hidden md:block">
+                    <p className="text-sm font-medium text-foreground">
+                      SpeedCharger Admin
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Gerencie sua plataforma
+                    </p>
+                  </div>
+                </div>
+              </div>
             </header>
-            <main className="flex-1 container mx-auto px-4 py-6">
+            <main className="flex-1">
               {children}
             </main>
           </div>
