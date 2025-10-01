@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { X, Zap, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerClose,
-} from '@/components/ui/drawer';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
 interface Charger {
@@ -30,7 +29,7 @@ interface ChargerDetailsDrawerProps {
   userLocation?: [number, number] | null;
 }
 
-export const ChargerDetailsDrawer = ({
+export const ChargerDetailsModal = ({
   charger,
   isOpen,
   onClose,
@@ -57,23 +56,21 @@ export const ChargerDetailsDrawer = ({
     'bg-gray-500';
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="z-40 h-[70vh] overflow-y-auto">
-        <DrawerHeader className="relative pb-2">
-          <DrawerClose asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2"
-              onClick={onClose}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </DrawerClose>
-          <DrawerTitle className="text-xl font-semibold text-left pr-10">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto rounded-2xl">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-4 top-4 z-50"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+        </Button>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl font-semibold text-left pr-10">
             {charger.name}
-          </DrawerTitle>
-        </DrawerHeader>
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="px-4 pb-6 space-y-4">
           {/* Address */}
@@ -156,7 +153,7 @@ export const ChargerDetailsDrawer = ({
             </Button>
           )}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigation, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ChargerDetailsDrawer } from './ChargerDetailsDrawer';
+import { ChargerDetailsModal } from './ChargerDetailsDrawer';
 
 interface Charger {
   id: string;
@@ -157,7 +157,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
         </Button>
       )}
 
-      <ChargerDetailsDrawer
+      <ChargerDetailsModal
         charger={selectedCharger}
         isOpen={isDrawerOpen}
         onClose={() => {
