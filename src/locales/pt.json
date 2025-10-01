@@ -70,7 +70,12 @@
   },
   "wallet": {
     "title": "Carteira",
-    "subtitle": "Gerencie seus pagamentos e créditos"
+    "subtitle": "Gerencie seus pagamentos e créditos",
+    "balanceTitle": "Saldo da carteira",
+    "addBalance": "Adicionar saldo",
+    "paymentMethods": "Formas de pagamento",
+    "walletBalance": "Saldo da carteira",
+    "addPaymentMethod": "Adicionar forma de pagamento"
   },
   "charging": {
     "title": "Iniciar Carga",
