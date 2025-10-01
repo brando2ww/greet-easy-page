@@ -48,7 +48,7 @@ const Carteira = () => {
 
         {/* Formas de Pagamento */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">{t('wallet.paymentMethods')}</h3>
+          <h3 className="text-lg font-semibold font-montserrat">{t('wallet.paymentMethods')}</h3>
           
           {/* Item: Saldo da carteira */}
           <div className="flex items-center gap-3 py-4 border-b">
