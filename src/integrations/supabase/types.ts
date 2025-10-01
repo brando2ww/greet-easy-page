@@ -24,6 +24,7 @@ export type Database = {
           location: string
           longitude: number | null
           name: string
+          partner_client_id: string | null
           power: number
           price_per_kwh: number
           serial_number: string | null
@@ -39,6 +40,7 @@ export type Database = {
           location: string
           longitude?: number | null
           name: string
+          partner_client_id?: string | null
           power: number
           price_per_kwh?: number
           serial_number?: string | null
@@ -54,6 +56,7 @@ export type Database = {
           location?: string
           longitude?: number | null
           name?: string
+          partner_client_id?: string | null
           power?: number
           price_per_kwh?: number
           serial_number?: string | null
@@ -66,6 +69,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chargers_partner_client_id_fkey"
+            columns: ["partner_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -126,6 +136,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          cnpj: string | null
+          company_name: string
+          created_at: string
+          email: string
+          id: string
+          phone: string | null
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          cnpj?: string | null
+          company_name: string
+          created_at?: string
+          email: string
+          id?: string
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          cnpj?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

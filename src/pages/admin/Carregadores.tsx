@@ -45,7 +45,7 @@ type Charger = {
   latitude: number | null;
   longitude: number | null;
   serial_number: string | null;
-  client_id: string | null;
+  partner_client_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -80,9 +80,9 @@ const Carregadores = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .order("full_name");
+        .from("clients")
+        .select("id, company_name, city, state")
+        .order("company_name");
       if (error) throw error;
       return data;
     },
@@ -93,7 +93,7 @@ const Carregadores = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chargers")
-        .select("id, name, location, connector_type, power, status, price_per_kwh, latitude, longitude, serial_number, client_id, created_at, updated_at")
+        .select("id, name, location, connector_type, power, status, price_per_kwh, latitude, longitude, serial_number, partner_client_id, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -107,7 +107,7 @@ const Carregadores = () => {
         name: data.name,
         connector_type: data.type,
         power: parseFloat(data.capacity),
-        client_id: data.client_id || null,
+          partner_client_id: data.client_id || null,
         serial_number: data.serial_number || null,
         location: data.location,
         status: 'available',
@@ -144,7 +144,7 @@ const Carregadores = () => {
           name: data.name,
           connector_type: data.type,
           power: parseFloat(data.capacity),
-          client_id: data.client_id || null,
+          partner_client_id: data.client_id || null,
           serial_number: data.serial_number || null,
           location: data.location,
           latitude: data.latitude ? parseFloat(data.latitude) : null,
@@ -208,7 +208,7 @@ const Carregadores = () => {
       name: charger.name,
       type: charger.connector_type,
       capacity: charger.power.toString(),
-      client_id: charger.client_id || "",
+      client_id: charger.partner_client_id || "",
       serial_number: charger.serial_number || "",
       location: charger.location,
       latitude: charger.latitude?.toString() || "",
@@ -437,30 +437,30 @@ const Carregadores = () => {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="client_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cliente (opcional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Nenhum cliente selecionado" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clients.map((client) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.full_name || client.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <FormField
+                        control={form.control}
+                        name="client_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t('admin.partnerClient')}</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('admin.noClientSelected')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {clients.map((client: any) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    {client.company_name} {client.city && client.state ? `(${client.city}/${client.state})` : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">

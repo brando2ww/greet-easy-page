@@ -17,7 +17,7 @@ interface Charger {
   latitude: number | null;
   longitude: number | null;
   serial_number: string | null;
-  client_id: string | null;
+  partner_client_id: string | null;
   created_at: string;
   updated_at: string;
 }
