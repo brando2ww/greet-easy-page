@@ -1,9 +1,10 @@
-import { Wallet, ChevronRight, Plus, ChevronLeft } from "lucide-react";
+import { ChevronRight, Plus, ChevronLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import walletCardIcon from "@/assets/wallet-card-icon.png";
 
 const Carteira = () => {
   const { t } = useTranslation();
@@ -52,8 +53,8 @@ const Carteira = () => {
           
           {/* Item: Saldo da carteira */}
           <div className="flex items-center gap-3 py-4 border-b">
-            <div className="p-2 rounded-lg bg-accent">
-              <Wallet className="w-5 h-5 text-muted-foreground" />
+            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+              <img src={walletCardIcon} alt="Wallet" className="w-full h-full object-cover" />
             </div>
             <span className="text-sm font-medium">{t('wallet.walletBalance')}</span>
           </div>
