@@ -40,11 +40,6 @@ const Login = () => {
 
       if (error) throw error;
 
-      toast({
-        title: t('common.success'),
-        description: t('auth.login.title'),
-      });
-
       navigate("/");
     } catch (error: any) {
       toast({
