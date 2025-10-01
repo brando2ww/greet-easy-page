@@ -442,15 +442,14 @@ const Carregadores = () => {
                   name="client_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cliente</FormLabel>
+                      <FormLabel>Cliente (opcional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione um cliente (opcional)" />
+                            <SelectValue placeholder="Nenhum cliente selecionado" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Nenhum</SelectItem>
                           {clients.map((client) => (
                             <SelectItem key={client.id} value={client.id}>
                               {client.full_name || client.email}
