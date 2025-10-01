@@ -62,15 +62,7 @@
     "enableLocation": "Enable location to use this feature",
     "centerOnMyLocation": "Center on my location",
     "noChargers": "No chargers found",
-    "tryDifferentFilters": "Try adjusting filters or search",
-    "mapboxTokenRequired": "Mapbox Token Required",
-    "mapboxTokenDescription": "To view the map, you need to configure a Mapbox token",
-    "howToGetToken": "How to get the token",
-    "step1": "Go to mapbox.com and create a free account",
-    "step2": "Navigate to 'Tokens' section in dashboard",
-    "step3": "Copy your public token (starts with 'pk.')",
-    "getTokenHere": "Get token here",
-    "saveToken": "Save Token"
+    "tryDifferentFilters": "Try adjusting filters or search"
   },
   "tips": {
     "title": "Tips",

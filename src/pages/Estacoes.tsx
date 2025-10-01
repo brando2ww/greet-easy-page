@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
@@ -7,23 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import speedLogo from "@/assets/speed_logo_01.png";
 import { StationsMap } from "@/components/map/StationsMap";
-import { MapTokenInput } from "@/components/map/MapTokenInput";
 import { useChargers } from "@/hooks/useChargers";
+import { MAPBOX_TOKEN } from "@/config/mapbox";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [mapboxToken, setMapboxToken] = useState<string>("");
   const { t } = useTranslation();
   const { data: chargers, isLoading } = useChargers();
-
-  // Load token from localStorage on mount
-  useEffect(() => {
-    const savedToken = localStorage.getItem('mapbox_token');
-    if (savedToken) {
-      setMapboxToken(savedToken);
-    }
-  }, []);
 
   const filterChips = [
     { key: 'all', label: t('stations.all') },
@@ -115,9 +106,7 @@ export default function Estacoes() {
   return (
     <ResponsiveLayout mobileHeader={header} showBottomNav>
       <div className="h-[calc(100vh-240px)]">
-        {!mapboxToken ? (
-          <MapTokenInput onTokenSubmit={setMapboxToken} />
-        ) : isLoading ? (
+        {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
@@ -134,7 +123,7 @@ export default function Estacoes() {
             </div>
           </div>
         ) : (
-          <StationsMap chargers={filteredChargers} mapboxToken={mapboxToken} />
+          <StationsMap chargers={filteredChargers} mapboxToken={MAPBOX_TOKEN} />
         )}
       </div>
     </ResponsiveLayout>

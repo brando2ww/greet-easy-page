@@ -62,15 +62,7 @@
     "enableLocation": "Habilite la ubicación para usar esta función",
     "centerOnMyLocation": "Centrar en mi ubicación",
     "noChargers": "No se encontraron cargadores",
-    "tryDifferentFilters": "Intente ajustar los filtros o búsqueda",
-    "mapboxTokenRequired": "Token de Mapbox Requerido",
-    "mapboxTokenDescription": "Para ver el mapa, necesita configurar un token de Mapbox",
-    "howToGetToken": "Cómo obtener el token",
-    "step1": "Vaya a mapbox.com y cree una cuenta gratuita",
-    "step2": "Navegue a la sección 'Tokens' en el panel",
-    "step3": "Copie su token público (comienza con 'pk.')",
-    "getTokenHere": "Obtener token aquí",
-    "saveToken": "Guardar Token"
+    "tryDifferentFilters": "Intente ajustar los filtros o búsqueda"
   },
   "tips": {
     "title": "Consejos",
