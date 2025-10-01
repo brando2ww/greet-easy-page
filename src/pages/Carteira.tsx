@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import walletCardIcon from "@/assets/wallet-card-icon.png";
+import { WalletCardIcon } from "@/components/icons/WalletCardIcon";
 
 const Carteira = () => {
   const { t } = useTranslation();
@@ -53,8 +53,8 @@ const Carteira = () => {
           
           {/* Item: Saldo da carteira */}
           <div className="flex items-center gap-3 py-4 border-b">
-            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-              <img src={walletCardIcon} alt="Wallet" className="w-full h-full object-cover" />
+            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
+              <WalletCardIcon className="w-7 h-7" fill="hsl(var(--muted-foreground))" />
             </div>
             <span className="text-sm font-medium">{t('wallet.walletBalance')}</span>
           </div>
