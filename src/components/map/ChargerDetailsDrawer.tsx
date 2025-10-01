@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Zap, Navigation, MapPin } from 'lucide-react';
+import { X, Zap, Navigation, MapPin, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
@@ -86,9 +86,14 @@ export const ChargerDetailsModal = ({
             isExpanded ? "h-auto max-h-[55vh] overflow-y-auto" : "h-auto"
           )}
         >
-          {/* Handle bar */}
+          {/* Handle bar with animated icon */}
           <div className="flex justify-center pt-3 pb-1">
-            <div className="w-12 h-1 rounded-full bg-muted-foreground/30" />
+            <ChevronDown 
+              className={cn(
+                "h-6 w-6 text-muted-foreground transition-transform duration-300",
+                isExpanded && "rotate-180"
+              )} 
+            />
           </div>
 
           <Button
