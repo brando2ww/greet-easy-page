@@ -232,21 +232,17 @@ const Carregadores = () => {
   return (
     <ResponsiveLayout
       mobileHeader={
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Carregadores</h1>
-            <p className="text-sm text-muted-foreground">
-              {stats.total} carregadores no total
-            </p>
-          </div>
-          <Button onClick={handleAddNew} size="icon" className="bg-green-500 hover:bg-green-600">
-            <Plus className="h-5 w-5" />
+        <div className="flex items-center justify-between p-4">
+          <h1 className="text-xl font-bold">Carregadores</h1>
+          <Button onClick={handleAddNew} size="sm" className="bg-green-500 hover:bg-green-600 h-9 gap-1.5">
+            <Plus className="h-4 w-4" />
+            <span className="text-xs">Novo</span>
           </Button>
         </div>
       }
       showBottomNav={true}
     >
-      <div className="space-y-6 pt-8 md:pt-12 pb-6 px-4 md:px-6 animate-fade-in">
+      <div className="space-y-3 md:space-y-6 pt-4 md:pt-12 pb-6 px-4 md:px-6 animate-fade-in">
         {/* Header Desktop */}
         <div className="hidden md:flex items-center justify-between">
           <div>
@@ -275,9 +271,9 @@ const Carregadores = () => {
         />
 
         {/* Toggle de visualização */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-2">
           <ChargersViewToggle view={viewMode} onViewChange={setViewMode} />
-          <p className="text-xs md:text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground shrink-0">
             {filteredChargers.length} {filteredChargers.length === 1 ? 'carregador' : 'carregadores'}
           </p>
         </div>
@@ -289,25 +285,45 @@ const Carregadores = () => {
             <p className="mt-4 text-muted-foreground">Carregando carregadores...</p>
           </div>
         ) : filteredChargers.length === 0 ? (
-          <div className="text-center py-12 backdrop-blur-sm bg-background/95 border border-green-200/50 rounded-lg">
-            <p className="text-muted-foreground">Nenhum carregador encontrado</p>
-            {(searchQuery || statusFilter !== "all") && (
+          <div className="text-center py-16 md:py-20 backdrop-blur-sm bg-background/95 border border-green-200/50 rounded-lg">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Plus className="h-8 w-8 md:h-10 md:w-10 text-green-500" />
+            </div>
+            <h3 className="text-lg md:text-xl font-semibold mb-2">
+              {searchQuery || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum carregador"}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 px-4">
+              {searchQuery || statusFilter !== "all" 
+                ? "Tente ajustar os filtros ou busca" 
+                : "Adicione seu primeiro carregador"}
+            </p>
+            {(searchQuery || statusFilter !== "all") ? (
               <Button
-                variant="link"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setSearchQuery("");
                   setStatusFilter("all");
                 }}
-                className="mt-2"
+                className="border-green-200"
               >
                 Limpar filtros
+              </Button>
+            ) : (
+              <Button
+                onClick={handleAddNew}
+                size="sm"
+                className="bg-green-500 hover:bg-green-600"
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                Adicionar carregador
               </Button>
             )}
           </div>
         ) : (
           <>
             {viewMode === "cards" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6 animate-fade-in">
                 {filteredChargers.map((charger, index) => (
                   <div
                     key={charger.id}
