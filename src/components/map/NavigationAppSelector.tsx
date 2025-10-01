@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Route } from 'lucide-react';
+import { Route, X } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerClose,
+  DrawerOverlay,
+} from '@/components/ui/drawer';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
@@ -24,19 +26,19 @@ const navigationApps = [
     id: 'waze' as NavigationApp,
     name: 'Waze',
     icon: '🗺️',
-    color: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+    color: 'bg-blue-50 hover:bg-blue-100',
   },
   {
     id: 'google' as NavigationApp,
     name: 'Google Maps',
     icon: '🗺',
-    color: 'bg-green-50 hover:bg-green-100 border-green-200',
+    color: 'bg-green-50 hover:bg-green-100',
   },
   {
     id: 'apple' as NavigationApp,
     name: 'Apple Maps',
     icon: '🧭',
-    color: 'bg-gray-50 hover:bg-gray-100 border-gray-200',
+    color: 'bg-gray-50 hover:bg-gray-100',
   },
 ];
 
@@ -77,39 +79,44 @@ export const NavigationAppSelector = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Route className="h-8 w-8 text-primary" />
+    <Drawer open={isOpen} onOpenChange={onClose}>
+      <DrawerOverlay className="bg-black/70 backdrop-blur-sm" />
+      <DrawerContent className="rounded-t-3xl max-h-[85vh]">
+        <DrawerClose className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors">
+          <X className="h-5 w-5 text-white" />
+        </DrawerClose>
+
+        <DrawerHeader className="pt-8 pb-2">
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Route className="h-10 w-10 text-primary" />
             </div>
           </div>
-          <DialogTitle className="text-center text-xl">
+          <DrawerTitle className="text-center text-xl font-semibold">
             Escolha seu aplicativo preferido para dirigir
-          </DialogTitle>
-        </DialogHeader>
+          </DrawerTitle>
+        </DrawerHeader>
 
-        <div className="space-y-3 py-4">
+        <div className="px-6 space-y-3 py-4">
           {navigationApps.map((app) => (
             <button
               key={app.id}
               onClick={() => handleAppSelect(app.id)}
               className={cn(
-                'w-full p-4 rounded-lg border-2 transition-all flex items-center gap-4',
+                'w-full p-5 rounded-xl border transition-all duration-200 flex items-center gap-4 shadow-sm',
                 app.color
               )}
             >
-              <span className="text-3xl">{app.icon}</span>
-              <span className="font-medium text-lg">{app.name}</span>
+              <span className="text-4xl">{app.icon}</span>
+              <span className="font-semibold text-lg">{app.name}</span>
             </button>
           ))}
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex-1">
-            <p className="text-sm font-medium mb-1">Lembrar da minha escolha</p>
-            <p className="text-xs text-primary">
+        <div className="flex items-center justify-between px-6 py-6 border-t">
+          <div className="flex-1 pr-4">
+            <p className="text-sm font-semibold mb-1">Lembrar da minha escolha</p>
+            <p className="text-xs text-purple-600">
               Você pode alterar isso mais tarde nas configurações
             </p>
           </div>
@@ -118,7 +125,7 @@ export const NavigationAppSelector = ({
             onCheckedChange={setRememberChoice}
           />
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 };
