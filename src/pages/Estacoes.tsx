@@ -28,11 +28,11 @@ export default function Estacoes() {
 
   const header = (
     <div className="p-4 space-y-3">
-      <div className="flex justify-center mb-2">
+      <div className="flex justify-start mb-2">
         <img 
           src={speedLogo} 
           alt="Speed Charger" 
-          className="h-8"
+          className="h-12"
         />
       </div>
       
