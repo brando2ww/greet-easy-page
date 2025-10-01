@@ -3,18 +3,15 @@ import { ResponsiveLayout } from '@/components/ResponsiveLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
   Search, 
   Plus, 
-  Zap, 
-  MapPin, 
-  Edit, 
-  Trash2,
+  Zap,
   Battery,
   Activity,
   WrenchIcon
 } from 'lucide-react';
+import { ChargerCard } from '@/components/ChargerCard';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -262,34 +259,6 @@ const Carregadores = () => {
     maintenance: chargers.filter((c) => c.status === 'maintenance').length,
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      available: { label: t('admin.available'), className: 'bg-green-500/10 text-green-600 border-green-500/20' },
-      in_use: { label: t('admin.inUse'), className: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
-      maintenance: { label: t('admin.maintenance'), className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
-      offline: { label: t('admin.offline'), className: 'bg-red-500/10 text-red-600 border-red-500/20' },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return <Badge className={config.className}>{config.label}</Badge>;
-  };
-
-  const getChargerCardStyle = (status: string) => {
-  if (status === 'available') {
-    return {
-      card: 'bg-gradient-to-br from-green-300 to-lime-400 border-transparent shadow-xl hover:shadow-2xl hover:scale-[1.02]',
-      text: 'text-white',
-      iconColor: 'text-white',
-      badge: 'bg-white/20 text-white border-white/30',
-    };
-  }
-    return {
-      card: 'bg-white border-gray-200 shadow-md hover:shadow-lg',
-      text: 'text-foreground',
-      iconColor: 'text-green-500 opacity-60',
-      badge: 'bg-gray-100 text-gray-700 border-gray-200',
-    };
-  };
-
   return (
     <ResponsiveLayout showBottomNav>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-purple-500/10">
@@ -397,64 +366,14 @@ const Carregadores = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredChargers.map((charger) => {
-                const cardStyle = getChargerCardStyle(charger.status);
-                return (
-                  <Card
-                    key={charger.id}
-                    className={`rounded-3xl transition-all duration-300 animate-fade-in ${cardStyle.card}`}
-                  >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between mb-4">
-                        <Zap className={`h-16 w-16 ${cardStyle.iconColor}`} />
-                        <Badge className={cardStyle.badge}>{getStatusBadge(charger.status)}</Badge>
-                      </div>
-                      <CardTitle className={`text-2xl ${cardStyle.text}`}>{charger.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className={`flex items-center text-sm ${cardStyle.text}`}>
-                        <MapPin className="h-5 w-5 mr-2" />
-                        <span>{charger.location}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className={`mb-1 ${cardStyle.text} opacity-80`}>Potência</p>
-                          <p className={`font-semibold text-base ${cardStyle.text}`}>{charger.power} kW</p>
-                        </div>
-                        <div>
-                          <p className={`mb-1 ${cardStyle.text} opacity-80`}>Preço</p>
-                          <p className={`font-semibold text-base ${cardStyle.text}`}>
-                            R$ {Number(charger.price_per_kwh).toFixed(2)}/kWh
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className={`text-sm mb-1 ${cardStyle.text} opacity-80`}>Conector</p>
-                        <p className={`font-semibold ${cardStyle.text}`}>{charger.connector_type}</p>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          variant={charger.status === 'available' ? 'secondary' : 'outline'}
-                          size="sm"
-                          onClick={() => handleEdit(charger)}
-                          className="flex-1 rounded-xl"
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          {t('common.edit')}
-                        </Button>
-                        <Button
-                          variant={charger.status === 'available' ? 'secondary' : 'outline'}
-                          size="sm"
-                          onClick={() => handleDelete(charger.id)}
-                          className="text-destructive hover:bg-destructive/10 rounded-xl"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {filteredChargers.map((charger) => (
+                <ChargerCard
+                  key={charger.id}
+                  charger={charger}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
           )}
         </div>
