@@ -56,7 +56,7 @@ export const ChargerDetailsModal = ({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-[50%] bottom-20 z-50 grid w-full max-w-md translate-x-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-bottom-[50px] data-[state=open]:slide-in-from-bottom-[50px] max-h-[calc(100vh-120px)] overflow-y-auto rounded-2xl mx-4"
+            "fixed left-[50%] top-[30%] z-50 grid w-[calc(100%-2rem)] max-w-md translate-x-[-50%] -translate-y-[20%] gap-4 border bg-background p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 max-h-[60vh] overflow-y-auto rounded-2xl"
           )}
         >
           <Button
