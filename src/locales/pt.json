@@ -75,7 +75,13 @@
     "addBalance": "Adicionar saldo",
     "paymentMethods": "Formas de pagamento",
     "walletBalance": "Saldo da carteira",
-    "addPaymentMethod": "Adicionar forma de pagamento"
+    "addPaymentMethod": "Adicionar forma de pagamento",
+    "choosePaymentMethod": "Escolha uma forma de pagamento",
+    "pix": "Pix",
+    "creditCard": "Cartão de crédito",
+    "ticketCar": "Ticket Car",
+    "semParar": "Sem Parar",
+    "flexFrota": "Flex Frota"
   },
   "charging": {
     "title": "Iniciar Carga",

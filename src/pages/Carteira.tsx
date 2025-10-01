@@ -1,14 +1,37 @@
-import { ChevronRight, Plus, ChevronLeft } from "lucide-react";
+import { ChevronRight, Plus, ChevronLeft, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { WalletCardIcon } from "@/components/icons/WalletCardIcon";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { useState } from "react";
 
 const Carteira = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const paymentOptions = [
+    { key: 'pix', label: t('wallet.pix') },
+    { key: 'creditCard', label: t('wallet.creditCard') },
+    { key: 'ticketCar', label: t('wallet.ticketCar') },
+    { key: 'semParar', label: t('wallet.semParar') },
+    { key: 'flexFrota', label: t('wallet.flexFrota') },
+  ];
+
+  const handleSelectPayment = (option: string) => {
+    console.log('Selected payment method:', option);
+    setOpen(false);
+  };
 
   return (
     <ResponsiveLayout
@@ -60,13 +83,41 @@ const Carteira = () => {
           </div>
 
           {/* Botão Adicionar */}
-          <Button 
-            variant="outline" 
-            className="w-full border-green-500 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-600 dark:hover:text-white transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            {t('wallet.addPaymentMethod')}
-          </Button>
+          <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full border-green-500 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-600 dark:hover:text-white transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                {t('wallet.addPaymentMethod')}
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="z-50">
+              <DrawerHeader className="relative border-b pb-4">
+                <DrawerTitle className="text-center font-montserrat">
+                  {t('wallet.choosePaymentMethod')}
+                </DrawerTitle>
+                <DrawerClose className="absolute right-4 top-4">
+                  <X className="h-5 w-5" />
+                </DrawerClose>
+              </DrawerHeader>
+              <div className="p-4">
+                {paymentOptions.map((option, index) => (
+                  <button
+                    key={option.key}
+                    onClick={() => handleSelectPayment(option.key)}
+                    className={`w-full flex items-center justify-between py-4 text-left hover:bg-accent/50 transition-colors ${
+                      index < paymentOptions.length - 1 ? 'border-b' : ''
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{option.label}</span>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                ))}
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
       </div>
     </ResponsiveLayout>
