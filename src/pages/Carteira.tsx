@@ -1,18 +1,25 @@
-import { Wallet, ChevronRight, Plus } from "lucide-react";
+import { Wallet, ChevronRight, Plus, ChevronLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 const Carteira = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <ResponsiveLayout
       mobileHeader={
-        <div className="space-y-1 p-4">
-          <h1 className="text-2xl font-bold tracking-tight">{t('wallet.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('wallet.subtitle')}</p>
+        <div className="flex items-center gap-3 p-4">
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-xl font-semibold">Pagamento</h1>
         </div>
       }
       showBottomNav
