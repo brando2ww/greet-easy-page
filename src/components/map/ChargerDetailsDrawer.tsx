@@ -193,7 +193,7 @@ export const ChargerDetailsModal = ({
                 e.stopPropagation();
                 handleNavigate();
               }}
-              className="w-full mt-4"
+              className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white"
               size="lg"
             >
               <Navigation className="h-5 w-5 mr-2" />
