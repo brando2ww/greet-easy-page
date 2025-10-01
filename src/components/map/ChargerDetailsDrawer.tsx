@@ -58,7 +58,7 @@ export const ChargerDetailsDrawer = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="z-[100] pb-24">
+      <DrawerContent className="z-40 pb-32">
         <DrawerHeader className="relative pb-2">
           <DrawerClose asChild>
             <Button
@@ -75,7 +75,7 @@ export const ChargerDetailsDrawer = ({
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 pb-6 space-y-4">
+        <div className="px-4 pb-6 mb-4 space-y-4">
           {/* Address */}
           <p className="text-sm text-muted-foreground">
             {charger.location}
