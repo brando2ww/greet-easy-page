@@ -1,22 +1,17 @@
-import { LayoutDashboard, Users, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Zap, BarChart3, UserCircle, LogOut, Sparkles } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-} from "@/components/ui/sidebar";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navItems = [
   { icon: LayoutDashboard, label: 'admin.dashboard', path: '/admin/dashboard' },
@@ -29,12 +24,10 @@ const navItems = [
 export const AdminSidebar = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { state } = useSidebar();
   const { user, signOut } = useAuth();
-  const collapsed = state === "collapsed";
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
-  const hasActiveItem = navItems.some((item) => isActive(item.path));
   
   const getUserInitials = () => {
     if (!user?.email) return "U";
@@ -48,102 +41,131 @@ export const AdminSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className={collapsed ? "w-16" : "w-64"}>
-      <div className="p-4 border-b border-sidebar-border bg-gradient-to-b from-sidebar-background to-sidebar-accent/30">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2 flex-shrink-0">
-            <Zap className="w-6 h-6 text-primary" />
+    <TooltipProvider delayDuration={0}>
+      <div className="relative flex">
+        {/* Icon Sidebar - Always visible */}
+        <div className="w-20 h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col items-center py-6 gap-6">
+          {/* Logo */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+          >
+            <Sparkles className="w-6 h-6 text-primary" />
+          </button>
+
+          <div className="w-12 h-px bg-border" />
+
+          {/* Icon Menu Items */}
+          <div className="flex-1 flex flex-col gap-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+
+              return (
+                <Tooltip key={item.path}>
+                  <TooltipTrigger asChild>
+                    <NavLink
+                      to={item.path}
+                      className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200",
+                        active
+                          ? "bg-foreground text-background shadow-lg"
+                          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="w-5 h-5" strokeWidth={1.5} />
+                    </NavLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-foreground text-background">
+                    {t(item.label)}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-base font-bold text-sidebar-foreground">
-                SpeedCharger
-              </span>
-              <span className="text-xs text-muted-foreground">Admin Panel</span>
-            </div>
-          )}
-        </div>
-      </div>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-2 text-xs font-semibold text-muted-foreground">
-            {!collapsed && "Navegação"}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.path);
-
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.path}
-                        className={({ isActive }) =>
-                          cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 relative",
-                            isActive
-                              ? "bg-primary/10 text-primary font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-primary before:rounded-r-full"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                          )
-                        }
-                      >
-                        <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-                        {!collapsed && (
-                          <span className="font-medium">{t(item.label)}</span>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      
-      <SidebarFooter className="border-t border-sidebar-border bg-sidebar-accent/30">
-        <div className={cn("p-3", collapsed ? "flex justify-center" : "")}>
-          {collapsed ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={signOut}
-              className="hover:bg-destructive/10 hover:text-destructive"
-              aria-label="Sair"
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9 border-2 border-primary/20">
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {getUserInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-semibold text-sidebar-foreground truncate">
-                  {getUserName()}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user?.email}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
+          {/* User Avatar */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
                 onClick={signOut}
-                className="hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
-                aria-label="Sair"
+                className="w-12 h-12 rounded-xl hover:bg-destructive/10 flex items-center justify-center transition-colors group"
               >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+                <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-destructive" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-foreground text-background">
+              Sair
+            </TooltipContent>
+          </Tooltip>
         </div>
-      </SidebarFooter>
-    </Sidebar>
+
+        {/* Expanded Menu Panel */}
+        {menuOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+              onClick={() => setMenuOpen(false)}
+            />
+
+            {/* Menu Panel */}
+            <div className="fixed left-20 top-0 h-screen w-80 bg-sidebar-background border-r border-sidebar-border shadow-2xl z-50 animate-slide-in-right">
+              <div className="p-6 h-full flex flex-col">
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-6">
+                  <Sparkles className="w-5 h-5 text-foreground" />
+                  <h2 className="text-lg font-bold text-foreground">Menu</h2>
+                </div>
+
+                {/* Navigation Items */}
+                <div className="flex-1 space-y-1 overflow-y-auto">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.path);
+
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setMenuOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                          active
+                            ? "bg-foreground text-background shadow-md"
+                            : "text-foreground hover:bg-sidebar-accent"
+                        )}
+                      >
+                        <Icon className="w-5 h-5" strokeWidth={1.5} />
+                        <span className="font-medium">{t(item.label)}</span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+
+                {/* User Section */}
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {getUserName()}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };

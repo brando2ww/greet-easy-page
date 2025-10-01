@@ -6,7 +6,6 @@ import { BottomNavigation } from "./BottomNavigation";
 import { AdminNavigation } from "./AdminNavigation";
 import { AdminSidebar } from "./AdminSidebar";
 import { useUserRole } from "@/hooks/useUserRole";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 interface ResponsiveLayoutProps {
   children: ReactNode;
@@ -30,31 +29,12 @@ export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false
 
   if (isAdmin || isSupport) {
     return (
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AdminSidebar />
-          <div className="flex flex-col flex-1">
-            <header className="sticky top-0 z-10 h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="flex h-full items-center justify-between px-6">
-                <div className="flex items-center gap-4">
-                  <SidebarTrigger className="hover:bg-accent hover:text-accent-foreground transition-colors" />
-                  <div className="hidden md:block">
-                    <p className="text-sm font-medium text-foreground">
-                      SpeedCharger Admin
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Gerencie sua plataforma
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </header>
-            <main className="flex-1">
-              {children}
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AdminSidebar />
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
     );
   }
 
