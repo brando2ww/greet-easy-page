@@ -273,6 +273,23 @@ const Carregadores = () => {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
+  const getChargerCardStyle = (status: string) => {
+    if (status === 'available') {
+      return {
+        card: 'bg-gradient-to-br from-cyan-400 to-teal-400 border-transparent shadow-xl hover:shadow-2xl hover:scale-[1.02]',
+        text: 'text-white',
+        iconColor: 'text-white',
+        badge: 'bg-white/20 text-white border-white/30',
+      };
+    }
+    return {
+      card: 'bg-white border-gray-200 shadow-md hover:shadow-lg',
+      text: 'text-foreground',
+      iconColor: 'text-cyan-500 opacity-60',
+      badge: 'bg-gray-100 text-gray-700 border-gray-200',
+    };
+  };
+
   return (
     <ResponsiveLayout showBottomNav>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-purple-500/10">
@@ -293,84 +310,68 @@ const Carregadores = () => {
             </Button>
           </div>
 
-          {/* Search and Filters */}
-          <Card className="mb-6 rounded-3xl border-primary/20 shadow-lg bg-gradient-to-br from-background via-background to-purple-500/5 backdrop-blur-sm animate-fade-in">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary h-4 w-4" />
-                  <Input
-                    placeholder={t('admin.searchChargers')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 rounded-2xl border-primary/30 focus:border-primary focus:ring-primary/20"
-                  />
+          {/* Search */}
+          <div className="mb-6 animate-fade-in">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <Input
+                placeholder={t('admin.searchChargers')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 rounded-2xl text-base"
+              />
+            </div>
+          </div>
+
+          {/* Unified Statistics Card */}
+          <Card className="mb-6 rounded-3xl border-cyan-200 shadow-lg bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50 animate-fade-in">
+            <CardContent className="pt-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <Zap className="h-12 w-12 text-cyan-500 mx-auto mb-3" />
+                  <p className="text-4xl font-bold text-foreground mb-1">{stats.total}</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.totalChargers')}</p>
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="md:w-[200px] rounded-2xl border-primary/30">
-                    <SelectValue placeholder="Filtrar por status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('admin.allStatus')}</SelectItem>
-                    <SelectItem value="available">{t('admin.available')}</SelectItem>
-                    <SelectItem value="in_use">{t('admin.inUse')}</SelectItem>
-                    <SelectItem value="maintenance">{t('admin.maintenance')}</SelectItem>
-                    <SelectItem value="offline">{t('admin.offline')}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="text-center">
+                  <Battery className="h-12 w-12 text-green-500 mx-auto mb-3" />
+                  <p className="text-4xl font-bold text-green-600 mb-1">{stats.available}</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.availableChargers')}</p>
+                </div>
+                <div className="text-center">
+                  <Activity className="h-12 w-12 text-blue-500 mx-auto mb-3" />
+                  <p className="text-4xl font-bold text-blue-600 mb-1">{stats.in_use}</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.chargersInUse')}</p>
+                </div>
+                <div className="text-center">
+                  <WrenchIcon className="h-12 w-12 text-yellow-500 mx-auto mb-3" />
+                  <p className="text-4xl font-bold text-yellow-600 mb-1">{stats.maintenance}</p>
+                  <p className="text-sm text-muted-foreground">{t('admin.chargersInMaintenance')}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card className="rounded-3xl border-primary/20 shadow-lg bg-gradient-to-br from-background to-blue-500/5 animate-fade-in">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('admin.totalChargers')}</p>
-                    <p className="text-3xl font-bold text-foreground mt-1">{stats.total}</p>
-                  </div>
-                  <Zap className="h-10 w-10 text-primary opacity-20" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-3xl border-primary/20 shadow-lg bg-gradient-to-br from-background to-green-500/5 animate-fade-in">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('admin.availableChargers')}</p>
-                    <p className="text-3xl font-bold text-green-600 mt-1">{stats.available}</p>
-                  </div>
-                  <Battery className="h-10 w-10 text-green-600 opacity-20" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-3xl border-primary/20 shadow-lg bg-gradient-to-br from-background to-blue-500/5 animate-fade-in">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('admin.chargersInUse')}</p>
-                    <p className="text-3xl font-bold text-blue-600 mt-1">{stats.in_use}</p>
-                  </div>
-                  <Activity className="h-10 w-10 text-blue-600 opacity-20" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-3xl border-primary/20 shadow-lg bg-gradient-to-br from-background to-yellow-500/5 animate-fade-in">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('admin.chargersInMaintenance')}</p>
-                    <p className="text-3xl font-bold text-yellow-600 mt-1">{stats.maintenance}</p>
-                  </div>
-                  <WrenchIcon className="h-10 w-10 text-yellow-600 opacity-20" />
-                </div>
-              </CardContent>
-            </Card>
+          {/* Filter Pills */}
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
+            {[
+              { value: 'all', label: t('admin.allStatus') },
+              { value: 'available', label: t('admin.available') },
+              { value: 'in_use', label: t('admin.inUse') },
+              { value: 'maintenance', label: t('admin.maintenance') },
+              { value: 'offline', label: t('admin.offline') },
+            ].map((status) => (
+              <button
+                key={status.value}
+                onClick={() => setStatusFilter(status.value)}
+                className={`px-6 py-2.5 rounded-full transition-all whitespace-nowrap font-medium text-sm ${
+                  statusFilter === status.value
+                    ? 'bg-gradient-to-r from-cyan-400 to-teal-400 text-white shadow-lg'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {status.label}
+              </button>
+            ))}
           </div>
 
           {/* Chargers List */}
@@ -395,64 +396,65 @@ const Carregadores = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredChargers.map((charger) => (
-                <Card
-                  key={charger.id}
-                  className="rounded-3xl border-primary/20 shadow-lg bg-gradient-to-br from-background via-background to-purple-500/5 backdrop-blur-sm hover:shadow-xl transition-all duration-300 animate-fade-in"
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-2">{charger.name}</CardTitle>
-                        {getStatusBadge(charger.status)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredChargers.map((charger) => {
+                const cardStyle = getChargerCardStyle(charger.status);
+                return (
+                  <Card
+                    key={charger.id}
+                    className={`rounded-3xl transition-all duration-300 animate-fade-in ${cardStyle.card}`}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <Zap className={`h-16 w-16 ${cardStyle.iconColor}`} />
+                        <Badge className={cardStyle.badge}>{getStatusBadge(charger.status)}</Badge>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 mr-2 text-primary" />
+                      <CardTitle className={`text-2xl ${cardStyle.text}`}>{charger.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className={`flex items-center text-sm ${cardStyle.text}`}>
+                        <MapPin className="h-5 w-5 mr-2" />
                         <span>{charger.location}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/50">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-xs text-muted-foreground">Potência</p>
-                          <p className="text-sm font-semibold text-foreground">{charger.power} kW</p>
+                          <p className={`mb-1 ${cardStyle.text} opacity-80`}>Potência</p>
+                          <p className={`font-semibold text-base ${cardStyle.text}`}>{charger.power} kW</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Preço</p>
-                          <p className="text-sm font-semibold text-foreground">R$ {charger.price_per_kwh.toFixed(2)}/kWh</p>
+                          <p className={`mb-1 ${cardStyle.text} opacity-80`}>Preço</p>
+                          <p className={`font-semibold text-base ${cardStyle.text}`}>
+                            R$ {Number(charger.price_per_kwh).toFixed(2)}/kWh
+                          </p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Conector</p>
-                        <p className="text-sm font-medium text-foreground">{charger.connector_type}</p>
+                        <p className={`text-sm mb-1 ${cardStyle.text} opacity-80`}>Conector</p>
+                        <p className={`font-semibold ${cardStyle.text}`}>{charger.connector_type}</p>
                       </div>
-                      <div className="flex gap-2 pt-3 border-t border-border/50">
+                      <div className="flex gap-2 pt-2">
                         <Button
-                          variant="outline"
+                          variant={charger.status === 'available' ? 'secondary' : 'outline'}
                           size="sm"
-                          className="flex-1 rounded-xl"
                           onClick={() => handleEdit(charger)}
+                          className="flex-1 rounded-xl"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           {t('common.edit')}
                         </Button>
                         <Button
-                          variant="destructive"
+                          variant={charger.status === 'available' ? 'secondary' : 'outline'}
                           size="sm"
-                          className="flex-1 rounded-xl"
                           onClick={() => handleDelete(charger.id)}
+                          className="text-destructive hover:bg-destructive/10 rounded-xl"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          {t('common.delete')}
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
