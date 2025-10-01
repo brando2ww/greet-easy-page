@@ -33,21 +33,21 @@ export const ChargersToolbar = ({
           placeholder="Buscar por nome ou localização..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 h-12 backdrop-blur-sm bg-background/95 border-green-200/50 focus:border-green-400"
+          className="pl-10 h-10 md:h-12 text-sm md:text-base backdrop-blur-sm bg-background/95 border-green-200/50 focus:border-green-400"
         />
       </div>
 
       {/* Filtros */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Filter className="h-4 w-4" />
+      <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
+          <Filter className="h-3.5 w-3.5 md:h-4 md:w-4" />
           <span className="font-medium">Filtrar:</span>
         </div>
         {statusOptions.map((option) => (
           <Badge
             key={option.value}
             variant={statusFilter === option.value ? "default" : "outline"}
-            className={`cursor-pointer transition-all duration-200 ${
+            className={`cursor-pointer transition-all duration-200 text-xs px-2 py-0.5 md:px-2.5 md:py-1 ${
               statusFilter === option.value
                 ? "bg-green-500 text-white hover:bg-green-600"
                 : option.color

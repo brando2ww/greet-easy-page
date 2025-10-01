@@ -66,75 +66,94 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete }: ChargerCardMode
         <Plug className="h-32 w-32" />
       </div>
 
-      <div className="p-6 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className="p-4 md:p-6 relative z-10">
+        <div className="flex flex-col lg:flex-row gap-3 md:gap-4">
           {/* Coluna principal - Info */}
           <div className="flex-1 space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-xl font-bold">{charger.name}</h3>
-                  <Badge className={config.badgeClass}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 md:gap-2 mb-2 flex-wrap">
+                  <h3 className="text-base md:text-xl font-bold truncate">{charger.name}</h3>
+                  <Badge className={`${config.badgeClass} text-xs whitespace-nowrap`}>
                     {config.label}
                   </Badge>
                   {charger.status === 'in_use' && (
                     <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {charger.location}
+                <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground flex-wrap">
+                  <span className="flex items-center gap-1 truncate">
+                    <MapPin className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                    <span className="truncate">{charger.location}</span>
                   </span>
-                  <Badge variant="outline" className="gap-1">
+                  <Badge variant="outline" className="gap-1 text-xs whitespace-nowrap">
                     <Zap className="h-3 w-3" />
                     {charger.power} kW
                   </Badge>
-                  <Badge variant="outline">{charger.connector_type}</Badge>
+                  <Badge variant="outline" className="text-xs whitespace-nowrap">{charger.connector_type}</Badge>
                 </div>
+              </div>
+              {/* Ações sempre visíveis no mobile */}
+              <div className="flex md:hidden gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+                  onClick={() => onEdit(charger)}
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-red-100 hover:text-red-600 hover:border-red-300"
+                  onClick={() => onDelete(charger)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
 
             {/* Métricas em grid */}
             {isLoading ? (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-16" />
+                  <Skeleton key={i} className="h-14 md:h-16" />
                 ))}
               </div>
             ) : stats ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="bg-green-50 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-green-600">
                     {stats.utilizationRate.toFixed(0)}%
                   </div>
-                  <div className="text-xs text-muted-foreground">Utilização</div>
+                  <div className="text-[10px] md:text-xs text-muted-foreground">Utilização</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-green-600">
                     R$ {stats.totalRevenue.toFixed(0)}
                   </div>
-                  <div className="text-xs text-muted-foreground">Receita (7d)</div>
+                  <div className="text-[10px] md:text-xs text-muted-foreground">Receita (7d)</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-green-600">
                     {stats.sessionsCount}
                   </div>
-                  <div className="text-xs text-muted-foreground">Sessões</div>
+                  <div className="text-[10px] md:text-xs text-muted-foreground">Sessões</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-green-600">
                     {stats.totalEnergy.toFixed(0)}
                   </div>
-                  <div className="text-xs text-muted-foreground">kWh</div>
+                  <div className="text-[10px] md:text-xs text-muted-foreground">kWh</div>
                 </div>
               </div>
             ) : null}
           </div>
 
-          {/* Coluna de gráficos */}
+          {/* Coluna de gráficos - escondida no mobile */}
           {!isLoading && stats && (
-            <div className="lg:w-64 space-y-2">
+            <div className="hidden md:block lg:w-64 space-y-2">
               <div className="bg-green-50/50 rounded-lg p-3">
                 <div className="text-xs text-muted-foreground mb-1">Sessões (7 dias)</div>
                 <ChargerMiniChart data={stats.dailyData} dataKey="sessions" color="#22c55e" />
@@ -146,8 +165,8 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete }: ChargerCardMode
             </div>
           )}
 
-          {/* Ações */}
-          <div className="flex lg:flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Ações desktop - aparecem ao hover */}
+          <div className="hidden md:flex lg:flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="outline"
               size="icon"

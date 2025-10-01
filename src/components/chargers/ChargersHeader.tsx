@@ -48,23 +48,23 @@ export const ChargersHeader = ({ stats, globalUtilization }: ChargersHeaderProps
   return (
     <div className="space-y-6">
       {/* Métricas principais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
             <Card
               key={metric.label}
-              className="p-4 backdrop-blur-sm bg-background/95 border-green-200/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              className="p-3 md:p-4 backdrop-blur-sm bg-background/95 border-green-200/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{metric.label}</p>
-                  <p className="text-3xl font-bold mt-1 animate-fade-in">
+                  <p className="text-xs md:text-sm text-muted-foreground">{metric.label}</p>
+                  <p className="text-xl md:text-3xl font-bold mt-1 animate-fade-in">
                     {metric.value}
                   </p>
                 </div>
-                <div className={`p-3 rounded-full ${metric.bgColor} ${metric.pulse ? 'animate-pulse' : ''}`}>
-                  <Icon className={`h-6 w-6 ${metric.color}`} />
+                <div className={`p-2 md:p-3 rounded-full ${metric.bgColor} ${metric.pulse ? 'animate-pulse' : ''}`}>
+                  <Icon className={`h-4 w-4 md:h-6 md:w-6 ${metric.color}`} />
                 </div>
               </div>
             </Card>
@@ -73,13 +73,13 @@ export const ChargersHeader = ({ stats, globalUtilization }: ChargersHeaderProps
       </div>
 
       {/* Barra de utilização global */}
-      <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+      <Card className="p-4 md:p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs md:text-sm">
             <span className="font-medium">Utilização da Rede</span>
-            <span className="font-bold text-lg">{globalUtilization.toFixed(1)}%</span>
+            <span className="font-bold text-base md:text-lg">{globalUtilization.toFixed(1)}%</span>
           </div>
-          <div className="h-3 bg-green-50 rounded-full overflow-hidden">
+          <div className="h-2 md:h-3 bg-green-50 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-500 rounded-full ${
                 globalUtilization > 80

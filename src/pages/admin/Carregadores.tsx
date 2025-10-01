@@ -275,9 +275,9 @@ const Carregadores = () => {
         />
 
         {/* Toggle de visualização */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <ChargersViewToggle view={viewMode} onViewChange={setViewMode} />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             {filteredChargers.length} {filteredChargers.length === 1 ? 'carregador' : 'carregadores'}
           </p>
         </div>
@@ -307,7 +307,7 @@ const Carregadores = () => {
         ) : (
           <>
             {viewMode === "cards" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 animate-fade-in">
                 {filteredChargers.map((charger, index) => (
                   <div
                     key={charger.id}
