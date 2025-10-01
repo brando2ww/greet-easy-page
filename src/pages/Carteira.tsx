@@ -53,8 +53,8 @@ const Carteira = () => {
           
           {/* Item: Saldo da carteira */}
           <div className="flex items-center gap-3 py-4 border-b">
-            <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
-              <WalletCardIcon className="w-7 h-7" fill="hsl(var(--muted-foreground))" />
+            <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+              <WalletCardIcon className="w-7 h-7" fill="white" />
             </div>
             <span className="text-sm font-medium">{t('wallet.walletBalance')}</span>
           </div>
