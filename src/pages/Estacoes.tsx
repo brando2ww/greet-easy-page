@@ -105,25 +105,27 @@ export default function Estacoes() {
 
   return (
     <ResponsiveLayout mobileHeader={header} showBottomNav>
-      {isLoading ? (
-        <div className="h-full flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      ) : filteredChargers.length === 0 ? (
-        <div className="h-full bg-muted flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">{t('stations.noChargers')}</h3>
-            <p className="text-sm text-muted-foreground">
-              {t('stations.tryDifferentFilters')}
-            </p>
+      <div className="h-full flex flex-col">
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        </div>
-      ) : (
-        <StationsMap chargers={filteredChargers} mapboxToken={MAPBOX_TOKEN} />
-      )}
+        ) : filteredChargers.length === 0 ? (
+          <div className="h-full bg-muted flex items-center justify-center">
+            <div className="text-center p-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{t('stations.noChargers')}</h3>
+              <p className="text-sm text-muted-foreground">
+                {t('stations.tryDifferentFilters')}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <StationsMap chargers={filteredChargers} mapboxToken={MAPBOX_TOKEN} />
+        )}
+      </div>
     </ResponsiveLayout>
   );
 }
