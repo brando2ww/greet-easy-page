@@ -4,8 +4,9 @@ import { MobileLayout } from "./MobileLayout";
 import { Header } from "./Header";
 import { BottomNavigation } from "./BottomNavigation";
 import { AdminNavigation } from "./AdminNavigation";
-import { AdminHeader } from "./AdminHeader";
+import { AdminSidebar } from "./AdminSidebar";
 import { useUserRole } from "@/hooks/useUserRole";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 interface ResponsiveLayoutProps {
   children: ReactNode;
@@ -27,9 +28,27 @@ export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false
     );
   }
 
+  if (isAdmin || isSupport) {
+    return (
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full bg-background">
+          <AdminSidebar />
+          <div className="flex flex-col flex-1">
+            <header className="h-14 border-b border-border flex items-center px-4">
+              <SidebarTrigger />
+            </header>
+            <main className="flex-1 container mx-auto px-4 py-6">
+              {children}
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {(isAdmin || isSupport) ? <AdminHeader /> : <Header />}
+      <Header />
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}
       </main>
