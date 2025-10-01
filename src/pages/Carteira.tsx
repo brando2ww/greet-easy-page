@@ -25,7 +25,7 @@ const Carteira = () => {
       showBottomNav
       noBorder
     >
-      <div className="space-y-8 p-4 pt-0 md:p-6 md:pt-6">
+      <div className="space-y-8 p-4 -mt-4 md:p-6 md:mt-0">
         <div className="hidden md:block space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">{t('wallet.title')}</h1>
           <p className="text-muted-foreground">{t('wallet.subtitle')}</p>
