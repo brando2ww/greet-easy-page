@@ -9,6 +9,7 @@ import speedLogo from "@/assets/speed_logo_01.png";
 import { StationsMap } from "@/components/map/StationsMap";
 import { useChargers } from "@/hooks/useChargers";
 import { MAPBOX_TOKEN } from "@/config/mapbox";
+import { cn } from "@/lib/utils";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,7 +94,12 @@ export default function Estacoes() {
           <Badge
             key={chip.key}
             variant={activeFilters.includes(chip.key) ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap px-4 py-2"
+            className={cn(
+              "cursor-pointer whitespace-nowrap px-4 py-2 transition-colors",
+              activeFilters.includes(chip.key) 
+                ? "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white border-green-500" 
+                : "hover:bg-green-50 dark:hover:bg-green-950"
+            )}
             onClick={() => toggleFilter(chip.key)}
           >
             {chip.label}
