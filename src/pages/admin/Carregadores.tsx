@@ -246,7 +246,7 @@ const Carregadores = () => {
       }
       showBottomNav={true}
     >
-      <div className="space-y-6 pb-6 px-4 md:px-6 animate-fade-in">
+      <div className="space-y-6 pt-8 md:pt-12 pb-6 px-4 md:px-6 animate-fade-in">
         {/* Header Desktop */}
         <div className="hidden md:flex items-center justify-between">
           <div>
