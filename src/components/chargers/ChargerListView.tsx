@@ -22,6 +22,8 @@ interface Charger {
   price_per_kwh: number;
   latitude: number | null;
   longitude: number | null;
+  serial_number: string | null;
+  client_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,6 +66,9 @@ const ChargerRow = ({
       </TableCell>
       <TableCell className="text-center">{charger.power} kW</TableCell>
       <TableCell className="text-center">{charger.connector_type}</TableCell>
+      <TableCell className="text-center">
+        {charger.serial_number || "-"}
+      </TableCell>
       <TableCell className="text-center">
         R$ {charger.price_per_kwh.toFixed(2)}
       </TableCell>
@@ -127,7 +132,8 @@ export const ChargerListView = ({ chargers, onEdit, onDelete }: ChargerListViewP
             <TableHead className="font-bold">Carregador</TableHead>
             <TableHead className="font-bold">Status</TableHead>
             <TableHead className="font-bold text-center">Potência</TableHead>
-            <TableHead className="font-bold text-center">Conector</TableHead>
+            <TableHead className="font-bold text-center">Tipo</TableHead>
+            <TableHead className="font-bold text-center">Nº Serial</TableHead>
             <TableHead className="font-bold text-center">Preço/kWh</TableHead>
             <TableHead className="font-bold text-center">Utilização</TableHead>
             <TableHead className="font-bold text-center">Receita (7d)</TableHead>

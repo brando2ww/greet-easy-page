@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       chargers: {
         Row: {
+          client_id: string | null
           connector_type: string
           created_at: string | null
           id: string
@@ -25,10 +26,12 @@ export type Database = {
           name: string
           power: number
           price_per_kwh: number
+          serial_number: string | null
           status: Database["public"]["Enums"]["charger_status"]
           updated_at: string | null
         }
         Insert: {
+          client_id?: string | null
           connector_type: string
           created_at?: string | null
           id?: string
@@ -37,11 +40,13 @@ export type Database = {
           longitude?: number | null
           name: string
           power: number
-          price_per_kwh: number
+          price_per_kwh?: number
+          serial_number?: string | null
           status?: Database["public"]["Enums"]["charger_status"]
           updated_at?: string | null
         }
         Update: {
+          client_id?: string | null
           connector_type?: string
           created_at?: string | null
           id?: string
@@ -51,10 +56,19 @@ export type Database = {
           name?: string
           power?: number
           price_per_kwh?: number
+          serial_number?: string | null
           status?: Database["public"]["Enums"]["charger_status"]
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chargers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       charging_sessions: {
         Row: {

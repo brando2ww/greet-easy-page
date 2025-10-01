@@ -23,11 +23,11 @@ import { ChargerAnalyticsView } from "@/components/chargers/ChargerAnalyticsView
 
 const chargerSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
+  type: z.string().min(1, "Tipo é obrigatório"),
+  capacity: z.string().min(1, "Capacidade é obrigatória"),
+  client_id: z.string().optional(),
+  serial_number: z.string().optional(),
   location: z.string().min(1, "Localização é obrigatória"),
-  power: z.string().min(1, "Potência é obrigatória"),
-  connector_type: z.string().min(1, "Tipo de conector é obrigatório"),
-  status: z.enum(["available", "in_use", "maintenance", "offline"]),
-  price_per_kwh: z.string().min(1, "Preço é obrigatório"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
 });
@@ -38,12 +38,14 @@ type Charger = {
   id: string;
   name: string;
   location: string;
-  power: number;
   connector_type: string;
+  power: number;
   status: "available" | "in_use" | "maintenance" | "offline";
   price_per_kwh: number;
   latitude: number | null;
   longitude: number | null;
+  serial_number: string | null;
+  client_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -63,13 +65,26 @@ const Carregadores = () => {
     resolver: zodResolver(chargerSchema),
     defaultValues: {
       name: "",
+      type: "",
+      capacity: "",
+      client_id: "",
+      serial_number: "",
       location: "",
-      power: "",
-      connector_type: "",
-      status: "available",
-      price_per_kwh: "",
       latitude: "",
       longitude: "",
+    },
+  });
+
+  // Fetch clients for dropdown
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .order("full_name");
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -78,7 +93,7 @@ const Carregadores = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chargers")
-        .select("*")
+        .select("id, name, location, connector_type, power, status, price_per_kwh, latitude, longitude, serial_number, client_id, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -90,11 +105,13 @@ const Carregadores = () => {
     mutationFn: async (data: ChargerFormData) => {
       const { error } = await supabase.from("chargers").insert({
         name: data.name,
+        connector_type: data.type,
+        power: parseFloat(data.capacity),
+        client_id: data.client_id || null,
+        serial_number: data.serial_number || null,
         location: data.location,
-        power: parseFloat(data.power),
-        connector_type: data.connector_type,
-        status: data.status,
-        price_per_kwh: parseFloat(data.price_per_kwh),
+        status: 'available',
+        price_per_kwh: 0.80,
         latitude: data.latitude ? parseFloat(data.latitude) : null,
         longitude: data.longitude ? parseFloat(data.longitude) : null,
       });
@@ -125,11 +142,11 @@ const Carregadores = () => {
         .from("chargers")
         .update({
           name: data.name,
+          connector_type: data.type,
+          power: parseFloat(data.capacity),
+          client_id: data.client_id || null,
+          serial_number: data.serial_number || null,
           location: data.location,
-          power: parseFloat(data.power),
-          connector_type: data.connector_type,
-          status: data.status,
-          price_per_kwh: parseFloat(data.price_per_kwh),
           latitude: data.latitude ? parseFloat(data.latitude) : null,
           longitude: data.longitude ? parseFloat(data.longitude) : null,
         })
@@ -189,11 +206,11 @@ const Carregadores = () => {
     setEditingCharger(charger);
     form.reset({
       name: charger.name,
+      type: charger.connector_type,
+      capacity: charger.power.toString(),
+      client_id: charger.client_id || "",
+      serial_number: charger.serial_number || "",
       location: charger.location,
-      power: charger.power.toString(),
-      connector_type: charger.connector_type,
-      status: charger.status,
-      price_per_kwh: charger.price_per_kwh.toString(),
       latitude: charger.latitude?.toString() || "",
       longitude: charger.longitude?.toString() || "",
     });
@@ -369,39 +386,50 @@ const Carregadores = () => {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Localização</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="power"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Potência (kW)</FormLabel>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="AC">AC (Corrente Alternada)</SelectItem>
+                          <SelectItem value="DC">DC (Corrente Contínua)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capacidade (kW)</FormLabel>
                       <FormControl>
                         <Input {...field} type="number" step="0.1" />
                       </FormControl>
@@ -411,66 +439,61 @@ const Carregadores = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="price_per_kwh"
+                  name="client_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preço/kWh (R$)</FormLabel>
+                      <FormLabel>Cliente</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um cliente (opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Nenhum</SelectItem>
+                          {clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.full_name || client.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="serial_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número Serial</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="0.01" />
+                        <Input {...field} placeholder="Opcional" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Localização</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="connector_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Conector</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="CCS">CCS</SelectItem>
-                        <SelectItem value="CHAdeMO">CHAdeMO</SelectItem>
-                        <SelectItem value="Type 2">Type 2</SelectItem>
-                        <SelectItem value="Type 1">Type 1</SelectItem>
-                        <SelectItem value="Tesla">Tesla</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="available">Disponível</SelectItem>
-                        <SelectItem value="in_use">Em Uso</SelectItem>
-                        <SelectItem value="maintenance">Manutenção</SelectItem>
-                        <SelectItem value="offline">Offline</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="latitude"
@@ -506,8 +529,8 @@ const Carregadores = () => {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-green-500 hover:bg-green-600">
-                  {editingCharger ? "Salvar" : "Adicionar"}
+                <Button type="submit" className="bg-violet-600 hover:bg-violet-700">
+                  {editingCharger ? "Salvar" : "Criar"}
                 </Button>
               </div>
             </form>

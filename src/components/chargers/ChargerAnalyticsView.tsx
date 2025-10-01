@@ -14,6 +14,8 @@ interface Charger {
   price_per_kwh: number;
   latitude: number | null;
   longitude: number | null;
+  serial_number: string | null;
+  client_id: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -16,6 +16,8 @@ interface Charger {
   price_per_kwh: number;
   latitude: number | null;
   longitude: number | null;
+  serial_number: string | null;
+  client_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -90,7 +92,14 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete }: ChargerCardMode
                     <Zap className="h-3 w-3" />
                     {charger.power} kW
                   </Badge>
-                  <Badge variant="outline" className="text-xs whitespace-nowrap">{charger.connector_type}</Badge>
+                  <Badge variant="outline" className="text-xs whitespace-nowrap">
+                    Tipo {charger.connector_type}
+                  </Badge>
+                  {charger.serial_number && (
+                    <span className="text-xs text-muted-foreground">
+                      SN: {charger.serial_number}
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Ações sempre visíveis no mobile */}
