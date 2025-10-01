@@ -205,10 +205,12 @@ const Clientes = () => {
     setIsDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingClient(null);
-    form.reset();
+  const handleCloseDialog = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setEditingClient(null);
+      form.reset();
+    }
   };
 
   const filteredClients = clients.filter(client =>
@@ -364,7 +366,7 @@ const Clientes = () => {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={handleCloseDialog}
+                        onClick={() => handleCloseDialog(false)}
                       >
                         {t('common.cancel')}
                       </Button>
