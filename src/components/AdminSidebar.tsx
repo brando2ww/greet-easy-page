@@ -1,17 +1,24 @@
-import { LayoutDashboard, Users, Zap, BarChart3, UserCircle, LogOut, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import speedLogo from "@/assets/speed-logo.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: 'admin.dashboard', path: '/admin/dashboard' },
@@ -25,7 +32,6 @@ export const AdminSidebar = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
   
@@ -42,129 +48,83 @@ export const AdminSidebar = () => {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="relative flex">
-        {/* Icon Sidebar - Always visible */}
-        <div className="w-20 h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col items-center py-6 gap-6">
-          {/* Logo */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
-          >
-            <Sparkles className="w-6 h-6 text-primary" />
-          </button>
+      <div className="w-[70px] h-screen bg-[#0A0A0B] flex flex-col items-center py-6 gap-6">
+        {/* Logo */}
+        <NavLink to="/admin/dashboard" className="mb-2">
+          <img src={speedLogo} alt="Speed" className="w-10 h-10 object-contain" />
+        </NavLink>
 
-          <div className="w-12 h-px bg-border" />
+        <div className="w-10 h-px bg-white/10" />
 
-          {/* Icon Menu Items */}
-          <div className="flex-1 flex flex-col gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
+        {/* Navigation Icons */}
+        <div className="flex-1 flex flex-col gap-3">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
 
-              return (
-                <Tooltip key={item.path}>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.path}
-                      className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200",
-                        active
-                          ? "bg-foreground text-background shadow-lg"
-                          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                      )}
-                    >
-                      <Icon className="w-5 h-5" strokeWidth={1.5} />
-                    </NavLink>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-foreground text-background">
-                    {t(item.label)}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-
-          {/* User Avatar */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={signOut}
-                className="w-12 h-12 rounded-xl hover:bg-destructive/10 flex items-center justify-center transition-colors group"
-              >
-                <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-destructive" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="bg-foreground text-background">
-              Sair
-            </TooltipContent>
-          </Tooltip>
+            return (
+              <Tooltip key={item.path}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={item.path}
+                    className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200",
+                      active
+                        ? "bg-primary text-white shadow-lg shadow-primary/50"
+                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                    )}
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-foreground text-background">
+                  {t(item.label)}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         </div>
 
-        {/* Expanded Menu Panel */}
-        {menuOpen && (
-          <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
-              onClick={() => setMenuOpen(false)}
-            />
+        {/* User Avatar with Dropdown */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button className="w-12 h-12 rounded-full hover:ring-2 hover:ring-primary/50 transition-all">
+                  <Avatar className="h-12 w-12 border-2 border-white/10">
+                    <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-foreground text-background">
+              {getUserName()}
+            </TooltipContent>
+          </Tooltip>
 
-            {/* Menu Panel */}
-            <div className="fixed left-20 top-0 h-screen w-80 bg-sidebar-background border-r border-sidebar-border shadow-2xl z-50 animate-slide-in-right">
-              <div className="p-6 h-full flex flex-col">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-6">
-                  <Sparkles className="w-5 h-5 text-foreground" />
-                  <h2 className="text-lg font-bold text-foreground">Menu</h2>
-                </div>
-
-                {/* Navigation Items */}
-                <div className="flex-1 space-y-1 overflow-y-auto">
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.path);
-
-                    return (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                          active
-                            ? "bg-foreground text-background shadow-md"
-                            : "text-foreground hover:bg-sidebar-accent"
-                        )}
-                      >
-                        <Icon className="w-5 h-5" strokeWidth={1.5} />
-                        <span className="font-medium">{t(item.label)}</span>
-                      </NavLink>
-                    );
-                  })}
-                </div>
-
-                {/* User Section */}
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent">
-                    <Avatar className="h-10 w-10 border-2 border-primary/20">
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {getUserInitials()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {getUserName()}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+          <DropdownMenuContent side="right" align="end" className="w-56 bg-popover">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">{getUserName()}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-            </div>
-          </>
-        )}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <NavLink to="/perfil" className="cursor-pointer">
+                <UserCircle className="mr-2 h-4 w-4" />
+                <span>{t('profile.title')}</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sair</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </TooltipProvider>
   );
