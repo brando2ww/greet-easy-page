@@ -21,7 +21,7 @@ import {
 const navItems = [
   { icon: LayoutDashboard, label: 'admin.dashboard', path: '/admin/dashboard' },
   { icon: Users, label: 'admin.clients', path: '/admin/clientes' },
-  { icon: Zap, label: 'admin.chargers', path: '/admin/carregadores', special: true },
+  { icon: Zap, label: 'admin.chargers', path: '/admin/carregadores' },
   { icon: BarChart3, label: 'admin.reports', path: '/admin/relatorios' },
   { icon: UserCircle, label: 'profile.title', path: '/perfil' },
 ];
@@ -75,7 +75,6 @@ export const AdminSidebar = () => {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
-                const isChargerItem = item.special;
 
                 return (
                   <SidebarMenuItem key={item.path}>
@@ -85,37 +84,15 @@ export const AdminSidebar = () => {
                         className={({ isActive }) =>
                           cn(
                             "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 relative",
-                            isChargerItem && !collapsed && "flex-col gap-2 py-4",
-                            isChargerItem && collapsed && "justify-center py-3",
-                            !isChargerItem && (isActive
+                            isActive
                               ? "bg-primary/10 text-primary font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-8 before:bg-primary before:rounded-r-full"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground")
+                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           )
                         }
                       >
-                        {isChargerItem ? (
-                          <>
-                            <div
-                              className={cn(
-                                "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 flex items-center justify-center",
-                                collapsed ? "w-10 h-10" : "w-12 h-12",
-                                "hover:scale-110 hover:shadow-xl hover:shadow-purple-500/70",
-                                active && "scale-110 shadow-xl shadow-purple-500/70 ring-2 ring-primary/30 ring-offset-2 ring-offset-sidebar-background"
-                              )}
-                            >
-                              <Icon className={cn("text-white", collapsed ? "w-5 h-5" : "w-6 h-6")} strokeWidth={1.5} />
-                            </div>
-                            {!collapsed && (
-                              <span className="font-semibold text-sm text-sidebar-foreground">{t(item.label)}</span>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-                            {!collapsed && (
-                              <span className="font-medium">{t(item.label)}</span>
-                            )}
-                          </>
+                        <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
+                        {!collapsed && (
+                          <span className="font-medium">{t(item.label)}</span>
                         )}
                       </NavLink>
                     </SidebarMenuButton>
