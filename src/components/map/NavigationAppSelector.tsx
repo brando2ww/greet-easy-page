@@ -108,8 +108,30 @@ export const NavigationAppSelector = ({
 
         <DrawerHeader className="pt-8 pb-2">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Route className="h-10 w-10 text-primary" />
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center relative">
+              {/* Círculo animado sendo traçado */}
+              <svg className="absolute inset-0 -rotate-90" width="80" height="80">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  fill="none"
+                  stroke="url(#route-gradient)"
+                  strokeWidth="3"
+                  strokeDasharray="226"
+                  strokeLinecap="round"
+                  className="animate-draw-route"
+                />
+                <defs>
+                  <linearGradient id="route-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="hsl(var(--primary-glow))" stopOpacity="1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              
+              {/* Ícone com pulso sutil */}
+              <Route className="h-10 w-10 text-primary relative z-10 animate-pulse-subtle" />
             </div>
           </div>
           <DrawerTitle className="text-center text-xl font-semibold">
