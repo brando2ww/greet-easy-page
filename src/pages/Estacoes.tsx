@@ -32,7 +32,7 @@ export default function Estacoes() {
         <img 
           src={speedLogo} 
           alt="Speed Charger" 
-          className="h-12"
+          className="h-16"
         />
       </div>
       
