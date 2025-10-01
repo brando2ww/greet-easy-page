@@ -205,3 +205,12 @@ All colors MUST be HSL.
     animation: slide-in-right 0.2s ease-out;
   }
 }
+
+/* Hide Mapbox branding */
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
+
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
