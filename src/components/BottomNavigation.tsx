@@ -41,8 +41,9 @@ export const BottomNavigation = () => {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group relative",
-                    isCharging && "-mt-6"
+                    "flex flex-col items-center justify-center gap-1 min-w-[60px] group relative",
+                    isCharging && "-mt-6",
+                    !isCharging && "py-2 px-1"
                   )}
                 >
                   {isCharging ? (
