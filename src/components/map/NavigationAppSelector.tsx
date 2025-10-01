@@ -10,6 +10,9 @@ import {
 } from '@/components/ui/drawer';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import { WazeIcon } from '@/components/icons/WazeIcon';
+import { GoogleMapsIcon } from '@/components/icons/GoogleMapsIcon';
+import { AppleMapsIcon } from '@/components/icons/AppleMapsIcon';
 
 const detectOperatingSystem = (): 'ios' | 'macos' | 'android' | 'windows' | 'other' => {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -36,20 +39,20 @@ const navigationApps = [
   {
     id: 'waze' as NavigationApp,
     name: 'Waze',
-    icon: '🗺️',
-    color: 'bg-blue-50 hover:bg-blue-100',
+    icon: WazeIcon,
+    color: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900',
   },
   {
     id: 'google' as NavigationApp,
     name: 'Google Maps',
-    icon: '🗺',
-    color: 'bg-green-50 hover:bg-green-100',
+    icon: GoogleMapsIcon,
+    color: 'bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900',
   },
   {
     id: 'apple' as NavigationApp,
     name: 'Apple Maps',
-    icon: '🧭',
-    color: 'bg-gray-50 hover:bg-gray-100',
+    icon: AppleMapsIcon,
+    color: 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700',
   },
 ];
 
@@ -140,19 +143,22 @@ export const NavigationAppSelector = ({
         </DrawerHeader>
 
         <div className="px-6 space-y-3 py-4">
-          {availableApps.map((app) => (
-            <button
-              key={app.id}
-              onClick={() => handleAppSelect(app.id)}
-              className={cn(
-                'w-full p-5 rounded-xl border transition-all duration-200 flex items-center gap-4 shadow-sm',
-                app.color
-              )}
-            >
-              <span className="text-4xl">{app.icon}</span>
-              <span className="font-semibold text-lg">{app.name}</span>
-            </button>
-          ))}
+          {availableApps.map((app) => {
+            const IconComponent = app.icon;
+            return (
+              <button
+                key={app.id}
+                onClick={() => handleAppSelect(app.id)}
+                className={cn(
+                  'w-full p-5 rounded-xl border transition-all duration-200 flex items-center gap-4 shadow-sm',
+                  app.color
+                )}
+              >
+                <IconComponent size={48} className="flex-shrink-0" />
+                <span className="font-semibold text-lg">{app.name}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between px-6 py-6 border-t">
