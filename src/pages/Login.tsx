@@ -107,11 +107,13 @@ const Login = () => {
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
             <Input
               id="email"
+              name="email"
               type="email"
               placeholder={t('auth.login.email')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200"
             />
           </div>
@@ -121,12 +123,14 @@ const Login = () => {
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
             <Input
               id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
               placeholder={t('auth.login.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="current-password"
               className="h-14 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200"
             />
             <button
