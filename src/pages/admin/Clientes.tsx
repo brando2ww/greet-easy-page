@@ -237,7 +237,7 @@ const Clientes = () => {
             
             <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-violet-600 hover:bg-violet-700">
+                <Button className="bg-green-600 hover:bg-green-700">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('admin.newClient')}
                 </Button>
@@ -372,7 +372,7 @@ const Clientes = () => {
                       </Button>
                       <Button 
                         type="submit" 
-                        className="bg-violet-600 hover:bg-violet-700"
+                        className="bg-green-600 hover:bg-green-700"
                         disabled={createMutation.isPending || updateMutation.isPending}
                       >
                         {editingClient ? t('admin.update') : t('admin.create')}
@@ -472,7 +472,7 @@ const Clientes = () => {
                               {client.city}{client.city && client.state && ', '}{client.state}
                             </p>
                           )}
-                          <p className="text-xs text-violet-600 font-medium">
+                          <p className="text-xs text-green-600 font-medium">
                             {chargersCounts[client.id] || 0} {t('admin.chargersInstalled').toLowerCase()}
                           </p>
                         </div>
