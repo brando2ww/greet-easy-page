@@ -1,66 +1,33 @@
-import { useTranslation } from 'react-i18next';
-import { ResponsiveLayout } from '@/components/ResponsiveLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { 
-  Search, 
-  Plus, 
-  Zap,
-  Battery,
-  Activity,
-  WrenchIcon
-} from 'lucide-react';
-import { ChargerCard } from '@/components/ChargerCard';
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ResponsiveLayout } from "@/components/ResponsiveLayout";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { ChargersHeader } from "@/components/chargers/ChargersHeader";
+import { ChargersToolbar } from "@/components/chargers/ChargersToolbar";
+import { ChargersViewToggle, ViewMode } from "@/components/chargers/ChargersViewToggle";
+import { ChargerCardModern } from "@/components/chargers/ChargerCardModern";
+import { ChargerListView } from "@/components/chargers/ChargerListView";
+import { ChargerAnalyticsView } from "@/components/chargers/ChargerAnalyticsView";
 
 const chargerSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  location: z.string().min(1, 'Localização é obrigatória'),
-  power: z.string().min(1, 'Potência é obrigatória'),
-  connector_type: z.string().min(1, 'Tipo de conector é obrigatório'),
-  status: z.enum(['available', 'in_use', 'maintenance', 'offline']),
-  price_per_kwh: z.string().min(1, 'Preço é obrigatório'),
+  name: z.string().min(1, "Nome é obrigatório"),
+  location: z.string().min(1, "Localização é obrigatória"),
+  power: z.string().min(1, "Potência é obrigatória"),
+  connector_type: z.string().min(1, "Tipo de conector é obrigatório"),
+  status: z.enum(["available", "in_use", "maintenance", "offline"]),
+  price_per_kwh: z.string().min(1, "Preço é obrigatório"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
 });
@@ -73,7 +40,7 @@ type Charger = {
   location: string;
   power: number;
   connector_type: string;
-  status: 'available' | 'in_use' | 'maintenance' | 'offline';
+  status: "available" | "in_use" | "maintenance" | "offline";
   price_per_kwh: number;
   latitude: number | null;
   longitude: number | null;
@@ -84,35 +51,36 @@ type Charger = {
 const Carregadores = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCharger, setEditingCharger] = useState<Charger | null>(null);
-  const [deletingChargerId, setDeletingChargerId] = useState<string | null>(null);
+  const [deletingCharger, setDeletingCharger] = useState<Charger | null>(null);
 
   const form = useForm<ChargerFormData>({
     resolver: zodResolver(chargerSchema),
     defaultValues: {
-      name: '',
-      location: '',
-      power: '',
-      connector_type: '',
-      status: 'available',
-      price_per_kwh: '',
-      latitude: '',
-      longitude: '',
+      name: "",
+      location: "",
+      power: "",
+      connector_type: "",
+      status: "available",
+      price_per_kwh: "",
+      latitude: "",
+      longitude: "",
     },
   });
 
   const { data: chargers = [], isLoading } = useQuery({
-    queryKey: ['chargers'],
+    queryKey: ["chargers"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('chargers')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .from("chargers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
       return data as Charger[];
     },
@@ -120,7 +88,7 @@ const Carregadores = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: ChargerFormData) => {
-      const { error } = await supabase.from('chargers').insert({
+      const { error } = await supabase.from("chargers").insert({
         name: data.name,
         location: data.location,
         power: parseFloat(data.power),
@@ -133,19 +101,19 @@ const Carregadores = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chargers'] });
+      queryClient.invalidateQueries({ queryKey: ["chargers"] });
       toast({
-        title: t('common.success'),
-        description: t('admin.chargerAdded'),
+        title: t("common.success"),
+        description: "Carregador adicionado com sucesso",
       });
-      setDialogOpen(false);
+      setIsDialogOpen(false);
       form.reset();
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: 'Erro ao adicionar carregador',
-        variant: 'destructive',
+        title: t("common.error"),
+        description: "Erro ao adicionar carregador",
+        variant: "destructive",
       });
     },
   });
@@ -154,7 +122,7 @@ const Carregadores = () => {
     mutationFn: async (data: ChargerFormData) => {
       if (!editingCharger) return;
       const { error } = await supabase
-        .from('chargers')
+        .from("chargers")
         .update({
           name: data.name,
           location: data.location,
@@ -165,47 +133,46 @@ const Carregadores = () => {
           latitude: data.latitude ? parseFloat(data.latitude) : null,
           longitude: data.longitude ? parseFloat(data.longitude) : null,
         })
-        .eq('id', editingCharger.id);
+        .eq("id", editingCharger.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chargers'] });
+      queryClient.invalidateQueries({ queryKey: ["chargers"] });
       toast({
-        title: t('common.success'),
-        description: t('admin.chargerUpdated'),
+        title: t("common.success"),
+        description: "Carregador atualizado com sucesso",
       });
-      setDialogOpen(false);
+      setIsDialogOpen(false);
       setEditingCharger(null);
       form.reset();
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: 'Erro ao atualizar carregador',
-        variant: 'destructive',
+        title: t("common.error"),
+        description: "Erro ao atualizar carregador",
+        variant: "destructive",
       });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('chargers').delete().eq('id', id);
+      const { error } = await supabase.from("chargers").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chargers'] });
+      queryClient.invalidateQueries({ queryKey: ["chargers"] });
       toast({
-        title: t('common.success'),
-        description: t('admin.chargerDeleted'),
+        title: t("common.success"),
+        description: "Carregador excluído com sucesso",
       });
-      setDeleteDialogOpen(false);
-      setDeletingChargerId(null);
+      setDeletingCharger(null);
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: 'Erro ao excluir carregador',
-        variant: 'destructive',
+        title: t("common.error"),
+        description: "Erro ao excluir carregador",
+        variant: "destructive",
       });
     },
   });
@@ -227,168 +194,162 @@ const Carregadores = () => {
       connector_type: charger.connector_type,
       status: charger.status,
       price_per_kwh: charger.price_per_kwh.toString(),
-      latitude: charger.latitude?.toString() || '',
-      longitude: charger.longitude?.toString() || '',
+      latitude: charger.latitude?.toString() || "",
+      longitude: charger.longitude?.toString() || "",
     });
-    setDialogOpen(true);
+    setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setDeletingChargerId(id);
-    setDeleteDialogOpen(true);
+  const handleDelete = () => {
+    if (deletingCharger) {
+      deleteMutation.mutate(deletingCharger.id);
+    }
   };
 
   const handleAddNew = () => {
     setEditingCharger(null);
     form.reset();
-    setDialogOpen(true);
+    setIsDialogOpen(true);
   };
 
   const filteredChargers = chargers.filter((charger) => {
     const matchesSearch =
       charger.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       charger.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || charger.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || charger.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
-    total: chargers.length,
-    available: chargers.filter((c) => c.status === 'available').length,
-    in_use: chargers.filter((c) => c.status === 'in_use').length,
-    maintenance: chargers.filter((c) => c.status === 'maintenance').length,
+    total: chargers?.length || 0,
+    available: chargers?.filter((c) => c.status === "available").length || 0,
+    inUse: chargers?.filter((c) => c.status === "in_use").length || 0,
+    maintenance: chargers?.filter((c) => c.status === "maintenance").length || 0,
   };
 
+  const globalUtilization = stats.total > 0 ? (stats.inUse / stats.total) * 100 : 0;
+
   return (
-    <ResponsiveLayout showBottomNav>
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-purple-500/10">
-        <div className="container mx-auto px-4 pt-6 pb-8 max-w-7xl">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-fade-in">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                {t('admin.chargers')}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {stats.total} {stats.total === 1 ? 'carregador' : 'carregadores'} cadastrados
-              </p>
-            </div>
-            <Button onClick={handleAddNew} className="rounded-2xl" size="lg">
-              <Plus className="h-5 w-5 mr-2" />
-              {t('admin.addCharger')}
-            </Button>
+    <ResponsiveLayout
+      mobileHeader={
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Carregadores</h1>
+            <p className="text-sm text-muted-foreground">
+              {stats.total} carregadores no total
+            </p>
           </div>
-
-          {/* Search */}
-          <div className="mb-6 animate-fade-in">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-              <Input
-                placeholder={t('admin.searchChargers')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 rounded-2xl text-base"
-              />
-            </div>
-          </div>
-
-          {/* Unified Statistics Card */}
-          <Card className="mb-6 rounded-3xl border-green-200 shadow-lg bg-gradient-to-br from-green-50 via-lime-50 to-emerald-50 animate-fade-in">
-            <CardContent className="pt-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="text-center">
-                  <Zap className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                  <p className="text-4xl font-bold text-foreground mb-1">{stats.total}</p>
-                  <p className="text-sm text-muted-foreground">{t('admin.totalChargers')}</p>
-                </div>
-                <div className="text-center">
-                  <Battery className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                  <p className="text-4xl font-bold text-green-600 mb-1">{stats.available}</p>
-                  <p className="text-sm text-muted-foreground">{t('admin.availableChargers')}</p>
-                </div>
-                <div className="text-center">
-                  <Activity className="h-12 w-12 text-blue-500 mx-auto mb-3" />
-                  <p className="text-4xl font-bold text-blue-600 mb-1">{stats.in_use}</p>
-                  <p className="text-sm text-muted-foreground">{t('admin.chargersInUse')}</p>
-                </div>
-                <div className="text-center">
-                  <WrenchIcon className="h-12 w-12 text-yellow-500 mx-auto mb-3" />
-                  <p className="text-4xl font-bold text-yellow-600 mb-1">{stats.maintenance}</p>
-                  <p className="text-sm text-muted-foreground">{t('admin.chargersInMaintenance')}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Filter Pills */}
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-6">
-            {[
-              { value: 'all', label: t('admin.allStatus') },
-              { value: 'available', label: t('admin.available') },
-              { value: 'in_use', label: t('admin.inUse') },
-              { value: 'maintenance', label: t('admin.maintenance') },
-              { value: 'offline', label: t('admin.offline') },
-            ].map((status) => (
-              <button
-                key={status.value}
-                onClick={() => setStatusFilter(status.value)}
-                className={`px-6 py-2.5 rounded-full transition-all whitespace-nowrap font-medium text-sm ${
-                  statusFilter === status.value
-                    ? 'bg-gradient-to-r from-green-300 to-lime-400 text-white shadow-lg'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                {status.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Chargers List */}
-          {isLoading ? (
-            <Card className="rounded-3xl border-primary/20 shadow-lg animate-fade-in">
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">{t('common.loading')}</p>
-              </CardContent>
-            </Card>
-          ) : filteredChargers.length === 0 ? (
-            <Card className="rounded-3xl border-primary/20 shadow-lg animate-fade-in">
-              <CardContent className="py-12 text-center">
-                <Zap className="h-16 w-16 text-muted-foreground/20 mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground mb-2">
-                  {chargers.length === 0 ? t('admin.noChargersYet') : t('admin.noChargersFound')}
-                </p>
-                {chargers.length === 0 && (
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t('admin.addFirstCharger')}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredChargers.map((charger) => (
-                <ChargerCard
-                  key={charger.id}
-                  charger={charger}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
+          <Button onClick={handleAddNew} size="icon" className="bg-green-500 hover:bg-green-600">
+            <Plus className="h-5 w-5" />
+          </Button>
         </div>
+      }
+      showBottomNav={true}
+    >
+      <div className="space-y-6 pb-6 px-4 md:px-6 animate-fade-in">
+        {/* Header Desktop */}
+        <div className="hidden md:flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Carregadores
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Gerencie os carregadores da rede
+            </p>
+          </div>
+          <Button onClick={handleAddNew} className="gap-2 bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transition-all">
+            <Plus className="h-5 w-5" />
+            Adicionar Carregador
+          </Button>
+        </div>
+
+        {/* Header com estatísticas */}
+        <ChargersHeader stats={stats} globalUtilization={globalUtilization} />
+
+        {/* Toolbar: Busca e Filtros */}
+        <ChargersToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+        />
+
+        {/* Toggle de visualização */}
+        <div className="flex items-center justify-between">
+          <ChargersViewToggle view={viewMode} onViewChange={setViewMode} />
+          <p className="text-sm text-muted-foreground">
+            {filteredChargers.length} {filteredChargers.length === 1 ? 'carregador' : 'carregadores'}
+          </p>
+        </div>
+
+        {/* Conteúdo baseado na vista */}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Carregando carregadores...</p>
+          </div>
+        ) : filteredChargers.length === 0 ? (
+          <div className="text-center py-12 backdrop-blur-sm bg-background/95 border border-green-200/50 rounded-lg">
+            <p className="text-muted-foreground">Nenhum carregador encontrado</p>
+            {(searchQuery || statusFilter !== "all") && (
+              <Button
+                variant="link"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+                className="mt-2"
+              >
+                Limpar filtros
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            {viewMode === "cards" && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+                {filteredChargers.map((charger, index) => (
+                  <div
+                    key={charger.id}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                    className="animate-fade-in"
+                  >
+                    <ChargerCardModern
+                      charger={charger}
+                      onEdit={handleEdit}
+                      onDelete={(charger) => setDeletingCharger(charger)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {viewMode === "list" && (
+              <div className="animate-fade-in">
+                <ChargerListView
+                  chargers={filteredChargers}
+                  onEdit={handleEdit}
+                  onDelete={(charger) => setDeletingCharger(charger)}
+                />
+              </div>
+            )}
+
+            {viewMode === "analytics" && (
+              <div className="animate-fade-in">
+                <ChargerAnalyticsView chargers={filteredChargers} />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {editingCharger ? t('admin.editCharger') : t('admin.addCharger')}
+              {editingCharger ? "Editar Carregador" : "Adicionar Carregador"}
             </DialogTitle>
-            <DialogDescription>
-              Preencha os dados do carregador
-            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -397,9 +358,9 @@ const Carregadores = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.chargerName')}</FormLabel>
+                    <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input {...field} className="rounded-xl" />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -410,9 +371,9 @@ const Carregadores = () => {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.location')}</FormLabel>
+                    <FormLabel>Localização</FormLabel>
                     <FormControl>
-                      <Input {...field} className="rounded-xl" />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -424,9 +385,9 @@ const Carregadores = () => {
                   name="power"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('admin.power')}</FormLabel>
+                      <FormLabel>Potência (kW)</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="0.1" className="rounded-xl" />
+                        <Input {...field} type="number" step="0.1" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -437,9 +398,9 @@ const Carregadores = () => {
                   name="price_per_kwh"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('admin.pricePerKwh')}</FormLabel>
+                      <FormLabel>Preço/kWh (R$)</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="0.01" className="rounded-xl" />
+                        <Input {...field} type="number" step="0.01" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -451,10 +412,10 @@ const Carregadores = () => {
                 name="connector_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.connectorType')}</FormLabel>
+                    <FormLabel>Tipo de Conector</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                       </FormControl>
@@ -475,18 +436,18 @@ const Carregadores = () => {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.status')}</FormLabel>
+                    <FormLabel>Status</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="available">{t('admin.available')}</SelectItem>
-                        <SelectItem value="in_use">{t('admin.inUse')}</SelectItem>
-                        <SelectItem value="maintenance">{t('admin.maintenance')}</SelectItem>
-                        <SelectItem value="offline">{t('admin.offline')}</SelectItem>
+                        <SelectItem value="available">Disponível</SelectItem>
+                        <SelectItem value="in_use">Em Uso</SelectItem>
+                        <SelectItem value="maintenance">Manutenção</SelectItem>
+                        <SelectItem value="offline">Offline</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -499,9 +460,9 @@ const Carregadores = () => {
                   name="latitude"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('admin.latitude')}</FormLabel>
+                      <FormLabel>Latitude (opcional)</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="any" className="rounded-xl" />
+                        <Input {...field} type="number" step="any" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -512,49 +473,49 @@ const Carregadores = () => {
                   name="longitude"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('admin.longitude')}</FormLabel>
+                      <FormLabel>Longitude (opcional)</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="any" className="rounded-xl" />
+                        <Input {...field} type="number" step="any" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              <DialogFooter>
+              <div className="flex justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                  className="rounded-xl"
+                  onClick={() => setIsDialogOpen(false)}
                 >
-                  {t('common.cancel')}
+                  Cancelar
                 </Button>
-                <Button type="submit" className="rounded-xl" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {createMutation.isPending || updateMutation.isPending ? t('common.loading') : t('common.save')}
+                <Button type="submit" className="bg-green-500 hover:bg-green-600">
+                  {editingCharger ? "Salvar" : "Adicionar"}
                 </Button>
-              </DialogFooter>
+              </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={!!deletingCharger} onOpenChange={() => setDeletingCharger(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('admin.confirmDelete')}</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('admin.deleteDescription')}
+              Tem certeza que deseja excluir o carregador "{deletingCharger?.name}"?
+              Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingChargerId && deleteMutation.mutate(deletingChargerId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600"
             >
-              {t('common.delete')}
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
