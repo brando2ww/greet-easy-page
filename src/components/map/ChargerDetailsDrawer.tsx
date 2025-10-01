@@ -86,14 +86,12 @@ export const ChargerDetailsModal = ({
             isExpanded ? "h-auto max-h-[55vh] overflow-y-auto" : "h-auto"
           )}
         >
-          {/* Handle bar with animated icon */}
+          {/* Handle bar with pulse animation */}
           <div className="flex justify-center pt-3 pb-1">
-            <ChevronDown 
-              className={cn(
-                "h-6 w-6 text-muted-foreground transition-transform duration-300",
-                isExpanded && "rotate-180"
-              )} 
-            />
+            <div className={cn(
+              "w-12 h-1 rounded-full bg-muted-foreground/30 transition-all duration-300",
+              !isExpanded && "animate-pulse"
+            )} />
           </div>
 
           <Button
