@@ -58,7 +58,7 @@ export const ChargerDetailsDrawer = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="z-40 max-h-[85vh]">
+      <DrawerContent className="z-40 h-[70vh] overflow-y-auto">
         <DrawerHeader className="relative pb-2">
           <DrawerClose asChild>
             <Button
