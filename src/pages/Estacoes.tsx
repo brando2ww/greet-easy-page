@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
+import speedLogo from "@/assets/speed_logo_01.png";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +28,14 @@ export default function Estacoes() {
 
   const header = (
     <div className="p-4 space-y-3">
+      <div className="flex justify-center mb-2">
+        <img 
+          src={speedLogo} 
+          alt="Speed Charger" 
+          className="h-8"
+        />
+      </div>
+      
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
