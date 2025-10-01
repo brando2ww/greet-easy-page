@@ -58,7 +58,7 @@ export const ChargerDetailsDrawer = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="z-[100]">
+      <DrawerContent className="z-[100] pb-24">
         <DrawerHeader className="relative pb-2">
           <DrawerClose asChild>
             <Button
