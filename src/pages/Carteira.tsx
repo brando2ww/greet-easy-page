@@ -32,7 +32,7 @@ const Carteira = () => {
         </div>
 
         {/* Card de Saldo */}
-        <Card className="p-6 -mt-5">
+        <Card className="p-6 mt-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">{t('wallet.balanceTitle')}</p>
