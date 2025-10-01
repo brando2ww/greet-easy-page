@@ -62,7 +62,7 @@ const Carteira = () => {
           {/* Botão Adicionar */}
           <Button 
             variant="outline" 
-            className="w-full border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 dark:text-green-400 dark:border-green-600"
+            className="w-full border-green-500 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-600 dark:hover:text-white transition-all"
           >
             <Plus className="w-4 h-4" />
             {t('wallet.addPaymentMethod')}
