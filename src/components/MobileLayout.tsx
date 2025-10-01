@@ -16,7 +16,7 @@ export const MobileLayout = ({ children, header }: MobileLayoutProps) => {
       )}
       
       <main className={cn(
-        "flex-1 flex flex-col pb-28 overflow-hidden",
+        "flex-1 flex flex-col pb-36 overflow-hidden",
         header && "pt-14"
       )}>
         {children}
