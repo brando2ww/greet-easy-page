@@ -102,12 +102,12 @@ const Carteira = () => {
                   <X className="h-5 w-5" />
                 </DrawerClose>
               </DrawerHeader>
-              <div className="p-4">
+              <div>
                 {paymentOptions.map((option, index) => (
                   <button
                     key={option.key}
                     onClick={() => handleSelectPayment(option.key)}
-                    className={`w-full flex items-center justify-between py-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                    className={`w-full flex items-center justify-between py-4 px-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                       index < paymentOptions.length - 1 ? 'border-b' : ''
                     }`}
                   >
