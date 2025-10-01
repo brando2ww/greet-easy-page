@@ -28,10 +28,6 @@ export default function Perfil() {
   const handleLogout = async () => {
     try {
       await signOut();
-      toast({
-        title: t('common.success'),
-        description: t('profile.logout'),
-      });
       navigate("/auth/login");
     } catch (error) {
       toast({
