@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      chargers: {
+        Row: {
+          connector_type: string
+          created_at: string | null
+          id: string
+          latitude: number | null
+          location: string
+          longitude: number | null
+          name: string
+          power: number
+          price_per_kwh: number
+          status: Database["public"]["Enums"]["charger_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          connector_type: string
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          name: string
+          power: number
+          price_per_kwh: number
+          status?: Database["public"]["Enums"]["charger_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          connector_type?: string
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          name?: string
+          power?: number
+          price_per_kwh?: number
+          status?: Database["public"]["Enums"]["charger_status"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -74,6 +116,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "support" | "user"
+      charger_status: "available" | "in_use" | "maintenance" | "offline"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -202,6 +245,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "support", "user"],
+      charger_status: ["available", "in_use", "maintenance", "offline"],
     },
   },
 } as const
