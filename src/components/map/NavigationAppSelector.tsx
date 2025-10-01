@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Route, X } from 'lucide-react';
 import {
   Drawer,
@@ -10,6 +10,17 @@ import {
 } from '@/components/ui/drawer';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+
+const detectOperatingSystem = (): 'ios' | 'macos' | 'android' | 'windows' | 'other' => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  const platform = navigator.platform.toLowerCase();
+  
+  if (/iphone|ipad|ipod/.test(userAgent)) return 'ios';
+  if (/mac/.test(platform) || /macintosh/.test(userAgent)) return 'macos';
+  if (/android/.test(userAgent)) return 'android';
+  if (/win/.test(platform)) return 'windows';
+  return 'other';
+};
 
 interface NavigationAppSelectorProps {
   isOpen: boolean;
@@ -50,6 +61,15 @@ export const NavigationAppSelector = ({
   userLocation,
 }: NavigationAppSelectorProps) => {
   const [rememberChoice, setRememberChoice] = useState(false);
+
+  const availableApps = useMemo(() => {
+    const os = detectOperatingSystem();
+    const isAppleOS = os === 'ios' || os === 'macos';
+    
+    return isAppleOS 
+      ? navigationApps 
+      : navigationApps.filter(app => app.id !== 'apple');
+  }, []);
 
   const handleAppSelect = (app: NavigationApp) => {
     const destination = `${latitude},${longitude}`;
@@ -98,7 +118,7 @@ export const NavigationAppSelector = ({
         </DrawerHeader>
 
         <div className="px-6 space-y-3 py-4">
-          {navigationApps.map((app) => (
+          {availableApps.map((app) => (
             <button
               key={app.id}
               onClick={() => handleAppSelect(app.id)}
