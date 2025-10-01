@@ -274,18 +274,18 @@ const Carregadores = () => {
   };
 
   const getChargerCardStyle = (status: string) => {
-    if (status === 'available') {
-      return {
-        card: 'bg-gradient-to-br from-cyan-400 to-teal-400 border-transparent shadow-xl hover:shadow-2xl hover:scale-[1.02]',
-        text: 'text-white',
-        iconColor: 'text-white',
-        badge: 'bg-white/20 text-white border-white/30',
-      };
-    }
+  if (status === 'available') {
+    return {
+      card: 'bg-gradient-to-br from-green-300 to-lime-400 border-transparent shadow-xl hover:shadow-2xl hover:scale-[1.02]',
+      text: 'text-white',
+      iconColor: 'text-white',
+      badge: 'bg-white/20 text-white border-white/30',
+    };
+  }
     return {
       card: 'bg-white border-gray-200 shadow-md hover:shadow-lg',
       text: 'text-foreground',
-      iconColor: 'text-cyan-500 opacity-60',
+      iconColor: 'text-green-500 opacity-60',
       badge: 'bg-gray-100 text-gray-700 border-gray-200',
     };
   };
@@ -324,11 +324,11 @@ const Carregadores = () => {
           </div>
 
           {/* Unified Statistics Card */}
-          <Card className="mb-6 rounded-3xl border-cyan-200 shadow-lg bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50 animate-fade-in">
+          <Card className="mb-6 rounded-3xl border-green-200 shadow-lg bg-gradient-to-br from-green-50 via-lime-50 to-emerald-50 animate-fade-in">
             <CardContent className="pt-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <Zap className="h-12 w-12 text-cyan-500 mx-auto mb-3" />
+                  <Zap className="h-12 w-12 text-green-500 mx-auto mb-3" />
                   <p className="text-4xl font-bold text-foreground mb-1">{stats.total}</p>
                   <p className="text-sm text-muted-foreground">{t('admin.totalChargers')}</p>
                 </div>
@@ -365,7 +365,7 @@ const Carregadores = () => {
                 onClick={() => setStatusFilter(status.value)}
                 className={`px-6 py-2.5 rounded-full transition-all whitespace-nowrap font-medium text-sm ${
                   statusFilter === status.value
-                    ? 'bg-gradient-to-r from-cyan-400 to-teal-400 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-green-300 to-lime-400 text-white shadow-lg'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
