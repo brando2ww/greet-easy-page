@@ -107,7 +107,7 @@ const Carteira = () => {
                   <button
                     key={option.key}
                     onClick={() => handleSelectPayment(option.key)}
-                    className={`w-full flex items-center justify-between py-4 text-left hover:bg-accent/50 transition-colors ${
+                    className={`w-full flex items-center justify-between py-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
                       index < paymentOptions.length - 1 ? 'border-b' : ''
                     }`}
                   >
