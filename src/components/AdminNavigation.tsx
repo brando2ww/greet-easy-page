@@ -48,7 +48,7 @@ export const AdminNavigation = () => {
             <div className="absolute bottom-0 right-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-bl-[100%]" />
           </div>
           
-          <div className="flex justify-around items-center h-24 px-4 pb-8">
+          <div className="flex justify-around items-end h-24 px-4 pb-8">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -61,7 +61,7 @@ export const AdminNavigation = () => {
                   to={item.path}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group",
-                    isChargerItem && "-mt-6"
+                    isChargerItem ? "-mt-6" : "pb-2"
                   )}
                 >
                   {isChargerItem ? (
