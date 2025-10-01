@@ -1,30 +1,75 @@
-import { useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import speedLogo from "@/assets/speed_logo_01.png";
+import { StationsMap } from "@/components/map/StationsMap";
+import { MapTokenInput } from "@/components/map/MapTokenInput";
+import { useChargers } from "@/hooks/useChargers";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [mapboxToken, setMapboxToken] = useState<string>("");
   const { t } = useTranslation();
+  const { data: chargers, isLoading } = useChargers();
+
+  // Load token from localStorage on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('mapbox_token');
+    if (savedToken) {
+      setMapboxToken(savedToken);
+    }
+  }, []);
 
   const filterChips = [
-    t('stations.all'),
-    t('stations.fast'),
-    t('stations.available')
+    { key: 'all', label: t('stations.all') },
+    { key: 'available', label: t('stations.available') },
+    { key: 'fast', label: t('stations.fast') },
   ];
 
-  const toggleFilter = (filter: string) => {
+  const toggleFilter = (filterKey: string) => {
     setActiveFilters(prev =>
-      prev.includes(filter)
-        ? prev.filter(f => f !== filter)
-        : [...prev, filter]
+      prev.includes(filterKey)
+        ? prev.filter(f => f !== filterKey)
+        : [...prev, filterKey]
     );
   };
+
+  // Filter chargers based on search and active filters
+  const filteredChargers = useMemo(() => {
+    if (!chargers) return [];
+
+    let filtered = chargers;
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (charger) =>
+          charger.name.toLowerCase().includes(query) ||
+          charger.location.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply status filters
+    if (activeFilters.length > 0 && !activeFilters.includes('all')) {
+      filtered = filtered.filter((charger) => {
+        if (activeFilters.includes('available')) {
+          return charger.status === 'available';
+        }
+        if (activeFilters.includes('fast')) {
+          return charger.power >= 50;
+        }
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [chargers, searchQuery, activeFilters]);
 
   const header = (
     <div className="p-4 space-y-3">
@@ -55,12 +100,12 @@ export default function Estacoes() {
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {filterChips.map((chip) => (
           <Badge
-            key={chip}
-            variant={activeFilters.includes(chip) ? "default" : "outline"}
+            key={chip.key}
+            variant={activeFilters.includes(chip.key) ? "default" : "outline"}
             className="cursor-pointer whitespace-nowrap px-4 py-2"
-            onClick={() => toggleFilter(chip)}
+            onClick={() => toggleFilter(chip.key)}
           >
-            {chip}
+            {chip.label}
           </Badge>
         ))}
       </div>
@@ -69,16 +114,28 @@ export default function Estacoes() {
 
   return (
     <ResponsiveLayout mobileHeader={header} showBottomNav>
-      <div className="h-[calc(100vh-240px)] bg-muted flex items-center justify-center">
-        <div className="text-center p-8">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 text-primary" />
+      <div className="h-[calc(100vh-240px)]">
+        {!mapboxToken ? (
+          <MapTokenInput onTokenSubmit={setMapboxToken} />
+        ) : isLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">{t('stations.title')}</h3>
-          <p className="text-sm text-muted-foreground">
-            {t('stations.mapPlaceholder')}
-          </p>
-        </div>
+        ) : filteredChargers.length === 0 ? (
+          <div className="h-full bg-muted flex items-center justify-center">
+            <div className="text-center p-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{t('stations.noChargers')}</h3>
+              <p className="text-sm text-muted-foreground">
+                {t('stations.tryDifferentFilters')}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <StationsMap chargers={filteredChargers} mapboxToken={mapboxToken} />
+        )}
       </div>
     </ResponsiveLayout>
   );
