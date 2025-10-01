@@ -48,7 +48,7 @@ export const BottomNavigation = () => {
                   {isCharging ? (
                     <>
                       {/* Círculo animado para iniciar carga */}
-                      <div className="relative z-10">
+                      <div className="relative z-20">
                         <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
                           <Icon
                             strokeWidth={1.5}
