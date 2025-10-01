@@ -71,8 +71,8 @@ export const AdminSidebar = () => {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                 active
-                  ? "bg-primary/10 text-primary border-l-4 border-primary font-medium"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground border-l-4 border-transparent"
+                  ? "bg-green-50 text-green-600 border-l-4 border-green-400 font-medium"
+                  : "text-muted-foreground hover:bg-green-50 hover:text-green-600 border-l-4 border-transparent"
               )}
             >
               <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
@@ -88,7 +88,7 @@ export const AdminSidebar = () => {
       <div className="px-3 pt-4 border-t border-border">
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="h-10 w-10 border-2 border-border">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            <AvatarFallback className="bg-green-50 text-green-600 font-semibold">
               {getUserInitials()}
             </AvatarFallback>
           </Avatar>
@@ -99,7 +99,7 @@ export const AdminSidebar = () => {
         </div>
         <button
           onClick={signOut}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
         >
           <LogOut className="w-4 h-4" />
           <span>Sair</span>

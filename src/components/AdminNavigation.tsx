@@ -67,9 +67,9 @@ export const AdminNavigation = () => {
                   {isChargerItem ? (
                     <div className="relative z-10">
                       <div className={cn(
-                        "rounded-full bg-gradient-to-br from-purple-400 via-purple-600 via-purple-700 to-purple-950 shadow-lg shadow-purple-500/50 transition-all duration-300 w-16 h-16 flex items-center justify-center",
-                        "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-purple-500/60",
-                        isActive && "scale-110 shadow-xl shadow-purple-500/60"
+                        "rounded-full bg-gradient-to-br from-green-300 to-lime-400 shadow-lg shadow-green-400/50 transition-all duration-300 w-16 h-16 flex items-center justify-center",
+                        "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-green-400/60",
+                        isActive && "scale-110 shadow-xl shadow-green-400/60"
                       )}>
                         <Icon
                           strokeWidth={1.5}
@@ -83,8 +83,8 @@ export const AdminNavigation = () => {
                       className={cn(
                         "transition-all duration-300 ease-out",
                         isActive
-                          ? "w-7 h-7 scale-110 text-foreground"
-                          : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
+                          ? "w-7 h-7 scale-110 text-green-600"
+                          : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-green-600"
                       )} 
                     />
                   )}
@@ -92,8 +92,8 @@ export const AdminNavigation = () => {
                   <span className={cn(
                     "text-[10px] transition-all duration-300 text-center leading-tight",
                     isActive 
-                      ? "font-semibold text-foreground" 
-                      : "text-muted-foreground group-hover:text-foreground"
+                      ? "font-semibold text-green-600" 
+                      : "text-muted-foreground group-hover:text-green-600"
                   )}>
                     {item.label}
                   </span>
