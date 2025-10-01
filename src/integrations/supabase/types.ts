@@ -56,6 +56,63 @@ export type Database = {
         }
         Relationships: []
       }
+      charging_sessions: {
+        Row: {
+          charger_id: string
+          cost: number | null
+          created_at: string
+          ended_at: string | null
+          energy_consumed: number | null
+          id: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+          vehicle_info: string | null
+        }
+        Insert: {
+          charger_id: string
+          cost?: number | null
+          created_at?: string
+          ended_at?: string | null
+          energy_consumed?: number | null
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vehicle_info?: string | null
+        }
+        Update: {
+          charger_id?: string
+          cost?: number | null
+          created_at?: string
+          ended_at?: string | null
+          energy_consumed?: number | null
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_info?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "charging_sessions_charger_id_fkey"
+            columns: ["charger_id"]
+            isOneToOne: false
+            referencedRelation: "chargers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "charging_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

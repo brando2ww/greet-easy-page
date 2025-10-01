@@ -9,84 +9,66 @@ import {
 } from 'recharts';
 import { 
   Users, Zap, BarChart3, TrendingUp, TrendingDown, 
-  Activity, Battery, CheckCircle2, Clock
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useDashboardChart } from '@/hooks/useDashboardChart';
+import { useRecentActivities } from '@/hooks/useRecentActivities';
 
 const Dashboard = () => {
   const { t } = useTranslation();
+  const { data: statsData, isLoading: statsLoading } = useDashboardStats();
+  const { data: chartData, isLoading: chartLoading } = useDashboardChart();
+  const { data: recentActivities, isLoading: activitiesLoading } = useRecentActivities();
 
   const stats = [
-    {
-      title: t('admin.totalUsers'),
-      value: '1,234',
-      icon: Users,
-      trend: '+12%',
-      trendUp: true,
+    { 
+      title: t('admin.totalUsers'), 
+      value: statsData?.totalUsers.toString() || '0', 
+      trend: `${statsData?.trends.users > 0 ? '+' : ''}${statsData?.trends.users.toFixed(1)}%`, 
+      trendUp: (statsData?.trends.users || 0) >= 0, 
+      icon: Users 
     },
-    {
-      title: t('admin.activeChargers'),
-      value: '89',
-      icon: Zap,
-      trend: '+5%',
-      trendUp: true,
+    { 
+      title: t('admin.activeChargers'), 
+      value: statsData?.activeChargers.toString() || '0', 
+      trend: `${statsData?.trends.chargers > 0 ? '+' : ''}${statsData?.trends.chargers.toFixed(1)}%`, 
+      trendUp: (statsData?.trends.chargers || 0) >= 0, 
+      icon: Zap 
     },
-    {
-      title: t('admin.totalSessions'),
-      value: '5,678',
-      icon: BarChart3,
-      trend: '+23%',
-      trendUp: true,
+    { 
+      title: t('admin.totalSessions'), 
+      value: statsData?.totalSessions.toString() || '0', 
+      trend: `${statsData?.trends.sessions > 0 ? '+' : ''}${statsData?.trends.sessions.toFixed(1)}%`, 
+      trendUp: (statsData?.trends.sessions || 0) >= 0, 
+      icon: BarChart3 
     },
-    {
-      title: t('admin.revenue'),
-      value: 'R$ 45,678',
-      icon: TrendingUp,
-      trend: '+18%',
-      trendUp: true,
-    }
+    { 
+      title: t('admin.revenue'), 
+      value: `R$ ${statsData?.totalRevenue.toFixed(2) || '0.00'}`, 
+      trend: `${statsData?.trends.revenue > 0 ? '+' : ''}${statsData?.trends.revenue.toFixed(1)}%`, 
+      trendUp: (statsData?.trends.revenue || 0) >= 0, 
+      icon: BarChart3 
+    },
   ];
 
-  const chartData = [
-    { date: 'Seg', sessions: 450, users: 120 },
-    { date: 'Ter', sessions: 380, users: 98 },
-    { date: 'Qua', sessions: 520, users: 145 },
-    { date: 'Qui', sessions: 490, users: 132 },
-    { date: 'Sex', sessions: 610, users: 178 },
-    { date: 'Sáb', sessions: 580, users: 165 },
-    { date: 'Dom', sessions: 420, users: 110 },
-  ];
+  const availabilityRate = statsData 
+    ? ((statsData.activeChargers / (statsData.activeChargers + 3)) * 100).toFixed(1)
+    : '0';
 
-  const recentActivities = [
-    {
-      icon: Battery,
-      title: 'Sessão de carregamento concluída',
-      description: 'Carregador #42 - Tesla Model 3',
-      time: '5 min atrás',
-      status: 'completed'
-    },
-    {
-      icon: Users,
-      title: 'Novo usuário cadastrado',
-      description: 'João Silva - joao@email.com',
-      time: '12 min atrás',
-      status: 'new'
-    },
-    {
-      icon: CheckCircle2,
-      title: 'Manutenção concluída',
-      description: 'Carregador #15 - Check-up preventivo',
-      time: '1 hora atrás',
-      status: 'completed'
-    },
-    {
-      icon: Clock,
-      title: 'Sessão em andamento',
-      description: 'Carregador #28 - BMW i4',
-      time: '25 min atrás',
-      status: 'active'
-    },
-  ];
+  if (statsLoading || chartLoading || activitiesLoading) {
+    return (
+      <ResponsiveLayout showBottomNav>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando dashboard...</p>
+          </div>
+        </div>
+      </ResponsiveLayout>
+    );
+  }
 
   return (
     <ResponsiveLayout showBottomNav>
@@ -149,7 +131,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData}>
+                  <LineChart data={chartData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
                     <XAxis 
                       dataKey="date" 
@@ -200,8 +182,8 @@ const Dashboard = () => {
                     <PieChart>
                       <Pie
                         data={[
-                          { name: 'Available', value: 75.5 },
-                          { name: 'Unavailable', value: 24.5 }
+                          { name: 'Available', value: parseFloat(availabilityRate) },
+                          { name: 'Unavailable', value: 100 - parseFloat(availabilityRate) }
                         ]}
                         cx="50%"
                         cy="50%"
@@ -215,7 +197,7 @@ const Dashboard = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <p className="text-4xl font-bold text-green-600">75.5%</p>
+                    <p className="text-4xl font-bold text-green-600">{availabilityRate}%</p>
                   </div>
                 </CardContent>
               </Card>
@@ -250,33 +232,37 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                {recentActivities.map((activity, index) => {
-                  const Icon = activity.icon;
-                  return (
-                    <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-green-50 transition-colors">
-                      <div className="rounded-full bg-green-100 p-3 flex-shrink-0">
-                        <Icon className="h-5 w-5 text-green-600" />
+                {recentActivities && recentActivities.length > 0 ? (
+                  recentActivities.map((activity, index) => {
+                    const Icon = activity.icon;
+                    return (
+                      <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-green-50 transition-colors">
+                        <div className="rounded-full bg-green-100 p-3 flex-shrink-0">
+                          <Icon className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{activity.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-xs text-muted-foreground mb-1">{activity.time}</p>
+                          <Badge 
+                            variant={activity.status === 'completed' ? 'default' : 'secondary'}
+                            className={cn(
+                              activity.status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
+                              activity.status === 'active' && "bg-blue-100 text-blue-700"
+                            )}
+                          >
+                            {activity.status === 'completed' ? 'Concluído' : 
+                             activity.status === 'new' ? 'Novo' : 'Ativo'}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{activity.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{activity.description}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-muted-foreground mb-1">{activity.time}</p>
-                        <Badge 
-                          variant={activity.status === 'completed' ? 'default' : 'secondary'}
-                          className={cn(
-                            activity.status === 'completed' && "bg-green-100 text-green-700 hover:bg-green-200",
-                            activity.status === 'active' && "bg-blue-100 text-blue-700"
-                          )}
-                        >
-                          {activity.status === 'completed' ? 'Concluído' : 
-                           activity.status === 'new' ? 'Novo' : 'Ativo'}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">Nenhuma atividade recente</p>
+                )}
               </div>
             </CardContent>
           </Card>
