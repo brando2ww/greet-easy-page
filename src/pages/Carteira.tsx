@@ -23,6 +23,7 @@ const Carteira = () => {
         </div>
       }
       showBottomNav
+      noBorder
     >
       <div className="space-y-8 p-4 md:p-6">
         <div className="hidden md:block space-y-1">

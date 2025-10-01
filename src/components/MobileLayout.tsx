@@ -4,13 +4,17 @@ import { cn } from "@/lib/utils";
 interface MobileLayoutProps {
   children: ReactNode;
   header?: ReactNode;
+  noBorder?: boolean;
 }
 
-export const MobileLayout = ({ children, header }: MobileLayoutProps) => {
+export const MobileLayout = ({ children, header, noBorder }: MobileLayoutProps) => {
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background overflow-hidden">
       {header && (
-        <header className="fixed top-0 left-0 right-0 bg-background border-b border-border z-40 max-w-md mx-auto">
+        <header className={cn(
+          "fixed top-0 left-0 right-0 bg-background z-40 max-w-md mx-auto",
+          !noBorder && "border-b border-border"
+        )}>
           {header}
         </header>
       )}

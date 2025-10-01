@@ -11,16 +11,17 @@ interface ResponsiveLayoutProps {
   children: ReactNode;
   mobileHeader?: ReactNode;
   showBottomNav?: boolean;
+  noBorder?: boolean;
 }
 
-export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false }: ResponsiveLayoutProps) => {
+export const ResponsiveLayout = ({ children, mobileHeader, showBottomNav = false, noBorder }: ResponsiveLayoutProps) => {
   const isMobile = useIsMobile();
   const { isAdmin, isSupport, roleLoading } = useUserRole();
 
   if (isMobile) {
     return (
       <>
-        <MobileLayout header={mobileHeader}>{children}</MobileLayout>
+        <MobileLayout header={mobileHeader} noBorder={noBorder}>{children}</MobileLayout>
         {showBottomNav && !roleLoading && (isAdmin || isSupport) && <AdminNavigation />}
         {showBottomNav && !roleLoading && !isAdmin && !isSupport && <BottomNavigation />}
       </>
