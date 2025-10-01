@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigation, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { ChargerDetailsDrawer } from './ChargerDetailsDrawer';
 
 interface Charger {
   id: string;
@@ -29,6 +30,8 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [selectedCharger, setSelectedCharger] = useState<Charger | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   // Get user location
@@ -109,32 +112,15 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
         charger.status === 'in_use' ? '#ef4444' :
         '#6b7280';
 
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div class="p-3 min-w-[200px]">
-          <h3 class="font-semibold text-base mb-2">${charger.name}</h3>
-          <p class="text-sm text-muted-foreground mb-1">${charger.location}</p>
-          <div class="flex items-center gap-2 mb-1">
-            <span class="inline-block w-2 h-2 rounded-full" style="background-color: ${markerColor}"></span>
-            <span class="text-sm capitalize">${charger.status.replace('_', ' ')}</span>
-          </div>
-          <p class="text-sm mb-1"><strong>${t('stations.powerKw')}:</strong> ${charger.power} kW</p>
-          <p class="text-sm mb-1"><strong>${t('stations.pricePerKwh')}:</strong> R$ ${charger.price_per_kwh.toFixed(2)}</p>
-          <p class="text-sm mb-3"><strong>${t('stations.connector')}:</strong> ${charger.connector_type}</p>
-          ${charger.status === 'available' ? `
-            <button 
-              class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
-              onclick="window.location.href='/iniciar-carga?charger=${charger.id}'"
-            >
-              ${t('stations.startCharging')}
-            </button>
-          ` : ''}
-        </div>
-      `);
-
       const marker = new mapboxgl.Marker({ color: markerColor })
         .setLngLat([charger.longitude, charger.latitude])
-        .setPopup(popup)
         .addTo(map.current);
+
+      // Add click event to open drawer
+      marker.getElement().addEventListener('click', () => {
+        setSelectedCharger(charger);
+        setIsDrawerOpen(true);
+      });
 
       markersRef.current.push(marker);
     });
@@ -170,6 +156,16 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
           <Navigation className="h-5 w-5" />
         </Button>
       )}
+
+      <ChargerDetailsDrawer
+        charger={selectedCharger}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedCharger(null);
+        }}
+        userLocation={userLocation}
+      />
     </div>
   );
 };
