@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { Badge } from '@/components/ui/badge';
+import { NavigationAppSelector } from './NavigationAppSelector';
 
 interface Charger {
   id: string;
@@ -33,6 +34,7 @@ export const ChargerDetailsModal = ({
 }: ChargerDetailsDrawerProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
 
   if (!charger) return null;
 
@@ -55,14 +57,31 @@ export const ChargerDetailsModal = ({
   const distance = calculateDistance();
 
   const handleNavigate = () => {
-    const destination = `${charger.latitude},${charger.longitude}`;
-    const origin = userLocation
-      ? `${userLocation[1]},${userLocation[0]}`
-      : '';
+    // Check if user has a preferred navigation app
+    const preferredApp = localStorage.getItem('preferredNavigationApp');
     
-    // Open Google Maps with directions
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
-    window.open(mapsUrl, '_blank');
+    if (preferredApp) {
+      const destination = `${charger.latitude},${charger.longitude}`;
+      const origin = userLocation ? `${userLocation[0]},${userLocation[1]}` : '';
+      
+      let url = '';
+      switch (preferredApp) {
+        case 'waze':
+          url = `https://waze.com/ul?ll=${destination}&navigate=yes`;
+          break;
+        case 'google':
+          url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+          break;
+        case 'apple':
+          url = `https://maps.apple.com/?daddr=${destination}`;
+          break;
+      }
+      
+      window.open(url, '_blank');
+    } else {
+      // Show modal to select app
+      setShowNavigationModal(true);
+    }
   };
 
   const statusColor = 
@@ -202,6 +221,14 @@ export const ChargerDetailsModal = ({
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
+
+      <NavigationAppSelector
+        isOpen={showNavigationModal}
+        onClose={() => setShowNavigationModal(false)}
+        latitude={charger.latitude}
+        longitude={charger.longitude}
+        userLocation={userLocation}
+      />
     </DialogPrimitive.Root>
   );
 };
