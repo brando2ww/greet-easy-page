@@ -18,18 +18,7 @@ export const BottomNavigation = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
       <div className="relative max-w-md mx-auto">
-        {/* Barra de navegação com notch */}
         <div className="relative bg-background/95 backdrop-blur-lg border-t border-border rounded-t-3xl">
-          {/* Curva esquerda do notch */}
-          <div className="absolute left-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
-            <div className="absolute bottom-0 right-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-br-3xl"></div>
-          </div>
-          
-          {/* Curva direita do notch */}
-          <div className="absolute right-[calc(50%-50px)] -top-5 w-10 h-10 bg-transparent">
-            <div className="absolute bottom-0 left-0 w-full h-full bg-background/95 backdrop-blur-lg rounded-bl-3xl"></div>
-          </div>
-          
           <div className="flex justify-around items-center h-24 px-4 pb-8">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
