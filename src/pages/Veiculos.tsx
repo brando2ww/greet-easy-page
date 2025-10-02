@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Battery, Plug, Droplet, Zap, Trash2 } from "lucide-react";
+import { Plus, Battery, Plug, Droplet, Zap, Trash2, Leaf } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "@/hooks/use-toast";
 import { CarIcon } from "@/components/icons/CarIcon";
@@ -109,24 +109,24 @@ export default function Veiculos() {
   };
 
   const VehicleTypeCards = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
       <Card 
         className="cursor-pointer border-2 hover:border-primary hover:shadow-lg transition-all duration-200 hover:scale-105"
         onClick={() => handleVehicleTypeSelect('hybrid')}
       >
-        <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
-          <div className="flex items-center gap-3">
-            <CarIcon className="w-16 h-16 text-foreground" strokeWidth={1.5} />
-            <div className="flex gap-2">
-              <div className="bg-orange-500 rounded-full p-2">
-                <Droplet className="w-5 h-5 text-white" fill="currentColor" />
-              </div>
-              <div className="bg-green-500 rounded-full p-2">
-                <Zap className="w-5 h-5 text-white" fill="currentColor" />
-              </div>
+        <CardContent className="p-4 flex flex-col items-center justify-center space-y-3">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1.5 rounded-lg bg-muted">
+              <CarIcon className="w-6 h-6 text-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
+              <Droplet className="w-6 h-6" style={{ color: '#FF8C42' }} />
+            </div>
+            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+              <Leaf className="w-6 h-6" style={{ color: '#22C55E' }} />
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-center">
+          <h3 className="text-base font-semibold text-center">
             {t('vehicles.hybrid')}
           </h3>
         </CardContent>
@@ -136,14 +136,16 @@ export default function Veiculos() {
         className="cursor-pointer border-2 hover:border-primary hover:shadow-lg transition-all duration-200 hover:scale-105"
         onClick={() => handleVehicleTypeSelect('electric')}
       >
-        <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
-          <div className="flex items-center gap-3">
-            <CarIcon className="w-16 h-16 text-foreground" strokeWidth={1.5} />
-            <div className="bg-green-500 rounded-full p-2">
-              <Zap className="w-5 h-5 text-white" fill="currentColor" />
+        <CardContent className="p-4 flex flex-col items-center justify-center space-y-3">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1.5 rounded-lg bg-muted">
+              <CarIcon className="w-6 h-6 text-foreground" strokeWidth={1.5} />
+            </div>
+            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+              <Zap className="w-6 h-6" style={{ color: '#22C55E' }} />
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-center">
+          <h3 className="text-base font-semibold text-center">
             {t('vehicles.electric')}
           </h3>
         </CardContent>
