@@ -125,7 +125,7 @@ export default function Veiculos() {
     setSelectedType(null);
   };
   const VehicleTypeCards = () => <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? 'border-green-600 border-3 shadow-lg hover:border-green-700' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
@@ -152,7 +152,7 @@ export default function Veiculos() {
         </CardContent>
       </Card>
 
-      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? 'border-green-600 border-3 shadow-lg hover:border-green-700' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
@@ -178,20 +178,20 @@ export default function Veiculos() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <Label htmlFor="brand">Marca do veículo</Label>
-          <Input id="brand" {...register('brand')} placeholder="Tesla, BYD, Nissan..." className="focus:border-green-600 focus:ring-green-600" />
+          <Input id="brand" {...register('brand')} placeholder="Tesla, BYD, Nissan..." className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
           {errors.brand && <p className="text-sm text-destructive mt-1">{errors.brand.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="model">Modelo do veículo</Label>
-          <Input id="model" {...register('model')} placeholder="Model 3, Dolphin, Leaf..." className="focus:border-green-600 focus:ring-green-600" />
+          <Input id="model" {...register('model')} placeholder="Model 3, Dolphin, Leaf..." className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
           {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="plugType">Plugs ou adaptadores</Label>
           <Select onValueChange={value => setValue('plugType', value)}>
-            <SelectTrigger className="focus:border-green-600 focus:ring-green-600">
+            <SelectTrigger className="focus-visible:!border-green-600 focus-visible:!ring-green-600">
               <SelectValue placeholder="Selecionar ⊕" />
             </SelectTrigger>
             <SelectContent>
@@ -209,7 +209,7 @@ export default function Veiculos() {
             <Label htmlFor="plate">Placa (opcional)</Label>
             <Info className="w-4 h-4 text-muted-foreground" />
           </div>
-          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} className="focus:border-green-600 focus:ring-green-600" onChange={e => {
+          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} className="focus-visible:!border-green-600 focus-visible:!ring-green-600" onChange={e => {
           const value = e.target.value.toUpperCase();
           e.target.value = value;
           setValue('plate', value);
@@ -222,7 +222,7 @@ export default function Veiculos() {
 
         <div>
           <Label htmlFor="chassi">Chassi do veículo</Label>
-          <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus:border-green-600 focus:ring-green-600" />
+          <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
           <p className="text-xs text-muted-foreground mt-1">Para receber benefícios exclusivos dos parceiros Speed Charger.</p>
           {errors.chassi && <p className="text-sm text-destructive mt-1">{errors.chassi.message}</p>}
         </div>
@@ -231,7 +231,7 @@ export default function Veiculos() {
           <Label htmlFor="batteryCapacity">Capacidade da bateria em kWh</Label>
           <Input id="batteryCapacity" type="number" {...register('batteryCapacity', {
           valueAsNumber: true
-        })} placeholder="75" className="focus:border-green-600 focus:ring-green-600" />
+        })} placeholder="75" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
           {errors.batteryCapacity && <p className="text-sm text-destructive mt-1">{errors.batteryCapacity.message}</p>}
         </div>
 
@@ -239,7 +239,7 @@ export default function Veiculos() {
           <Label htmlFor="autonomy">Autonomia em km</Label>
           <Input id="autonomy" type="number" {...register('autonomy', {
           valueAsNumber: true
-        })} placeholder="Informe a autonomia em km" className="focus:border-green-600 focus:ring-green-600" />
+        })} placeholder="Informe a autonomia em km" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
           {errors.autonomy && <p className="text-sm text-destructive mt-1">{errors.autonomy.message}</p>}
         </div>
 
