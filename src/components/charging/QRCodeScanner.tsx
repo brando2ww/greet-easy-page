@@ -94,79 +94,79 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
   };
 
   return (
-    <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
-      {/* Scanner container */}
-      <div id="qr-reader" className="w-full h-full" />
+    <div className="fixed inset-0 w-screen h-screen bg-black overflow-hidden">
+      {/* Scanner container - Full viewport */}
+      <div id="qr-reader" className="absolute inset-0 w-full h-full" style={{ minHeight: '100vh', minWidth: '100vw' }} />
 
       {/* Header Overlay - Instructions */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 via-black/40 to-transparent pb-16 pointer-events-none" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
-        <h1 className="text-xl font-bold text-white mb-3">Iniciar carga</h1>
-        <div className="space-y-1 text-sm text-white/90">
-          <p><span className="font-semibold">1.</span> Conecte o plug no seu veículo</p>
-          <p><span className="font-semibold">2.</span> Aponte a câmera para o QR Code</p>
+      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent pb-20 pointer-events-none" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-lg font-semibold text-white">Escaneie o QR Code</h1>
+          <button 
+            className="text-white/90 hover:text-white transition-colors flex items-center gap-1.5 text-sm pointer-events-auto"
+            onClick={() => window.open('https://suporte.example.com', '_blank')}
+          >
+            <Headset className="w-4 h-4" />
+            <span>Ajuda</span>
+          </button>
         </div>
+        <p className="text-sm text-white/80">Posicione o código no centro da tela</p>
       </div>
 
       {/* Overlay with frame */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="flex items-center justify-center w-full h-full">
-          <div className="relative w-64 h-64">
-            {/* Corner borders */}
-            <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-white rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-white rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-white rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-white rounded-br-lg" />
-            
-            {/* Scanning animation */}
-            {isScanning && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-full h-1 bg-primary animate-pulse" />
-              </div>
-            )}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="relative w-72 h-72">
+          {/* Corner borders with glow */}
+          <div className="absolute top-0 left-0 w-16 h-16 border-t-[3px] border-l-[3px] border-white rounded-tl-xl shadow-lg shadow-white/20" />
+          <div className="absolute top-0 right-0 w-16 h-16 border-t-[3px] border-r-[3px] border-white rounded-tr-xl shadow-lg shadow-white/20" />
+          <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[3px] border-l-[3px] border-white rounded-bl-xl shadow-lg shadow-white/20" />
+          <div className="absolute bottom-0 right-0 w-16 h-16 border-b-[3px] border-r-[3px] border-white rounded-br-xl shadow-lg shadow-white/20" />
+          
+          {/* Scanning animation line */}
+          {isScanning && (
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse shadow-lg shadow-primary/50" />
+            </div>
+          )}
+          
+          {/* Center guide */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-2 h-2 bg-white/50 rounded-full" />
           </div>
         </div>
       </div>
 
-      {/* Control buttons */}
-      <div className="absolute left-0 right-0 flex justify-between px-6 z-20 pointer-events-auto" style={{ top: 'max(2rem, calc(2rem + env(safe-area-inset-top)))' }}>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="bg-black/50 hover:bg-black/70 backdrop-blur-sm border-white/20"
-          onClick={() => window.open('https://suporte.example.com', '_blank')}
-        >
-          <Headset className="w-5 h-5 text-white" />
-        </Button>
-
-        {hasFlashSupport && (
+      {/* Flash Control Button - Top Right */}
+      {hasFlashSupport && (
+        <div className="absolute right-6 z-20 pointer-events-auto" style={{ top: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-top)))' }}>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="icon"
             className={cn(
-              "bg-black/50 hover:bg-black/70 backdrop-blur-sm border-white/20",
-              isFlashOn && "bg-primary/50 hover:bg-primary/70"
+              "bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 rounded-full w-12 h-12 transition-all",
+              isFlashOn && "bg-primary/40 border-primary/50"
             )}
             onClick={toggleFlash}
           >
             {isFlashOn ? (
               <Zap className="w-5 h-5 text-white" />
             ) : (
-              <ZapOff className="w-5 h-5 text-white" />
+              <ZapOff className="w-5 h-5 text-white/90" />
             )}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Bottom Manual Input Button */}
-      <div className="absolute left-0 right-0 z-40 px-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-16 pointer-events-none" style={{ bottom: 'max(7rem, calc(7rem + env(safe-area-inset-bottom)))' }}>
+      <div className="absolute left-0 right-0 z-40 px-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent pt-20 pointer-events-none" style={{ bottom: 'max(7rem, calc(7rem + env(safe-area-inset-bottom)))' }}>
         <Button
           variant="outline"
           size="lg"
-          className="w-full h-14 text-lg bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm pointer-events-auto mb-2"
+          className="w-full h-14 text-base font-medium bg-transparent text-white border-2 border-white/40 hover:bg-white/10 hover:border-white/60 backdrop-blur-md pointer-events-auto mb-2 transition-all rounded-full"
           onClick={onManualClick}
           disabled={isLoading}
         >
-          Inserir código da estação
+          Inserir código manualmente
         </Button>
       </div>
     </div>
