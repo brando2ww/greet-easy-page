@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Loader2 } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
 
 interface ManualCodeInputProps {
   open: boolean;
@@ -14,49 +13,60 @@ interface ManualCodeInputProps {
 export const ManualCodeInput = ({ open, onOpenChange, onSubmit, isLoading }: ManualCodeInputProps) => {
   const [code, setCode] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.trim()) {
-      onSubmit(code.trim());
+  const handleValueChange = (value: string) => {
+    setCode(value);
+    // Auto-submit quando completar 6 dígitos
+    if (value.length === 6) {
+      onSubmit(value);
     }
   };
 
+  // Limpar código ao fechar
+  useEffect(() => {
+    if (!open) {
+      setCode("");
+    }
+  }, [open]);
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-xl">
-        <SheetHeader>
-          <SheetTitle>Código da Estação</SheetTitle>
-          <SheetDescription>
-            Digite o código que está no carregador
-          </SheetDescription>
-        </SheetHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="px-6 pb-8">
+        <DrawerHeader className="text-center px-0 pt-6 pb-8">
+          <DrawerTitle className="text-xl font-semibold">
+            Digite o código da estação
+          </DrawerTitle>
+        </DrawerHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-          <Input
-            placeholder="Ex: CHG-001"
+        <div className="flex flex-col items-center space-y-8">
+          <InputOTP
+            maxLength={6}
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            className="text-lg h-12"
-            autoFocus
+            onChange={handleValueChange}
+            pattern="^[A-Z0-9]+$"
             disabled={isLoading}
-          />
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} className="w-12 h-14 text-xl rounded-lg" />
+              <InputOTPSlot index={1} className="w-12 h-14 text-xl rounded-lg" />
+              <InputOTPSlot index={2} className="w-12 h-14 text-xl rounded-lg" />
+            </InputOTPGroup>
+            <InputOTPSeparator />
+            <InputOTPGroup>
+              <InputOTPSlot index={3} className="w-12 h-14 text-xl rounded-lg" />
+              <InputOTPSlot index={4} className="w-12 h-14 text-xl rounded-lg" />
+              <InputOTPSlot index={5} className="w-12 h-14 text-xl rounded-lg" />
+            </InputOTPGroup>
+          </InputOTP>
           
           <Button 
-            type="submit" 
-            className="w-full h-12 text-lg" 
-            disabled={!code.trim() || isLoading}
+            variant="ghost" 
+            className="text-primary hover:text-primary/80 hover:bg-transparent text-base font-medium"
+            onClick={() => onOpenChange(false)}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Verificando...
-              </>
-            ) : (
-              "Confirmar"
-            )}
+            Voltar
           </Button>
-        </form>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
