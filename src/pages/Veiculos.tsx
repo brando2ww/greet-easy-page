@@ -115,13 +115,15 @@ export default function Veiculos() {
         onClick={() => handleVehicleTypeSelect('hybrid')}
       >
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-          <div className="flex items-center gap-2">
-            <CarIcon className="w-6 h-6 text-foreground" />
-            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
-              <Droplet className="w-6 h-6" style={{ color: '#FF8C42' }} />
-            </div>
-            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-              <Leaf className="w-6 h-6" style={{ color: '#22C55E' }} />
+          <div className="relative inline-block">
+            <CarIcon className="w-20 h-20 text-foreground" />
+            <div className="absolute -bottom-1 -right-1 flex gap-1">
+              <div className="p-1 rounded-md" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
+                <Droplet className="w-3 h-3" style={{ color: '#FF8C42' }} />
+              </div>
+              <div className="p-1 rounded-md" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+                <Leaf className="w-3 h-3" style={{ color: '#22C55E' }} />
+              </div>
             </div>
           </div>
           <h3 className="text-lg font-semibold text-center">
@@ -135,10 +137,12 @@ export default function Veiculos() {
         onClick={() => handleVehicleTypeSelect('electric')}
       >
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-          <div className="flex items-center gap-2">
-            <CarIcon className="w-6 h-6 text-foreground" />
-            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-              <Zap className="w-6 h-6" style={{ color: '#22C55E' }} />
+          <div className="relative inline-block">
+            <CarIcon className="w-20 h-20 text-foreground" />
+            <div className="absolute -bottom-1 -right-1 flex gap-1">
+              <div className="p-1 rounded-md" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+                <Zap className="w-3 h-3" style={{ color: '#22C55E' }} />
+              </div>
             </div>
           </div>
           <h3 className="text-lg font-semibold text-center">
