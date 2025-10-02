@@ -24,6 +24,12 @@ interface Charger {
   longitude: number | null;
   serial_number: string | null;
   partner_client_id: string | null;
+  ocpp_charge_point_id: string | null;
+  ocpp_protocol_status: string | null;
+  last_heartbeat: string | null;
+  firmware_version: string | null;
+  ocpp_vendor: string | null;
+  ocpp_model: string | null;
   created_at: string;
   updated_at: string;
 }

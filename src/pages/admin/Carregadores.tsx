@@ -27,6 +27,7 @@ const chargerSchema = z.object({
   capacity: z.string().min(1, "Capacidade é obrigatória"),
   client_id: z.string().optional(),
   serial_number: z.string().optional(),
+  ocpp_charge_point_id: z.string().optional(),
   location: z.string().min(1, "Localização é obrigatória"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -46,6 +47,12 @@ type Charger = {
   longitude: number | null;
   serial_number: string | null;
   partner_client_id: string | null;
+  ocpp_charge_point_id: string | null;
+  ocpp_protocol_status: string | null;
+  last_heartbeat: string | null;
+  firmware_version: string | null;
+  ocpp_vendor: string | null;
+  ocpp_model: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -69,6 +76,7 @@ const Carregadores = () => {
       capacity: "",
       client_id: "",
       serial_number: "",
+      ocpp_charge_point_id: "",
       location: "",
       latitude: "",
       longitude: "",
@@ -93,7 +101,7 @@ const Carregadores = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chargers")
-        .select("id, name, location, connector_type, power, status, price_per_kwh, latitude, longitude, serial_number, partner_client_id, created_at, updated_at")
+        .select("id, name, location, connector_type, power, status, price_per_kwh, latitude, longitude, serial_number, partner_client_id, ocpp_charge_point_id, ocpp_protocol_status, last_heartbeat, firmware_version, ocpp_vendor, ocpp_model, created_at, updated_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -107,8 +115,9 @@ const Carregadores = () => {
         name: data.name,
         connector_type: data.type,
         power: parseFloat(data.capacity),
-          partner_client_id: data.client_id || null,
+        partner_client_id: data.client_id || null,
         serial_number: data.serial_number || null,
+        ocpp_charge_point_id: data.ocpp_charge_point_id || null,
         location: data.location,
         status: 'available',
         price_per_kwh: 0.80,
@@ -146,6 +155,7 @@ const Carregadores = () => {
           power: parseFloat(data.capacity),
           partner_client_id: data.client_id || null,
           serial_number: data.serial_number || null,
+          ocpp_charge_point_id: data.ocpp_charge_point_id || null,
           location: data.location,
           latitude: data.latitude ? parseFloat(data.latitude) : null,
           longitude: data.longitude ? parseFloat(data.longitude) : null,
@@ -210,6 +220,7 @@ const Carregadores = () => {
       capacity: charger.power.toString(),
       client_id: charger.partner_client_id || "",
       serial_number: charger.serial_number || "",
+      ocpp_charge_point_id: charger.ocpp_charge_point_id || "",
       location: charger.location,
       latitude: charger.latitude?.toString() || "",
       longitude: charger.longitude?.toString() || "",
@@ -479,18 +490,32 @@ const Carregadores = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="location"
+                  name="ocpp_charge_point_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Localização</FormLabel>
+                      <FormLabel>OCPP Charge Point ID</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} placeholder="Ex: CP001 (opcional)" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Localização</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="grid md:grid-cols-2 gap-4">
                 <FormField

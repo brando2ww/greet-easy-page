@@ -1,1 +1,4 @@
 project_id = "fgvjvtglcmxzadetmmoi"
+
+[functions.ocpp-server]
+verify_jwt = false

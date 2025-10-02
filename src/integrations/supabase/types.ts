@@ -19,11 +19,18 @@ export type Database = {
           client_id: string | null
           connector_type: string
           created_at: string | null
+          firmware_version: string | null
           id: string
+          last_heartbeat: string | null
           latitude: number | null
           location: string
           longitude: number | null
           name: string
+          ocpp_charge_point_id: string | null
+          ocpp_error_code: string | null
+          ocpp_model: string | null
+          ocpp_protocol_status: string | null
+          ocpp_vendor: string | null
           partner_client_id: string | null
           power: number
           price_per_kwh: number
@@ -35,11 +42,18 @@ export type Database = {
           client_id?: string | null
           connector_type: string
           created_at?: string | null
+          firmware_version?: string | null
           id?: string
+          last_heartbeat?: string | null
           latitude?: number | null
           location: string
           longitude?: number | null
           name: string
+          ocpp_charge_point_id?: string | null
+          ocpp_error_code?: string | null
+          ocpp_model?: string | null
+          ocpp_protocol_status?: string | null
+          ocpp_vendor?: string | null
           partner_client_id?: string | null
           power: number
           price_per_kwh?: number
@@ -51,11 +65,18 @@ export type Database = {
           client_id?: string | null
           connector_type?: string
           created_at?: string | null
+          firmware_version?: string | null
           id?: string
+          last_heartbeat?: string | null
           latitude?: number | null
           location?: string
           longitude?: number | null
           name?: string
+          ocpp_charge_point_id?: string | null
+          ocpp_error_code?: string | null
+          ocpp_model?: string | null
+          ocpp_protocol_status?: string | null
+          ocpp_vendor?: string | null
           partner_client_id?: string | null
           power?: number
           price_per_kwh?: number
@@ -88,8 +109,13 @@ export type Database = {
           ended_at: string | null
           energy_consumed: number | null
           id: string
+          id_tag: string | null
+          meter_start: number | null
+          meter_stop: number | null
           started_at: string
           status: string
+          stop_reason: string | null
+          transaction_id: number | null
           updated_at: string
           user_id: string
           vehicle_info: string | null
@@ -101,8 +127,13 @@ export type Database = {
           ended_at?: string | null
           energy_consumed?: number | null
           id?: string
+          id_tag?: string | null
+          meter_start?: number | null
+          meter_stop?: number | null
           started_at?: string
           status?: string
+          stop_reason?: string | null
+          transaction_id?: number | null
           updated_at?: string
           user_id: string
           vehicle_info?: string | null
@@ -114,8 +145,13 @@ export type Database = {
           ended_at?: string | null
           energy_consumed?: number | null
           id?: string
+          id_tag?: string | null
+          meter_start?: number | null
+          meter_stop?: number | null
           started_at?: string
           status?: string
+          stop_reason?: string | null
+          transaction_id?: number | null
           updated_at?: string
           user_id?: string
           vehicle_info?: string | null
