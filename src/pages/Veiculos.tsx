@@ -259,7 +259,7 @@ export default function Veiculos() {
           <Button type="button" variant="outline" className="flex-1" onClick={handleFormCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="flex-1">
+          <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white">
             Adicionar veículo
           </Button>
         </div>
