@@ -169,6 +169,18 @@ export default function Veiculos() {
         </div>
 
         <div>
+          <Label htmlFor="year">Ano do veículo</Label>
+          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} placeholder="2024" min="2015" max="2025" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          {errors.year && <p className="text-sm text-destructive mt-1">{errors.year.message}</p>}
+        </div>
+
+        <div>
+          <Label htmlFor="color">Cor do veículo</Label>
+          <Input id="color" {...register('color')} placeholder="Branco, Preto, Vermelho..." className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          {errors.color && <p className="text-sm text-destructive mt-1">{errors.color.message}</p>}
+        </div>
+
+        <div>
           <Label htmlFor="plug_type">Plugs ou adaptadores</Label>
           <Select onValueChange={value => setValue('plug_type', value)}>
             <SelectTrigger className="focus-visible:!border-green-600 focus-visible:!ring-green-600">
