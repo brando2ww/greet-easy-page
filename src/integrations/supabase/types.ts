@@ -257,6 +257,57 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicles: {
+        Row: {
+          autonomy: number | null
+          battery_capacity: number
+          brand: string
+          chassi: string | null
+          color: string
+          created_at: string | null
+          id: string
+          model: string
+          plate: string | null
+          plug_type: string
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          autonomy?: number | null
+          battery_capacity: number
+          brand: string
+          chassi?: string | null
+          color: string
+          created_at?: string | null
+          id?: string
+          model: string
+          plate?: string | null
+          plug_type: string
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          autonomy?: number | null
+          battery_capacity?: number
+          brand?: string
+          chassi?: string | null
+          color?: string
+          created_at?: string | null
+          id?: string
+          model?: string
+          plate?: string | null
+          plug_type?: string
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -273,6 +324,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "support" | "user"
       charger_status: "available" | "in_use" | "maintenance" | "offline"
+      vehicle_type: "hybrid" | "electric"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -402,6 +454,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "support", "user"],
       charger_status: ["available", "in_use", "maintenance", "offline"],
+      vehicle_type: ["hybrid", "electric"],
     },
   },
 } as const
