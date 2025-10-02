@@ -20,7 +20,7 @@ export const MobileLayout = ({ children, header, noBorder }: MobileLayoutProps) 
       )}
       
       <main className={cn(
-        "flex-1 flex flex-col pb-16 overflow-y-auto",
+        "flex-1 flex flex-col pb-16 overflow-y-auto scrollbar-hide",
         header && "pt-14"
       )}>
         {children}
