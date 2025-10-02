@@ -112,6 +112,16 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
           height: 100% !important;
           object-fit: cover !important;
         }
+        /* Hide the default overlay/shaded region from html5-qrcode */
+        #qr-reader__dashboard_section,
+        #qr-reader__dashboard_section_csr,
+        #qr-shaded-region {
+          display: none !important;
+        }
+        /* Hide canvas overlay if present */
+        #qr-reader canvas {
+          display: none !important;
+        }
       `}</style>
       
       {/* Scanner container - Full viewport */}
