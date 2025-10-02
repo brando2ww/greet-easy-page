@@ -294,7 +294,7 @@ export default function Veiculos() {
         </div>
 
         <div className="flex gap-2 pt-4">
-          <Button type="button" variant="outline" className="flex-1 hover:bg-muted" onClick={handleFormCancel}>
+          <Button type="button" variant="outline" className="flex-1 hover:bg-destructive hover:text-destructive-foreground" onClick={handleFormCancel}>
             Cancelar
           </Button>
           <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white" disabled={isAddingVehicle || isUpdatingVehicle}>
