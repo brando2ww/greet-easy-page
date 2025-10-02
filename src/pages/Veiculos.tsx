@@ -109,24 +109,24 @@ export default function Veiculos() {
   };
 
   const VehicleTypeCards = () => (
-    <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
+    <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
       <Card 
         className="cursor-pointer border-2 hover:border-primary hover:shadow-lg transition-all duration-200 hover:scale-105"
         onClick={() => handleVehicleTypeSelect('hybrid')}
       >
-        <CardContent className="p-4 flex flex-col items-center justify-center space-y-3">
-          <div className="flex items-center gap-1.5">
-            <div className="p-1.5 rounded-lg bg-muted">
-              <CarIcon className="w-6 h-6 text-foreground" strokeWidth={1.5} />
+        <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2.5 rounded-lg bg-muted">
+              <CarIcon className="w-10 h-10 text-foreground" strokeWidth={1.5} />
             </div>
-            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
-              <Droplet className="w-6 h-6" style={{ color: '#FF8C42' }} />
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
+              <Droplet className="w-10 h-10" style={{ color: '#FF8C42' }} />
             </div>
-            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-              <Leaf className="w-6 h-6" style={{ color: '#22C55E' }} />
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+              <Leaf className="w-10 h-10" style={{ color: '#22C55E' }} />
             </div>
           </div>
-          <h3 className="text-base font-semibold text-center">
+          <h3 className="text-lg font-semibold text-center">
             {t('vehicles.hybrid')}
           </h3>
         </CardContent>
@@ -136,16 +136,16 @@ export default function Veiculos() {
         className="cursor-pointer border-2 hover:border-primary hover:shadow-lg transition-all duration-200 hover:scale-105"
         onClick={() => handleVehicleTypeSelect('electric')}
       >
-        <CardContent className="p-4 flex flex-col items-center justify-center space-y-3">
-          <div className="flex items-center gap-1.5">
-            <div className="p-1.5 rounded-lg bg-muted">
-              <CarIcon className="w-6 h-6 text-foreground" strokeWidth={1.5} />
+        <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2.5 rounded-lg bg-muted">
+              <CarIcon className="w-10 h-10 text-foreground" strokeWidth={1.5} />
             </div>
-            <div className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-              <Zap className="w-6 h-6" style={{ color: '#22C55E' }} />
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+              <Zap className="w-10 h-10" style={{ color: '#22C55E' }} />
             </div>
           </div>
-          <h3 className="text-base font-semibold text-center">
+          <h3 className="text-lg font-semibold text-center">
             {t('vehicles.electric')}
           </h3>
         </CardContent>
