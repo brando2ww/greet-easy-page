@@ -9,24 +9,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "@/hooks/use-toast";
 import { CarIcon } from "@/components/icons/CarIcon";
 
-const vehicles = [
-  {
-    id: 1,
-    model: "Tesla Model 3",
-    plate: "ABC-1234",
-    plugType: "Tipo 2",
-    battery: "75 kWh",
-    image: "🚗"
-  },
-  {
-    id: 2,
-    model: "Nissan Leaf",
-    plate: "XYZ-5678",
-    plugType: "CHAdeMO",
-    battery: "40 kWh",
-    image: "🚙"
-  }
-];
+const vehicles: any[] = [];
 
 export default function Veiculos() {
   const { t } = useTranslation();
