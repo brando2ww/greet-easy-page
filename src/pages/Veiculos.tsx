@@ -116,12 +116,12 @@ export default function Veiculos() {
       >
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="flex items-center gap-2">
-            <CarIcon className="w-10 h-10 text-foreground" />
-            <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
-              <Droplet className="w-10 h-10" style={{ color: '#FF8C42' }} />
+            <CarIcon className="w-6 h-6 text-foreground" />
+            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
+              <Droplet className="w-6 h-6" style={{ color: '#FF8C42' }} />
             </div>
-            <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-              <Leaf className="w-10 h-10" style={{ color: '#22C55E' }} />
+            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+              <Leaf className="w-6 h-6" style={{ color: '#22C55E' }} />
             </div>
           </div>
           <h3 className="text-lg font-semibold text-center">
@@ -136,9 +136,9 @@ export default function Veiculos() {
       >
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="flex items-center gap-2">
-            <CarIcon className="w-10 h-10 text-foreground" />
-            <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-              <Zap className="w-10 h-10" style={{ color: '#22C55E' }} />
+            <CarIcon className="w-6 h-6 text-foreground" />
+            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
+              <Zap className="w-6 h-6" style={{ color: '#22C55E' }} />
             </div>
           </div>
           <h3 className="text-lg font-semibold text-center">
