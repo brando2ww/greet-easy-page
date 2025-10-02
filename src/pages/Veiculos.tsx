@@ -15,7 +15,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
 interface Vehicle {
   id: string;
   brand: string;
@@ -29,57 +28,69 @@ interface Vehicle {
   autonomy?: number;
   type: 'hybrid' | 'electric';
 }
-
 export default function Veiculos() {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<'hybrid' | 'electric' | null>(null);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
-
   const vehicleSchema = z.object({
-    brand: z.string().min(1, { message: t('vehicles.brandRequired') }),
-    model: z.string().min(1, { message: t('vehicles.modelRequired') }),
-    year: z.number().min(2015).max(2025, { message: t('vehicles.yearRequired') }),
+    brand: z.string().min(1, {
+      message: t('vehicles.brandRequired')
+    }),
+    model: z.string().min(1, {
+      message: t('vehicles.modelRequired')
+    }),
+    year: z.number().min(2015).max(2025, {
+      message: t('vehicles.yearRequired')
+    }),
     plate: z.string().optional(),
-    color: z.string().min(1, { message: t('vehicles.colorRequired') }),
-    plugType: z.string().min(1, { message: t('vehicles.plugTypeRequired') }),
-    batteryCapacity: z.number()
-      .min(10, { message: t('vehicles.batteryCapacityMin') })
-      .max(200, { message: t('vehicles.batteryCapacityMax') }),
+    color: z.string().min(1, {
+      message: t('vehicles.colorRequired')
+    }),
+    plugType: z.string().min(1, {
+      message: t('vehicles.plugTypeRequired')
+    }),
+    batteryCapacity: z.number().min(10, {
+      message: t('vehicles.batteryCapacityMin')
+    }).max(200, {
+      message: t('vehicles.batteryCapacityMax')
+    }),
     chassi: z.string().optional(),
-    autonomy: z.number().min(1).optional(),
+    autonomy: z.number().min(1).optional()
   });
-
   type VehicleFormData = z.infer<typeof vehicleSchema>;
-
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: {
+      errors
+    },
     setValue,
     watch,
-    reset,
+    reset
   } = useForm<VehicleFormData>({
-    resolver: zodResolver(vehicleSchema),
+    resolver: zodResolver(vehicleSchema)
   });
-
   const handleVehicleTypeSelect = (type: 'hybrid' | 'electric') => {
     setSelectedType(type);
     setIsTypeDialogOpen(false);
-    
+
     // Auto scroll to form
     setTimeout(() => {
       const formElement = document.getElementById('vehicle-form');
       if (formElement) {
-        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        formElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
       }
     }, 100);
   };
-
   const onSubmit = (data: VehicleFormData) => {
     if (!selectedType) return;
-
     const newVehicle: Vehicle = {
       id: Date.now().toString(),
       brand: data.brand,
@@ -91,50 +102,47 @@ export default function Veiculos() {
       batteryCapacity: data.batteryCapacity,
       chassi: data.chassi,
       autonomy: data.autonomy,
-      type: selectedType,
+      type: selectedType
     };
-
     setVehicles([...vehicles, newVehicle]);
     reset();
     setSelectedType(null);
-    
     toast({
       title: t('common.success'),
-      description: t('vehicles.vehicleAdded'),
+      description: t('vehicles.vehicleAdded')
     });
   };
-
   const handleDeleteVehicle = (id: string) => {
     setVehicles(vehicles.filter(v => v.id !== id));
     setVehicleToDelete(null);
     toast({
       title: t('common.success'),
-      description: t('vehicles.vehicleDeleted'),
+      description: t('vehicles.vehicleDeleted')
     });
   };
-
   const handleFormCancel = () => {
     reset();
     setSelectedType(null);
   };
-
-  const VehicleTypeCards = () => (
-    <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-      <Card 
-        className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${
-          selectedType === 'hybrid' ? 'border-primary border-3 shadow-lg' : 'hover:border-primary hover:shadow-lg'
-        }`}
-        onClick={() => handleVehicleTypeSelect('hybrid')}
-      >
+  const VehicleTypeCards = () => <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? 'border-primary border-3 shadow-lg' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
             <div className="absolute -bottom-1 -right-1 flex gap-1">
-              <div className="p-1 rounded-md" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
-                <Droplet className="w-3 h-3" style={{ color: '#FF8C42' }} />
+              <div className="p-1 rounded-md" style={{
+              backgroundColor: 'rgba(255, 140, 66, 0.2)'
+            }}>
+                <Droplet className="w-3 h-3" style={{
+                color: '#FF8C42'
+              }} />
               </div>
-              <div className="p-1 rounded-md" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-                <Leaf className="w-3 h-3" style={{ color: '#22C55E' }} />
+              <div className="p-1 rounded-md" style={{
+              backgroundColor: 'rgba(34, 197, 94, 0.2)'
+            }}>
+                <Leaf className="w-3 h-3" style={{
+                color: '#22C55E'
+              }} />
               </div>
             </div>
           </div>
@@ -144,18 +152,17 @@ export default function Veiculos() {
         </CardContent>
       </Card>
 
-      <Card 
-        className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${
-          selectedType === 'electric' ? 'border-primary border-3 shadow-lg' : 'hover:border-primary hover:shadow-lg'
-        }`}
-        onClick={() => handleVehicleTypeSelect('electric')}
-      >
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? 'border-primary border-3 shadow-lg' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
             <div className="absolute -bottom-1 -right-1 flex gap-1">
-              <div className="p-1 rounded-md" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
-                <Zap className="w-3 h-3" style={{ color: '#22C55E' }} />
+              <div className="p-1 rounded-md" style={{
+              backgroundColor: 'rgba(34, 197, 94, 0.2)'
+            }}>
+                <Zap className="w-3 h-3" style={{
+                color: '#22C55E'
+              }} />
               </div>
             </div>
           </div>
@@ -164,15 +171,10 @@ export default function Veiculos() {
           </h3>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 
   // Inline form component
-  const InlineForm = () => (
-    <div 
-      id="vehicle-form"
-      className="max-w-2xl mx-auto animate-fade-in"
-    >
+  const InlineForm = () => <div id="vehicle-form" className="max-w-2xl mx-auto animate-fade-in">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <Label htmlFor="brand">Marca do veículo</Label>
@@ -188,7 +190,7 @@ export default function Veiculos() {
 
         <div>
           <Label htmlFor="plugType">Plugs ou adaptadores</Label>
-          <Select onValueChange={(value) => setValue('plugType', value)}>
+          <Select onValueChange={value => setValue('plugType', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Selecionar ⊕" />
             </SelectTrigger>
@@ -207,17 +209,11 @@ export default function Veiculos() {
             <Label htmlFor="plate">Placa (opcional)</Label>
             <Info className="w-4 h-4 text-muted-foreground" />
           </div>
-          <Input 
-            id="plate" 
-            {...register('plate')} 
-            placeholder="ABC-1234" 
-            maxLength={8}
-            onChange={(e) => {
-              const value = e.target.value.toUpperCase();
-              e.target.value = value;
-              setValue('plate', value);
-            }}
-          />
+          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} onChange={e => {
+          const value = e.target.value.toUpperCase();
+          e.target.value = value;
+          setValue('plate', value);
+        }} />
           <p className="text-xs text-muted-foreground mt-1">
             Ao incluir sua placa você terá ofertas exclusivas através da mesma
           </p>
@@ -227,31 +223,23 @@ export default function Veiculos() {
         <div>
           <Label htmlFor="chassi">Chassi do veículo</Label>
           <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" />
-          <p className="text-xs text-muted-foreground mt-1">
-            Para receber benefícios exclusivos dos parceiros Tupi
-          </p>
+          <p className="text-xs text-muted-foreground mt-1">Para receber benefícios exclusivos dos parceiros Speed Charger.</p>
           {errors.chassi && <p className="text-sm text-destructive mt-1">{errors.chassi.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="batteryCapacity">Capacidade da bateria em kWh</Label>
-          <Input 
-            id="batteryCapacity" 
-            type="number" 
-            {...register('batteryCapacity', { valueAsNumber: true })} 
-            placeholder="75" 
-          />
+          <Input id="batteryCapacity" type="number" {...register('batteryCapacity', {
+          valueAsNumber: true
+        })} placeholder="75" />
           {errors.batteryCapacity && <p className="text-sm text-destructive mt-1">{errors.batteryCapacity.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="autonomy">Autonomia em km</Label>
-          <Input 
-            id="autonomy" 
-            type="number" 
-            {...register('autonomy', { valueAsNumber: true })}
-            placeholder="Informe a autonomia em km"
-          />
+          <Input id="autonomy" type="number" {...register('autonomy', {
+          valueAsNumber: true
+        })} placeholder="Informe a autonomia em km" />
           {errors.autonomy && <p className="text-sm text-destructive mt-1">{errors.autonomy.message}</p>}
         </div>
 
@@ -264,13 +252,11 @@ export default function Veiculos() {
           </Button>
         </div>
       </form>
-    </div>
-  );
+    </div>;
 
   // Empty state - show cards directly
   if (vehicles.length === 0) {
-    return (
-      <ResponsiveLayout showBottomNav>
+    return <ResponsiveLayout showBottomNav>
         <div className="p-4 space-y-6 pb-16">
           <div>
             <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
@@ -284,13 +270,11 @@ export default function Veiculos() {
           {/* Inline Form */}
           {selectedType && <InlineForm />}
         </div>
-      </ResponsiveLayout>
-    );
+      </ResponsiveLayout>;
   }
 
   // List state - show vehicles with + button
-  const header = (
-    <div className="p-4 flex items-center justify-between">
+  const header = <div className="p-4 flex items-center justify-between">
       <div>
         <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
         <p className="text-sm text-muted-foreground">
@@ -300,14 +284,10 @@ export default function Veiculos() {
       <Button size="icon" className="rounded-full w-12 h-12" onClick={() => setIsTypeDialogOpen(true)}>
         <Plus className="w-6 h-6" />
       </Button>
-    </div>
-  );
-
-  return (
-    <ResponsiveLayout mobileHeader={header} showBottomNav>
+    </div>;
+  return <ResponsiveLayout mobileHeader={header} showBottomNav>
       <div className="p-4 space-y-4">
-        {vehicles.map((vehicle) => (
-          <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
+        {vehicles.map(vehicle => <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -319,29 +299,20 @@ export default function Veiculos() {
                       <h3 className="font-bold text-lg">{vehicle.brand} {vehicle.model}</h3>
                       <p className="text-sm text-muted-foreground">{vehicle.plate} • {vehicle.year}</p>
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => setVehicleToDelete(vehicle.id)}
-                    >
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setVehicleToDelete(vehicle.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <Badge variant="secondary" className="text-xs">
-                      {vehicle.type === 'hybrid' ? (
-                        <div className="flex items-center gap-1">
+                      {vehicle.type === 'hybrid' ? <div className="flex items-center gap-1">
                           <Droplet className="w-3 h-3" />
                           <Zap className="w-3 h-3" />
                           {t('vehicles.hybrid')}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1">
+                        </div> : <div className="flex items-center gap-1">
                           <Zap className="w-3 h-3" />
                           {t('vehicles.electric')}
-                        </div>
-                      )}
+                        </div>}
                     </Badge>
                     <Badge variant="secondary" className="text-xs">
                       <Plug className="w-3 h-3 mr-1" />
@@ -355,8 +326,7 @@ export default function Veiculos() {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        ))}
+          </Card>)}
       </div>
 
       {/* Type Selection Dialog */}
@@ -376,11 +346,9 @@ export default function Veiculos() {
           </div>
 
           {/* Inline Form in Dialog */}
-          {selectedType && (
-            <div className="mt-6">
+          {selectedType && <div className="mt-6">
               <InlineForm />
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
 
@@ -395,15 +363,11 @@ export default function Veiculos() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => vehicleToDelete && handleDeleteVehicle(vehicleToDelete)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={() => vehicleToDelete && handleDeleteVehicle(vehicleToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </ResponsiveLayout>
-  );
+    </ResponsiveLayout>;
 }
