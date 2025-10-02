@@ -90,6 +90,38 @@ export const useVehicles = () => {
     },
   });
 
+  const updateVehicle = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: VehicleFormData }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: updatedVehicle, error } = await supabase
+        .from('vehicles')
+        .update(data)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updatedVehicle;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast({
+        title: 'Veículo atualizado',
+        description: 'O veículo foi atualizado com sucesso.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erro ao atualizar veículo',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const deleteVehicle = useMutation({
     mutationFn: async (vehicleId: string) => {
       const { error } = await supabase
@@ -119,8 +151,10 @@ export const useVehicles = () => {
     vehicles,
     isLoading,
     addVehicle: addVehicle.mutate,
+    updateVehicle: updateVehicle.mutate,
     deleteVehicle: deleteVehicle.mutate,
     isAddingVehicle: addVehicle.isPending,
+    isUpdatingVehicle: updateVehicle.isPending,
     isDeletingVehicle: deleteVehicle.isPending,
   };
 };

@@ -14,13 +14,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useVehicles, VehicleType } from "@/hooks/useVehicles";
+import { useVehicles, VehicleType, Vehicle } from "@/hooks/useVehicles";
 export default function Veiculos() {
   const { t } = useTranslation();
-  const { vehicles, isLoading, addVehicle, deleteVehicle, isAddingVehicle } = useVehicles();
+  const { vehicles, isLoading, addVehicle, updateVehicle, deleteVehicle, isAddingVehicle, isUpdatingVehicle } = useVehicles();
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<VehicleType | null>(null);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const vehicleSchema = z.object({
     brand: z.string().min(1, {
       message: t('vehicles.brandRequired')
@@ -60,6 +61,9 @@ export default function Veiculos() {
     resolver: zodResolver(vehicleSchema)
   });
   const handleVehicleTypeSelect = (type: VehicleType) => {
+    // Don't change type if editing
+    if (editingVehicle) return;
+    
     setSelectedType(type);
     setIsTypeDialogOpen(false);
 
@@ -75,21 +79,71 @@ export default function Veiculos() {
     }, 100);
   };
   
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setSelectedType(vehicle.type);
+    
+    // Fill form with vehicle data
+    setValue('brand', vehicle.brand);
+    setValue('model', vehicle.model);
+    setValue('year', vehicle.year);
+    setValue('color', vehicle.color);
+    setValue('plug_type', vehicle.plug_type);
+    setValue('battery_capacity', vehicle.battery_capacity);
+    setValue('plate', vehicle.plate || '');
+    setValue('chassi', vehicle.chassi || '');
+    setValue('autonomy', vehicle.autonomy || undefined);
+    
+    setIsTypeDialogOpen(true);
+    
+    // Scroll to form
+    setTimeout(() => {
+      const formElement = document.getElementById('vehicle-form');
+      if (formElement) {
+        formElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 100);
+  };
+  
   const onSubmit = (data: VehicleFormData) => {
     if (!selectedType) return;
     
-    addVehicle({
-      brand: data.brand,
-      model: data.model,
-      year: data.year,
-      color: data.color,
-      plug_type: data.plug_type,
-      battery_capacity: data.battery_capacity,
-      type: selectedType,
-      plate: data.plate,
-      chassi: data.chassi,
-      autonomy: data.autonomy,
-    });
+    if (editingVehicle) {
+      // Update existing vehicle
+      updateVehicle({
+        id: editingVehicle.id,
+        data: {
+          brand: data.brand,
+          model: data.model,
+          year: data.year,
+          color: data.color,
+          plug_type: data.plug_type,
+          battery_capacity: data.battery_capacity,
+          type: selectedType,
+          plate: data.plate,
+          chassi: data.chassi,
+          autonomy: data.autonomy,
+        }
+      });
+      setEditingVehicle(null);
+    } else {
+      // Add new vehicle
+      addVehicle({
+        brand: data.brand,
+        model: data.model,
+        year: data.year,
+        color: data.color,
+        plug_type: data.plug_type,
+        battery_capacity: data.battery_capacity,
+        type: selectedType,
+        plate: data.plate,
+        chassi: data.chassi,
+        autonomy: data.autonomy,
+      });
+    }
     
     reset();
     setSelectedType(null);
@@ -103,6 +157,7 @@ export default function Veiculos() {
   const handleFormCancel = () => {
     reset();
     setSelectedType(null);
+    setEditingVehicle(null);
   };
   const VehicleTypeCards = () => <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
       <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-green-500 hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
@@ -155,6 +210,9 @@ export default function Veiculos() {
 
   // Inline form component
   const InlineForm = () => <div id="vehicle-form" className="max-w-2xl mx-auto animate-fade-in">
+      <h2 className="text-lg font-semibold mb-4">
+        {editingVehicle ? 'Editar veículo' : 'Adicionar novo veículo'}
+      </h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <Label htmlFor="brand">Marca do veículo</Label>
@@ -239,8 +297,11 @@ export default function Veiculos() {
           <Button type="button" variant="outline" className="flex-1" onClick={handleFormCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white" disabled={isAddingVehicle}>
-            {isAddingVehicle ? 'Adicionando...' : 'Adicionar veículo'}
+          <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white" disabled={isAddingVehicle || isUpdatingVehicle}>
+            {editingVehicle 
+              ? (isUpdatingVehicle ? 'Atualizando...' : 'Atualizar veículo')
+              : (isAddingVehicle ? 'Adicionando...' : 'Adicionar veículo')
+            }
           </Button>
         </div>
       </form>
@@ -296,7 +357,7 @@ export default function Veiculos() {
                 <Button 
                   variant="link" 
                   className="h-auto p-0 text-green-600 hover:text-green-700 font-semibold"
-                  onClick={() => {/* TODO: Implement edit */}}
+                  onClick={() => handleEditVehicle(vehicle)}
                 >
                   Editar
                 </Button>
