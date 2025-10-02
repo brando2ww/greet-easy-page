@@ -305,6 +305,23 @@ export default function Veiculos() {
           </Button>
         </div>
       </form>
+      
+      {editingVehicle && (
+        <div className="pt-6 mt-6 border-t">
+          <Button 
+            type="button" 
+            variant="destructive" 
+            className="w-full"
+            onClick={() => {
+              setVehicleToDelete(editingVehicle.id);
+              setIsTypeDialogOpen(false);
+            }}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Excluir veículo
+          </Button>
+        </div>
+      )}
     </div>;
 
   // Loading state
@@ -403,7 +420,7 @@ export default function Veiculos() {
 
       {/* Type Selection Dialog */}
       <Dialog open={isTypeDialogOpen} onOpenChange={setIsTypeDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center">
               {t('vehicles.addNew')}
