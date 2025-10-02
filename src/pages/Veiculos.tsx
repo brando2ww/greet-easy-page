@@ -443,7 +443,7 @@ export default function Veiculos() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!vehicleToDelete} onOpenChange={() => setVehicleToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="!top-auto !bottom-0 !translate-y-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:duration-300 data-[state=closed]:duration-300">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('vehicles.confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
