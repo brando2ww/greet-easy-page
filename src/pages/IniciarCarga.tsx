@@ -1,73 +1,62 @@
+import { useState } from "react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Zap, MapPin, Car, Plug } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { QRCodeScanner } from "@/components/charging/QRCodeScanner";
+import { ManualCodeInput } from "@/components/charging/ManualCodeInput";
+import { useChargerValidation } from "@/hooks/useChargerValidation";
 
 export default function IniciarCarga() {
-  const { t } = useTranslation();
+  const [showManualInput, setShowManualInput] = useState(false);
+  const { validateAndStartSession, isLoading } = useChargerValidation();
+
+  const handleScanSuccess = (code: string) => {
+    validateAndStartSession(code);
+  };
+
+  const handleManualSubmit = (code: string) => {
+    validateAndStartSession(code);
+    setShowManualInput(false);
+  };
 
   const header = (
-    <div className="p-4">
-      <h1 className="text-xl font-bold">{t('charging.title')}</h1>
+    <div className="p-4 border-b">
+      <h1 className="text-xl font-bold mb-3">Iniciar carga</h1>
+      <div className="space-y-1 text-sm text-muted-foreground">
+        <p><span className="font-semibold text-foreground">1.</span> Conecte o plug no seu veículo</p>
+        <p><span className="font-semibold text-foreground">2.</span> Aponte a câmera para o QR Code</p>
+      </div>
     </div>
   );
 
   return (
     <ResponsiveLayout mobileHeader={header} showBottomNav>
-      <div className="p-4 space-y-4">
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-            <Zap className="w-12 h-12 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Pronto para carregar?</h2>
-          <p className="text-muted-foreground mb-8 max-w-sm">
-            Selecione uma estação e veículo para iniciar o carregamento
-          </p>
-          
-          <Button size="lg" className="w-full max-w-xs h-14 text-lg">
-            <Zap className="w-5 h-5 mr-2" />
-            Começar Carregamento
-          </Button>
+      <div className="flex flex-col h-full p-4 space-y-4">
+        {/* Scanner Area */}
+        <div className="flex-1 min-h-[400px]">
+          <QRCodeScanner 
+            onScanSuccess={handleScanSuccess}
+            onError={(error) => console.error('Scanner error:', error)}
+          />
         </div>
 
-        <div className="space-y-3">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold">Selecionar Estação</p>
-                <p className="text-sm text-muted-foreground">Escolha onde carregar</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Manual Input Button */}
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full h-14 text-lg"
+          onClick={() => setShowManualInput(true)}
+          disabled={isLoading}
+        >
+          Inserir código da estação
+        </Button>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Car className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold">Selecionar Veículo</p>
-                <p className="text-sm text-muted-foreground">Escolha seu carro</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Plug className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold">Tipo de Plug</p>
-                <p className="text-sm text-muted-foreground">Verifique compatibilidade</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Manual Input Sheet */}
+        <ManualCodeInput
+          open={showManualInput}
+          onOpenChange={setShowManualInput}
+          onSubmit={handleManualSubmit}
+          isLoading={isLoading}
+        />
       </div>
     </ResponsiveLayout>
   );
