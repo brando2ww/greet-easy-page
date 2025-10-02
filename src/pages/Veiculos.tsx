@@ -420,7 +420,7 @@ export default function Veiculos() {
 
       {/* Type Selection Dialog */}
       <Dialog open={isTypeDialogOpen} onOpenChange={setIsTypeDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto scrollbar-hide data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:!slide-in-from-top-0 data-[state=closed]:!slide-out-to-top-0">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto scrollbar-hide !top-auto !bottom-0 !translate-y-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:duration-300 data-[state=closed]:duration-300">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center">
               {t('vehicles.addNew')}
