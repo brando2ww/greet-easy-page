@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,12 +14,6 @@ const vehicles: any[] = [];
 export default function Veiculos() {
   const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (vehicles.length === 0) {
-      setIsDialogOpen(true);
-    }
-  }, []);
 
   const handleVehicleTypeSelect = (type: 'hybrid' | 'electric') => {
     setIsDialogOpen(false);
@@ -94,10 +88,15 @@ export default function Veiculos() {
               onClick={() => handleVehicleTypeSelect('hybrid')}
             >
               <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
-                <div className="relative">
-                  <CarIcon className="w-20 h-20 text-foreground" strokeWidth={1.5} />
-                  <div className="absolute -bottom-2 -right-2 bg-orange-500 rounded-full p-2">
-                    <Droplet className="w-6 h-6 text-white" fill="currentColor" />
+                <div className="flex items-center gap-3">
+                  <CarIcon className="w-16 h-16 text-foreground" strokeWidth={1.5} />
+                  <div className="flex gap-2">
+                    <div className="bg-orange-500 rounded-full p-2">
+                      <Droplet className="w-5 h-5 text-white" fill="currentColor" />
+                    </div>
+                    <div className="bg-green-500 rounded-full p-2">
+                      <Zap className="w-5 h-5 text-white" fill="currentColor" />
+                    </div>
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold text-center">
@@ -112,10 +111,10 @@ export default function Veiculos() {
               onClick={() => handleVehicleTypeSelect('electric')}
             >
               <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
-                <div className="relative">
-                  <CarIcon className="w-20 h-20 text-foreground" strokeWidth={1.5} />
-                  <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
-                    <Zap className="w-6 h-6 text-white" fill="currentColor" />
+                <div className="flex items-center gap-3">
+                  <CarIcon className="w-16 h-16 text-foreground" strokeWidth={1.5} />
+                  <div className="bg-green-500 rounded-full p-2">
+                    <Zap className="w-5 h-5 text-white" fill="currentColor" />
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold text-center">
