@@ -45,7 +45,6 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
           {
             fps: 10,
             qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
           },
           (decodedText) => {
             // Haptic feedback
@@ -95,8 +94,28 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-black overflow-hidden">
+      {/* CSS to force video to cover full screen */}
+      <style>{`
+        #qr-reader {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          overflow: hidden !important;
+        }
+        #qr-reader video {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+        }
+      `}</style>
+      
       {/* Scanner container - Full viewport */}
-      <div id="qr-reader" className="absolute inset-0 w-full h-full" style={{ minHeight: '100vh', minWidth: '100vw' }} />
+      <div id="qr-reader" className="fixed inset-0 w-full h-full" />
 
       {/* Header Overlay - Instructions */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 via-black/30 to-transparent pb-20 pointer-events-none" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
