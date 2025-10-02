@@ -18,9 +18,9 @@ export default function IniciarCarga() {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-[100dvh] w-full overflow-hidden">
       {/* Fullscreen Scanner */}
-      <QRCodeScanner 
+      <QRCodeScanner
         onScanSuccess={handleScanSuccess}
         onError={(error) => console.error('Scanner error:', error)}
         onManualClick={() => setShowManualInput(true)}

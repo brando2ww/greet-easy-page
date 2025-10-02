@@ -99,7 +99,7 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
       <div id="qr-reader" className="w-full h-full" />
 
       {/* Header Overlay - Instructions */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-6 pb-12 pointer-events-none">
+      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 via-black/40 to-transparent pb-16 pointer-events-none" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))', paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
         <h1 className="text-xl font-bold text-white mb-3">Iniciar carga</h1>
         <div className="space-y-1 text-sm text-white/90">
           <p><span className="font-semibold">1.</span> Conecte o plug no seu veículo</p>
@@ -128,7 +128,7 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
       </div>
 
       {/* Control buttons */}
-      <div className="absolute top-6 left-0 right-0 flex justify-between px-6 z-20 pointer-events-auto">
+      <div className="absolute left-0 right-0 flex justify-between px-6 z-20 pointer-events-auto" style={{ top: 'max(2rem, calc(2rem + env(safe-area-inset-top)))' }}>
         <Button
           variant="secondary"
           size="icon"
@@ -158,11 +158,11 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
       </div>
 
       {/* Bottom Manual Input Button */}
-      <div className="absolute bottom-20 left-0 right-0 z-20 px-6 pb-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-12 pointer-events-none">
+      <div className="absolute left-0 right-0 z-40 px-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-16 pointer-events-none" style={{ bottom: 'max(7rem, calc(7rem + env(safe-area-inset-bottom)))' }}>
         <Button
           variant="outline"
           size="lg"
-          className="w-full h-14 text-lg bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm pointer-events-auto"
+          className="w-full h-14 text-lg bg-white/10 text-white border-white/30 hover:bg-white/20 backdrop-blur-sm pointer-events-auto mb-2"
           onClick={onManualClick}
           disabled={isLoading}
         >
