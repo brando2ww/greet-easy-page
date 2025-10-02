@@ -153,6 +153,14 @@ export default function Veiculos() {
   const handleDeleteVehicle = (id: string) => {
     deleteVehicle(id);
     setVehicleToDelete(null);
+    
+    // Limpar estados de edição
+    setEditingVehicle(null);
+    setSelectedType(null);
+    reset();
+    
+    // Fechar diálogo de edição se estiver aberto
+    setIsTypeDialogOpen(false);
   };
   const handleFormCancel = () => {
     reset();
