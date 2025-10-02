@@ -116,9 +116,7 @@ export default function Veiculos() {
       >
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-lg bg-muted">
-              <CarIcon className="w-10 h-10 text-foreground" strokeWidth={1.5} />
-            </div>
+            <CarIcon className="w-10 h-10 text-foreground" />
             <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(255, 140, 66, 0.2)' }}>
               <Droplet className="w-10 h-10" style={{ color: '#FF8C42' }} />
             </div>
@@ -138,9 +136,7 @@ export default function Veiculos() {
       >
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-lg bg-muted">
-              <CarIcon className="w-10 h-10 text-foreground" strokeWidth={1.5} />
-            </div>
+            <CarIcon className="w-10 h-10 text-foreground" />
             <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)' }}>
               <Zap className="w-10 h-10" style={{ color: '#22C55E' }} />
             </div>
