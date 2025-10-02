@@ -125,7 +125,7 @@ export default function Veiculos() {
     setSelectedType(null);
   };
   const VehicleTypeCards = () => <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-green-500 hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
@@ -152,7 +152,7 @@ export default function Veiculos() {
         </CardContent>
       </Card>
 
-      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-green-500 hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
@@ -281,7 +281,7 @@ export default function Veiculos() {
           {vehicles.length} {vehicles.length === 1 ? t('vehicles.vehicleRegistered') : t('vehicles.vehiclesRegistered')}
         </p>
       </div>
-      <Button size="icon" className="rounded-full w-12 h-12" onClick={() => setIsTypeDialogOpen(true)}>
+      <Button size="icon" className="rounded-full w-12 h-12 bg-green-600 hover:bg-green-700 text-white" onClick={() => setIsTypeDialogOpen(true)}>
         <Plus className="w-6 h-6" />
       </Button>
     </div>;
@@ -290,8 +290,8 @@ export default function Veiculos() {
         {vehicles.map(vehicle => <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <CarIcon className="w-10 h-10 text-primary" />
+                  <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center">
+                    <CarIcon className="w-10 h-10 text-green-600" />
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex items-start justify-between">
