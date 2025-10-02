@@ -451,7 +451,7 @@ export default function Veiculos() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="hover:bg-destructive hover:text-destructive-foreground">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel className="hover:bg-green-600 hover:text-white">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => vehicleToDelete && handleDeleteVehicle(vehicleToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('common.delete')}
             </AlertDialogAction>
