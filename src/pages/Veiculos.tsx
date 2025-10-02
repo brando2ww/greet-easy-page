@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,32 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Battery, Plug, Droplet, Zap, Trash2, Leaf, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { toast } from "@/hooks/use-toast";
 import { CarIcon } from "@/components/icons/CarIcon";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-interface Vehicle {
-  id: string;
-  brand: string;
-  model: string;
-  year: number;
-  plate?: string;
-  color: string;
-  plugType: string;
-  batteryCapacity: number;
-  chassi?: string;
-  autonomy?: number;
-  type: 'hybrid' | 'electric';
-}
+import { useVehicles, VehicleType } from "@/hooks/useVehicles";
 export default function Veiculos() {
-  const {
-    t
-  } = useTranslation();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const { t } = useTranslation();
+  const { vehicles, isLoading, addVehicle, deleteVehicle, isAddingVehicle } = useVehicles();
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<'hybrid' | 'electric' | null>(null);
+  const [selectedType, setSelectedType] = useState<VehicleType | null>(null);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
   const vehicleSchema = z.object({
     brand: z.string().min(1, {
@@ -50,10 +35,10 @@ export default function Veiculos() {
     color: z.string().min(1, {
       message: t('vehicles.colorRequired')
     }),
-    plugType: z.string().min(1, {
+    plug_type: z.string().min(1, {
       message: t('vehicles.plugTypeRequired')
     }),
-    batteryCapacity: z.number().min(10, {
+    battery_capacity: z.number().min(10, {
       message: t('vehicles.batteryCapacityMin')
     }).max(200, {
       message: t('vehicles.batteryCapacityMax')
@@ -74,7 +59,7 @@ export default function Veiculos() {
   } = useForm<VehicleFormData>({
     resolver: zodResolver(vehicleSchema)
   });
-  const handleVehicleTypeSelect = (type: 'hybrid' | 'electric') => {
+  const handleVehicleTypeSelect = (type: VehicleType) => {
     setSelectedType(type);
     setIsTypeDialogOpen(false);
 
@@ -89,36 +74,31 @@ export default function Veiculos() {
       }
     }, 100);
   };
+  
   const onSubmit = (data: VehicleFormData) => {
     if (!selectedType) return;
-    const newVehicle: Vehicle = {
-      id: Date.now().toString(),
+    
+    addVehicle({
       brand: data.brand,
       model: data.model,
       year: data.year,
-      plate: data.plate,
       color: data.color,
-      plugType: data.plugType,
-      batteryCapacity: data.batteryCapacity,
+      plug_type: data.plug_type,
+      battery_capacity: data.battery_capacity,
+      type: selectedType,
+      plate: data.plate,
       chassi: data.chassi,
       autonomy: data.autonomy,
-      type: selectedType
-    };
-    setVehicles([...vehicles, newVehicle]);
+    });
+    
     reset();
     setSelectedType(null);
-    toast({
-      title: t('common.success'),
-      description: t('vehicles.vehicleAdded')
-    });
+    setIsTypeDialogOpen(false);
   };
+  
   const handleDeleteVehicle = (id: string) => {
-    setVehicles(vehicles.filter(v => v.id !== id));
+    deleteVehicle(id);
     setVehicleToDelete(null);
-    toast({
-      title: t('common.success'),
-      description: t('vehicles.vehicleDeleted')
-    });
   };
   const handleFormCancel = () => {
     reset();
@@ -189,8 +169,8 @@ export default function Veiculos() {
         </div>
 
         <div>
-          <Label htmlFor="plugType">Plugs ou adaptadores</Label>
-          <Select onValueChange={value => setValue('plugType', value)}>
+          <Label htmlFor="plug_type">Plugs ou adaptadores</Label>
+          <Select onValueChange={value => setValue('plug_type', value)}>
             <SelectTrigger className="focus-visible:!border-green-600 focus-visible:!ring-green-600">
               <SelectValue placeholder="Selecionar ⊕" />
             </SelectTrigger>
@@ -201,7 +181,7 @@ export default function Veiculos() {
               <SelectItem value="tesla">{t('vehicles.plugTypes.tesla')}</SelectItem>
             </SelectContent>
           </Select>
-          {errors.plugType && <p className="text-sm text-destructive mt-1">{errors.plugType.message}</p>}
+          {errors.plug_type && <p className="text-sm text-destructive mt-1">{errors.plug_type.message}</p>}
         </div>
 
         <div>
@@ -228,11 +208,11 @@ export default function Veiculos() {
         </div>
 
         <div>
-          <Label htmlFor="batteryCapacity">Capacidade da bateria em kWh</Label>
-          <Input id="batteryCapacity" type="number" {...register('batteryCapacity', {
+          <Label htmlFor="battery_capacity">Capacidade da bateria em kWh</Label>
+          <Input id="battery_capacity" type="number" {...register('battery_capacity', {
           valueAsNumber: true
         })} placeholder="75" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
-          {errors.batteryCapacity && <p className="text-sm text-destructive mt-1">{errors.batteryCapacity.message}</p>}
+          {errors.battery_capacity && <p className="text-sm text-destructive mt-1">{errors.battery_capacity.message}</p>}
         </div>
 
         <div>
@@ -247,12 +227,22 @@ export default function Veiculos() {
           <Button type="button" variant="outline" className="flex-1" onClick={handleFormCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-            Adicionar veículo
+          <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white" disabled={isAddingVehicle}>
+            {isAddingVehicle ? 'Adicionando...' : 'Adicionar veículo'}
           </Button>
         </div>
       </form>
     </div>;
+
+  // Loading state
+  if (isLoading) {
+    return <ResponsiveLayout showBottomNav>
+        <div className="p-4 space-y-4">
+          <div className="h-8 bg-muted animate-pulse rounded" />
+          <div className="h-32 bg-muted animate-pulse rounded" />
+        </div>
+      </ResponsiveLayout>;
+  }
 
   // Empty state - show cards directly
   if (vehicles.length === 0) {
@@ -273,60 +263,69 @@ export default function Veiculos() {
       </ResponsiveLayout>;
   }
 
-  // List state - show vehicles with + button
-  const header = <div className="p-4 flex items-center justify-between">
-      <div>
-        <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {vehicles.length} {vehicles.length === 1 ? t('vehicles.vehicleRegistered') : t('vehicles.vehiclesRegistered')}
-        </p>
-      </div>
-      <Button size="icon" className="rounded-full w-12 h-12 bg-green-600 hover:bg-green-700 text-white" onClick={() => setIsTypeDialogOpen(true)}>
-        <Plus className="w-6 h-6" />
-      </Button>
-    </div>;
-  return <ResponsiveLayout mobileHeader={header} showBottomNav>
-      <div className="p-4 space-y-4">
-        {vehicles.map(vehicle => <Card key={vehicle.id} className="hover:shadow-md transition-shadow">
+  // List state - show vehicles 
+  return <ResponsiveLayout showBottomNav>
+      <div className="p-4 space-y-4 pb-20">
+        {/* Header */}
+        <div>
+          <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
+          <p className="text-sm text-muted-foreground">
+            {vehicles.length} {vehicles.length === 1 ? t('vehicles.vehicleRegistered') : t('vehicles.vehiclesRegistered')}
+          </p>
+        </div>
+
+        {/* Vehicle Cards */}
+        {vehicles.map(vehicle => <Card key={vehicle.id} className="overflow-hidden">
             <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CarIcon className="w-10 h-10 text-green-600" />
+              <div className="flex items-start justify-between mb-3">
+                <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                  {vehicle.brand}
+                </Badge>
+                <Button 
+                  variant="link" 
+                  className="h-auto p-0 text-green-600 hover:text-green-700 font-semibold"
+                  onClick={() => {/* TODO: Implement edit */}}
+                >
+                  Editar
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CarIcon className="w-8 h-8 text-green-600" />
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-lg">{vehicle.brand} {vehicle.model}</h3>
-                      <p className="text-sm text-muted-foreground">{vehicle.plate} • {vehicle.year}</p>
-                    </div>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setVehicleToDelete(vehicle.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge variant="secondary" className="text-xs">
-                      {vehicle.type === 'hybrid' ? <div className="flex items-center gap-1">
-                          <Droplet className="w-3 h-3" />
-                          <Zap className="w-3 h-3" />
-                          {t('vehicles.hybrid')}
-                        </div> : <div className="flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          {t('vehicles.electric')}
-                        </div>}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      <Plug className="w-3 h-3 mr-1" />
-                      {t(`vehicles.plugTypes.${vehicle.plugType}`)}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      <Battery className="w-3 h-3 mr-1" />
-                      {vehicle.batteryCapacity} kWh
-                    </Badge>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base truncate">{vehicle.model}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {vehicle.type === 'electric' ? t('vehicles.electric') : t('vehicles.hybrid')} • {vehicle.battery_capacity} kWh
+                  </p>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t">
+                <span className="text-sm text-muted-foreground">
+                  {vehicle.plate || 'Sem placa'} • {vehicle.year}
+                </span>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive" 
+                  onClick={() => setVehicleToDelete(vehicle.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>)}
+
+        {/* Add New Vehicle Button */}
+        <Button 
+          className="w-full h-14 bg-green-600 hover:bg-green-700 text-white text-base font-semibold"
+          onClick={() => setIsTypeDialogOpen(true)}
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Adicionar novo veículo
+        </Button>
       </div>
 
       {/* Type Selection Dialog */}

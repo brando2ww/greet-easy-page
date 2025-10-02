@@ -1,0 +1,12 @@
+-- Corrigir função update_vehicles_updated_at para ter search_path seguro
+CREATE OR REPLACE FUNCTION update_vehicles_updated_at()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
