@@ -158,7 +158,7 @@ export const QRCodeScanner = ({ onScanSuccess, onError, onManualClick, isLoading
       )}
 
       {/* Bottom Manual Input Button */}
-      <div className="absolute left-0 right-0 z-40 px-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent pt-20 pointer-events-none" style={{ bottom: 'max(7rem, calc(7rem + env(safe-area-inset-bottom)))' }}>
+      <div className="absolute left-0 right-0 z-40 px-6 bg-gradient-to-t from-black/60 via-black/20 to-transparent pt-20 pointer-events-none" style={{ bottom: 'calc(max(7rem, calc(7rem + env(safe-area-inset-bottom))) + 50px)' }}>
         <Button
           variant="outline"
           size="lg"
