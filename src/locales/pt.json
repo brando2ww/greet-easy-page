@@ -89,7 +89,12 @@
   },
   "vehicles": {
     "title": "Meus Veículos",
-    "subtitle": "Gerencie sua frota elétrica"
+    "subtitle": "Gerencie sua frota elétrica",
+    "addNew": "Adicionar novo veículo",
+    "selectType": "Selecione o tipo",
+    "hybrid": "Híbrido",
+    "electric": "100% elétrico",
+    "typeSelected": "Tipo de veículo selecionado"
   },
   "profile": {
     "title": "Perfil",

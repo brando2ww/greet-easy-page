@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Car, Battery, Plug } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Car, Battery, Plug, Droplet, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "@/hooks/use-toast";
+import { CarIcon } from "@/components/icons/CarIcon";
 
 const vehicles = [
   {
@@ -26,6 +30,15 @@ const vehicles = [
 
 export default function Veiculos() {
   const { t } = useTranslation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleVehicleTypeSelect = (type: 'hybrid' | 'electric') => {
+    setIsDialogOpen(false);
+    toast({
+      title: t('vehicles.typeSelected'),
+      description: type === 'hybrid' ? t('vehicles.hybrid') : t('vehicles.electric'),
+    });
+  };
 
   const header = (
     <div className="p-4 flex items-center justify-between">
@@ -35,7 +48,7 @@ export default function Veiculos() {
           {vehicles.length} {vehicles.length === 1 ? 'veículo' : 'veículos'} cadastrados
         </p>
       </div>
-      <Button size="icon" className="rounded-full w-12 h-12">
+      <Button size="icon" className="rounded-full w-12 h-12" onClick={() => setIsDialogOpen(true)}>
         <Plus className="w-6 h-6" />
       </Button>
     </div>
@@ -81,13 +94,64 @@ export default function Veiculos() {
             <p className="text-sm text-muted-foreground mb-6">
               Adicione seu primeiro veículo elétrico
             </p>
-            <Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Adicionar Veículo
             </Button>
           </div>
         )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              {t('vehicles.addNew')}
+            </DialogTitle>
+            <p className="text-center text-muted-foreground mt-2">
+              {t('vehicles.selectType')}
+            </p>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            {/* Híbrido Card */}
+            <Card 
+              className="cursor-pointer border-2 hover:border-primary hover:shadow-lg transition-all duration-200 hover:scale-105"
+              onClick={() => handleVehicleTypeSelect('hybrid')}
+            >
+              <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
+                <div className="relative">
+                  <CarIcon className="w-20 h-20 text-foreground" strokeWidth={1.5} />
+                  <div className="absolute -bottom-2 -right-2 bg-orange-500 rounded-full p-2">
+                    <Droplet className="w-6 h-6 text-white" fill="currentColor" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-center">
+                  {t('vehicles.hybrid')}
+                </h3>
+              </CardContent>
+            </Card>
+
+            {/* 100% Elétrico Card */}
+            <Card 
+              className="cursor-pointer border-2 hover:border-primary hover:shadow-lg transition-all duration-200 hover:scale-105"
+              onClick={() => handleVehicleTypeSelect('electric')}
+            >
+              <CardContent className="p-8 flex flex-col items-center justify-center space-y-4">
+                <div className="relative">
+                  <CarIcon className="w-20 h-20 text-foreground" strokeWidth={1.5} />
+                  <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
+                    <Zap className="w-6 h-6 text-white" fill="currentColor" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-center">
+                  {t('vehicles.electric')}
+                </h3>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
     </ResponsiveLayout>
   );
 }
