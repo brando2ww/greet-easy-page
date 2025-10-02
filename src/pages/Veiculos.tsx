@@ -223,7 +223,7 @@ export default function Veiculos() {
         <div>
           <Label htmlFor="chassi">Chassi do veículo</Label>
           <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
-          <p className="text-xs text-muted-foreground mt-1">Para receber benefícios exclusivos dos parceiros Speed Charger.</p>
+          <p className="text-xs text-muted-foreground mt-1">Para receber benefícios exclusivos dos parceiros Speed Charger</p>
           {errors.chassi && <p className="text-sm text-destructive mt-1">{errors.chassi.message}</p>}
         </div>
 
