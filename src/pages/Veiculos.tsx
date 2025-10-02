@@ -271,7 +271,7 @@ export default function Veiculos() {
   if (vehicles.length === 0) {
     return (
       <ResponsiveLayout showBottomNav>
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 pb-16">
           <div>
             <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
             <p className="text-sm text-muted-foreground">
