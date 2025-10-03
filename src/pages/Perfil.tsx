@@ -69,11 +69,11 @@ export default function Perfil() {
       // Forçar refresh do user no contexto
       await supabase.auth.getUser();
       
-      toast.success("Perfil atualizado com sucesso!");
+      toast.success(t('profile.profileUpdatedSuccess'));
       setIsEditSheetOpen(false);
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Erro ao atualizar perfil");
+      toast.error(t('profile.profileUpdateError'));
     } finally {
       setIsSaving(false);
     }
@@ -99,7 +99,7 @@ export default function Perfil() {
 
   const handleDeleteAccount = async () => {
     // Placeholder para funcionalidade de exclusão de conta
-    toast.error("Funcionalidade de exclusão de conta ainda não implementada");
+    toast.error(t('profile.deleteNotImplemented'));
     setIsDeleteDialogOpen(false);
   };
 
@@ -116,11 +116,11 @@ export default function Perfil() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || "Usuário"}</h2>
+              <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || t('profile.user')}</h2>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setIsEditSheetOpen(true)}>
-            Editar
+            {t('profile.edit')}
           </Button>
         </div>
 
@@ -134,10 +134,10 @@ export default function Perfil() {
               <Clock className="w-6 h-6 text-green-600" />
             </div>
             <p className="text-center font-semibold text-foreground mb-1">
-              Descubra o impacto positivo
+              {t('profile.impactTitle')}
             </p>
             <p className="text-center text-sm text-muted-foreground">
-              das suas viagens elétricas
+              {t('profile.impactSubtitle')}
             </p>
           </CardContent>
         </Card>
@@ -147,7 +147,7 @@ export default function Perfil() {
           <Card className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30">
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <Headphones className="w-8 h-8 text-foreground" />
-              <span className="text-sm font-medium text-center">Ajuda</span>
+              <span className="text-sm font-medium text-center">{t('profile.help')}</span>
             </CardContent>
           </Card>
           
@@ -157,7 +157,7 @@ export default function Perfil() {
           >
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <DollarSign className="w-8 h-8 text-foreground" />
-              <span className="text-sm font-medium text-center">Pagamento</span>
+              <span className="text-sm font-medium text-center">{t('profile.payment')}</span>
             </CardContent>
           </Card>
           
@@ -167,7 +167,7 @@ export default function Perfil() {
           >
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <History className="w-8 h-8 text-foreground" />
-              <span className="text-sm font-medium text-center">Histórico</span>
+              <span className="text-sm font-medium text-center">{t('profile.history')}</span>
             </CardContent>
           </Card>
         </div>
@@ -183,7 +183,7 @@ export default function Perfil() {
             </div>
             <div className="flex items-center justify-between pl-8">
               <span className="text-sm text-muted-foreground">
-                Receber novidades e promoções por email
+                {t('profile.newsletterLabel')}
               </span>
               <Switch 
                 checked={receiveNewsletters}
@@ -201,7 +201,7 @@ export default function Perfil() {
           >
             <CardContent className="p-4 flex items-center gap-3">
               <User className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 font-medium">Informações de cobrança</span>
+              <span className="flex-1 font-medium">{t('profile.billingInfo')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </CardContent>
           </Card>
@@ -212,7 +212,7 @@ export default function Perfil() {
           >
             <CardContent className="p-4 flex items-center gap-3">
               <Settings className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 font-medium">Configurações</span>
+              <span className="flex-1 font-medium">{t('profile.settings')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </CardContent>
           </Card>
@@ -221,9 +221,9 @@ export default function Perfil() {
         {/* Footer */}
         <div className="text-center pt-4 pb-8">
           <p className="text-xs text-muted-foreground">
-            <button className="hover:underline">Termos de uso</button>
+            <button className="hover:underline">{t('profile.termsOfUse')}</button>
             {" • "}
-            <button className="hover:underline">Política de privacidade</button>
+            <button className="hover:underline">{t('profile.privacyPolicy')}</button>
           </p>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function Perfil() {
             >
               <ChevronRight className="h-5 w-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-bold">Minha conta</h1>
+            <h1 className="text-xl font-bold">{t('profile.myAccount')}</h1>
           </div>
 
           {/* Conteúdo Scrollável */}
@@ -265,7 +265,7 @@ export default function Perfil() {
                   onClick={() => fileInputRef.current?.click()}
                   className="text-sm text-primary hover:underline"
                 >
-                  Carregar foto
+                  {t('profile.uploadPhoto')}
                 </button>
                 {avatarUrl && (
                   <>
@@ -274,7 +274,7 @@ export default function Perfil() {
                       onClick={handleRemoveAvatar}
                       className="text-sm text-muted-foreground hover:text-foreground hover:underline"
                     >
-                      Remover foto
+                      {t('profile.removePhoto')}
                     </button>
                   </>
                 )}
@@ -283,12 +283,12 @@ export default function Perfil() {
 
             {/* Campo de Nome */}
             <div className="space-y-2">
-              <Label htmlFor="fullName">Seu nome</Label>
+              <Label htmlFor="fullName">{t('profile.yourName')}</Label>
               <Input 
                 id="fullName" 
                 value={fullName} 
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Digite seu nome completo"
+                placeholder={t('profile.namePlaceholder')}
               />
             </div>
           </div>
@@ -300,14 +300,14 @@ export default function Perfil() {
               onClick={handleSaveProfile}
               disabled={isSaving}
             >
-              {isSaving ? "Salvando..." : "Salvar alterações"}
+              {isSaving ? t('profile.saving') : t('profile.saveChanges')}
             </Button>
             <button
               onClick={() => setIsDeleteDialogOpen(true)}
               className="flex items-center justify-center gap-2 w-full text-sm text-destructive hover:underline"
             >
               <Trash2 className="w-4 h-4" />
-              Excluir conta
+              {t('profile.deleteAccount')}
             </button>
           </div>
         </SheetContent>
@@ -317,15 +317,15 @@ export default function Perfil() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogTitle>{t('profile.deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Sua conta e todos os dados associados serão permanentemente excluídos.
+              {t('profile.deleteConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir conta
+              {t('profile.deleteAccount')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
