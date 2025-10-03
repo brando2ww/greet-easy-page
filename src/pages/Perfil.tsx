@@ -2,106 +2,158 @@ import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { 
   User, 
   History, 
-  CreditCard, 
-  Wallet, 
-  Bell, 
+  DollarSign, 
+  Headphones, 
   Settings, 
-  HelpCircle, 
-  LogOut,
-  ChevronRight 
+  Ticket,
+  ChevronRight,
+  Zap,
+  Leaf,
+  Clock,
+  Mail
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "@/components/LanguageSelector";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function Perfil() {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [receiveNewsletters, setReceiveNewsletters] = useState(false);
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate("/auth/login");
-    } catch (error) {
-      toast({
-        title: t('common.error'),
-        description: "Erro ao sair",
-        variant: "destructive",
-      });
-    }
+    await signOut();
+    navigate("/auth/login");
   };
 
-  const menuItems = [
-    { icon: User, label: t('profile.myAccount'), path: "/perfil/dados" },
-    { icon: History, label: "Histórico de Cargas", path: "/perfil/historico" },
-    { icon: CreditCard, label: "Formas de Pagamento", path: "/perfil/pagamento" },
-    { icon: Wallet, label: "Carteira", path: "/perfil/carteira" },
-    { icon: Bell, label: t('profile.notifications'), path: "/perfil/notificacoes" },
-    { icon: Settings, label: t('profile.settings'), path: "/perfil/configuracoes" },
-    { icon: HelpCircle, label: t('profile.help'), path: "/perfil/ajuda" },
-  ];
   return (
     <ResponsiveLayout showBottomNav>
       <div className="p-4 space-y-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  {user?.email?.substring(0, 2).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || "Usuário"}</h2>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
-              </div>
+        {/* Header com Avatar e Botão Editar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Avatar className="w-20 h-20">
+              <AvatarImage src="" />
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                {user?.email?.substring(0, 2).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || "Usuário"}</h2>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-primary" />
-                </div>
-                <span className="font-medium">{t('profile.language')}</span>
-              </div>
-              <LanguageSelector />
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Card key={item.path} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="flex-1 font-medium">{item.label}</span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </CardContent>
-              </Card>
-            );
-          })}
+          </div>
+          <Button variant="outline" size="sm">
+            Editar
+          </Button>
         </div>
 
-        <Button variant="destructive" className="w-full" size="lg" onClick={handleLogout}>
-          <LogOut className="w-5 h-5 mr-2" />
-          {t('profile.logout')}
-        </Button>
+        {/* Card de Impacto Ambiental */}
+        <Card className="bg-accent/50">
+          <CardContent className="p-6">
+            <div className="flex justify-center gap-6 mb-3">
+              <Zap className="w-6 h-6 text-primary" />
+              <DollarSign className="w-6 h-6 text-primary" />
+              <Leaf className="w-6 h-6 text-primary" />
+              <Clock className="w-6 h-6 text-primary" />
+            </div>
+            <p className="text-center font-semibold text-foreground mb-1">
+              Descubra o impacto positivo
+            </p>
+            <p className="text-center text-sm text-muted-foreground">
+              das suas viagens elétricas
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Grid de 3 Cards Principais */}
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-accent/30">
+            <CardContent className="p-4 flex flex-col items-center gap-2">
+              <Headphones className="w-8 h-8 text-foreground" />
+              <span className="text-sm font-medium text-center">Ajuda</span>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-accent/30">
+            <CardContent className="p-4 flex flex-col items-center gap-2">
+              <DollarSign className="w-8 h-8 text-foreground" />
+              <span className="text-sm font-medium text-center">Pagamento</span>
+            </CardContent>
+          </Card>
+          
+          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-accent/30">
+            <CardContent className="p-4 flex flex-col items-center gap-2">
+              <History className="w-8 h-8 text-foreground" />
+              <span className="text-sm font-medium text-center">Histórico</span>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Seção de Email com Toggle */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">{user?.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pl-8">
+              <span className="text-sm text-muted-foreground">
+                Receber novidades e promoções por email
+              </span>
+              <Switch 
+                checked={receiveNewsletters}
+                onCheckedChange={setReceiveNewsletters}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Menu Items */}
+        <div className="space-y-2">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-3">
+              <User className="w-5 h-5 text-muted-foreground" />
+              <span className="flex-1 font-medium">Informações de cobrança</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Ticket className="w-5 h-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="font-medium">Cupons</p>
+                <p className="text-sm text-muted-foreground">Nenhum cupom adicionado</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Settings className="w-5 h-5 text-muted-foreground" />
+              <span className="flex-1 font-medium">Configurações</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center pt-4 pb-8">
+          <p className="text-xs text-muted-foreground">
+            <button className="hover:underline">Termos de uso</button>
+            {" • "}
+            <button className="hover:underline">Política de privacidade</button>
+          </p>
+        </div>
       </div>
     </ResponsiveLayout>
   );
