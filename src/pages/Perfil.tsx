@@ -206,7 +206,10 @@ export default function Perfil() {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate("/perfil/configuracoes")}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <Settings className="w-5 h-5 text-muted-foreground" />
               <span className="flex-1 font-medium">Configurações</span>

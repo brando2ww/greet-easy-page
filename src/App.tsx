@@ -16,6 +16,7 @@ import IniciarCarga from "./pages/IniciarCarga";
 import Veiculos from "./pages/Veiculos";
 import Perfil from "./pages/Perfil";
 import InformacoesCobranca from "./pages/InformacoesCobranca";
+import Configuracoes from "./pages/Configuracoes";
 import AuthWelcome from "./pages/AuthWelcome";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/veiculos" element={<ProtectedRoute><Veiculos /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
               <Route path="/perfil/informacoes-cobranca" element={<ProtectedRoute><InformacoesCobranca /></ProtectedRoute>} />
+              <Route path="/perfil/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
               <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
               <Route path="/admin/clientes" element={<AdminRoute><Clientes /></AdminRoute>} />
               <Route path="/admin/carregadores" element={<AdminRoute><Carregadores /></AdminRoute>} />
