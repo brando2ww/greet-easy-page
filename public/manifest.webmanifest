@@ -1,0 +1,60 @@
+{
+  "name": "Speed Charger",
+  "short_name": "Speed Charger",
+  "description": "Sistema de carregadores para veículos elétricos",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#131318",
+  "theme_color": "#10B981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["utilities", "navigation"],
+  "shortcuts": [
+    {
+      "name": "Iniciar Carga",
+      "short_name": "Carregar",
+      "description": "Iniciar uma nova sessão de carga",
+      "url": "/iniciar-carga",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mapa de Estações",
+      "short_name": "Mapa",
+      "description": "Ver mapa de estações de carregamento",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

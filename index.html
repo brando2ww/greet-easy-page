@@ -7,7 +7,19 @@
     <meta name="description" content="Sistema de carregadores para veículos elétricos.">
     <meta name="author" content="Lovable" />
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest">
     
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#10B981">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#10B981">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131318">
+    
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Speed Charger">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
@@ -16,17 +28,19 @@
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     <meta property="og:title" content="Speed Charger">
-  <meta name="twitter:title" content="Speed Charger">
-  <meta property="og:description" content="Sistema de carregadores para veículos elétricos.">
+    <meta name="twitter:title" content="Speed Charger">
+    <meta property="og:description" content="Sistema de carregadores para veículos elétricos.">
     <meta name="twitter:description" content="Sistema de carregadores para veículos elétricos.">
-  <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/xq3rsxM6G3Uju6VR6UIMsJ47WSN2/uploads/1759327813349-speed_logo_01.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
+    
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
 
   <body>
     <div id="root"></div>
+    <script src="/pwa-register.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
