@@ -196,7 +196,10 @@ export default function Perfil() {
 
         {/* Menu Items */}
         <div className="space-y-2">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate("/perfil/informacoes-cobranca")}
+          >
             <CardContent className="p-4 flex items-center gap-3">
               <User className="w-5 h-5 text-muted-foreground" />
               <span className="flex-1 font-medium">Informações de cobrança</span>

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_info: {
+        Row: {
+          city: string | null
+          complement: string | null
+          cpf: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          neighborhood: string | null
+          number: string | null
+          state: string | null
+          street_address: string | null
+          updated_at: string | null
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          city?: string | null
+          complement?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          neighborhood?: string | null
+          number?: string | null
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string | null
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          city?: string | null
+          complement?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          neighborhood?: string | null
+          number?: string | null
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string | null
+          user_id?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       chargers: {
         Row: {
           client_id: string | null
