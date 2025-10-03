@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import QRCode from "qrcode";
+import { useRef } from "react";
+import QRCodeSVG from "react-qr-code";
 import { Download, Printer, Copy, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -26,64 +26,55 @@ export const ChargerQRCode = ({
   open,
   onOpenChange,
 }: ChargerQRCodeProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const qrRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const [qrDataUrl, setQrDataUrl] = useState<string>("");
-
-  useEffect(() => {
-    if (open && canvasRef.current) {
-      // Gerar QR code no canvas
-      QRCode.toCanvas(
-        canvasRef.current,
-        chargerId,
-        {
-          width: 300,
-          margin: 2,
-          color: {
-            dark: "#000000",
-            light: "#FFFFFF",
-          },
-        },
-        (error) => {
-          if (error) {
-            console.error("Erro ao gerar QR code:", error);
-            toast({
-              title: "Erro",
-              description: "Não foi possível gerar o QR code",
-              variant: "destructive",
-            });
-          }
-        }
-      );
-
-      // Gerar data URL para download
-      QRCode.toDataURL(chargerId, { width: 500, margin: 2 })
-        .then((url) => {
-          setQrDataUrl(url);
-        })
-        .catch((err) => {
-          console.error("Erro ao gerar data URL:", err);
-        });
-    }
-  }, [open, chargerId, toast]);
 
   const handleDownload = () => {
-    if (!qrDataUrl) return;
+    if (!qrRef.current) return;
 
-    const link = document.createElement("a");
-    link.href = qrDataUrl;
-    link.download = `qrcode-${chargerName.replace(/\s+/g, "-").toLowerCase()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const svg = qrRef.current.querySelector("svg");
+    if (!svg) return;
 
-    toast({
-      title: "Download iniciado",
-      description: "QR code baixado com sucesso",
-    });
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    canvas.width = 500;
+    canvas.height = 500;
+
+    img.onload = () => {
+      ctx?.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `qrcode-${chargerName.replace(/\s+/g, "-").toLowerCase()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast({
+          title: "Download iniciado",
+          description: "QR code baixado com sucesso",
+        });
+      });
+    };
+
+    img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
   const handlePrint = () => {
+    if (!qrRef.current) return;
+
+    const svg = qrRef.current.querySelector("svg");
+    if (!svg) return;
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const dataUrl = "data:image/svg+xml;base64," + btoa(svgData);
+
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast({
@@ -155,7 +146,7 @@ export const ChargerQRCode = ({
           <div class="container">
             <h1>${chargerName}</h1>
             <div class="location">${chargerLocation}</div>
-            <img src="${qrDataUrl}" alt="QR Code" />
+            <img src="${dataUrl}" alt="QR Code" />
             <div class="instructions">
               <strong>Como usar:</strong>
               <ol>
@@ -215,8 +206,8 @@ export const ChargerQRCode = ({
           </div>
 
           {/* QR Code */}
-          <div className="flex justify-center p-6 bg-white rounded-lg border-2 border-green-200">
-            <canvas ref={canvasRef} />
+          <div ref={qrRef} className="flex justify-center p-6 bg-white rounded-lg border-2 border-green-200">
+            <QRCodeSVG value={chargerId} size={256} level="H" />
           </div>
 
           {/* ID do carregador */}
@@ -233,7 +224,6 @@ export const ChargerQRCode = ({
               variant="outline"
               onClick={handleDownload}
               className="gap-2"
-              disabled={!qrDataUrl}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Baixar</span>
@@ -242,7 +232,6 @@ export const ChargerQRCode = ({
               variant="outline"
               onClick={handlePrint}
               className="gap-2"
-              disabled={!qrDataUrl}
             >
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Imprimir</span>
