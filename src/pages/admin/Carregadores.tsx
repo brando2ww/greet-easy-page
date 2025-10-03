@@ -29,8 +29,7 @@ const chargerSchema = z.object({
   client_id: z.string().optional(),
   serial_number: z.string().optional(),
   ocpp_charge_point_id: z.string()
-    .regex(/^[0-9]{6}$/, "O código OCPP deve ter exatamente 6 números")
-    .optional(),
+    .regex(/^[0-9]{6}$/, "O código OCPP deve ter exatamente 6 números"),
   location: z.string().min(1, "Localização é obrigatória"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -522,7 +521,7 @@ const Carregadores = () => {
                             const value = e.target.value.replace(/\D/g, '');
                             field.onChange(value);
                           }}
-                          placeholder="Ex: 123456 (opcional)"
+                          placeholder="Ex: 123456"
                         />
                       </FormControl>
                       <FormMessage />
