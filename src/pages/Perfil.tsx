@@ -152,7 +152,10 @@ export default function Perfil() {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30"
+            onClick={() => navigate("/carteira")}
+          >
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <DollarSign className="w-8 h-8 text-foreground" />
               <span className="text-sm font-medium text-center">Pagamento</span>
