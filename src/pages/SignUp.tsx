@@ -127,7 +127,7 @@ const SignUp = () => {
               onChange={(e) => setFullName(e.target.value)}
               required
               autoComplete="name"
-              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:text-white [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:focus]:bg-white/10"
+              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:[-webkit-text-fill-color:white] [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:hover]:[-webkit-text-fill-color:white] [-webkit-autofill:focus]:bg-white/10 [-webkit-autofill:focus]:[-webkit-text-fill-color:white] [-webkit-autofill:active]:[-webkit-text-fill-color:white]"
             />
           </div>
 
@@ -143,7 +143,7 @@ const SignUp = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:text-white [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:focus]:bg-white/10"
+              className="h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:[-webkit-text-fill-color:white] [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:hover]:[-webkit-text-fill-color:white] [-webkit-autofill:focus]:bg-white/10 [-webkit-autofill:focus]:[-webkit-text-fill-color:white] [-webkit-autofill:active]:[-webkit-text-fill-color:white]"
             />
           </div>
 
@@ -160,7 +160,7 @@ const SignUp = () => {
               required
               minLength={6}
               autoComplete="new-password"
-              className="h-14 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:text-white [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:focus]:bg-white/10"
+              className="h-14 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:[-webkit-text-fill-color:white] [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:hover]:[-webkit-text-fill-color:white] [-webkit-autofill:focus]:bg-white/10 [-webkit-autofill:focus]:[-webkit-text-fill-color:white] [-webkit-autofill:active]:[-webkit-text-fill-color:white]"
             />
             <button
               type="button"
@@ -185,7 +185,7 @@ const SignUp = () => {
               required
               minLength={6}
               autoComplete="new-password"
-              className="h-14 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:text-white [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:focus]:bg-white/10"
+              className="h-14 pl-12 pr-12 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-white/20 rounded-xl transition-all duration-200 [-webkit-autofill]:bg-white/5 [-webkit-autofill]:[-webkit-text-fill-color:white] [-webkit-autofill:hover]:bg-white/5 [-webkit-autofill:hover]:[-webkit-text-fill-color:white] [-webkit-autofill:focus]:bg-white/10 [-webkit-autofill:focus]:[-webkit-text-fill-color:white] [-webkit-autofill:active]:[-webkit-text-fill-color:white]"
             />
             <button
               type="button"
