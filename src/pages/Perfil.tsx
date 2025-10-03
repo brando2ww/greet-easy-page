@@ -19,7 +19,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,14 @@ export default function Perfil() {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sincronizar estado local com user metadata
+  useEffect(() => {
+    if (user?.user_metadata) {
+      setFullName(user.user_metadata.full_name || "");
+      setAvatarUrl(user.user_metadata.avatar_url || "");
+    }
+  }, [user]);
+
   const handleLogout = async () => {
     await signOut();
     navigate("/auth/login");
@@ -57,6 +65,9 @@ export default function Perfil() {
 
       if (error) throw error;
 
+      // Forçar refresh do user no contexto
+      await supabase.auth.getUser();
+      
       toast.success("Perfil atualizado com sucesso!");
       setIsEditSheetOpen(false);
     } catch (error) {
@@ -98,7 +109,7 @@ export default function Perfil() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="w-20 h-20">
-              <AvatarImage src="" />
+              <AvatarImage src={user?.user_metadata?.avatar_url || ""} />
               <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                 {user?.email?.substring(0, 2).toUpperCase() || "U"}
               </AvatarFallback>
