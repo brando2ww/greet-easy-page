@@ -1,4 +1,4 @@
-import { Edit, Trash2, Zap, MapPin, Plug } from "lucide-react";
+import { Edit, Trash2, Zap, MapPin, Plug, QrCode } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ interface ChargerCardModernProps {
   charger: Charger;
   onEdit: (charger: Charger) => void;
   onDelete: (charger: Charger) => void;
+  onViewQRCode?: (charger: Charger) => void;
 }
 
 const statusConfig = {
@@ -61,7 +62,7 @@ const statusConfig = {
   },
 };
 
-export const ChargerCardModern = ({ charger, onEdit, onDelete }: ChargerCardModernProps) => {
+export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: ChargerCardModernProps) => {
   const { data: stats, isLoading } = useChargerStats(charger.id);
   const config = statusConfig[charger.status as keyof typeof statusConfig] || statusConfig.available;
 
@@ -110,6 +111,16 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete }: ChargerCardMode
               </div>
               {/* Ações sempre visíveis no mobile */}
               <div className="flex md:hidden gap-1">
+                {onViewQRCode && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+                    onClick={() => onViewQRCode(charger)}
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="icon"
@@ -182,6 +193,16 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete }: ChargerCardMode
 
           {/* Ações desktop - aparecem ao hover */}
           <div className="hidden md:flex lg:flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onViewQRCode && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onViewQRCode(charger)}
+                className="hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+              >
+                <QrCode className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"

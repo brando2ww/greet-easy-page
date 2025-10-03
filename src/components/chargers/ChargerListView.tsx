@@ -1,4 +1,4 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, QrCode } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -38,6 +38,7 @@ interface ChargerListViewProps {
   chargers: Charger[];
   onEdit: (charger: Charger) => void;
   onDelete: (charger: Charger) => void;
+  onViewQRCode?: (charger: Charger) => void;
 }
 
 const statusConfig = {
@@ -51,10 +52,12 @@ const ChargerRow = ({
   charger,
   onEdit,
   onDelete,
+  onViewQRCode,
 }: {
   charger: Charger;
   onEdit: (charger: Charger) => void;
   onDelete: (charger: Charger) => void;
+  onViewQRCode?: (charger: Charger) => void;
 }) => {
   const { data: stats, isLoading } = useChargerStats(charger.id);
   const config = statusConfig[charger.status as keyof typeof statusConfig] || statusConfig.available;
@@ -107,6 +110,17 @@ const ChargerRow = ({
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
+          {onViewQRCode && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onViewQRCode(charger)}
+              className="h-8 w-8 hover:bg-green-100 hover:text-green-600"
+              title="Ver QR Code"
+            >
+              <QrCode className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -129,7 +143,7 @@ const ChargerRow = ({
   );
 };
 
-export const ChargerListView = ({ chargers, onEdit, onDelete }: ChargerListViewProps) => {
+export const ChargerListView = ({ chargers, onEdit, onDelete, onViewQRCode }: ChargerListViewProps) => {
   return (
     <div className="rounded-lg border border-green-200/50 overflow-hidden backdrop-blur-sm bg-background/95">
       <Table>
@@ -154,6 +168,7 @@ export const ChargerListView = ({ chargers, onEdit, onDelete }: ChargerListViewP
               charger={charger}
               onEdit={onEdit}
               onDelete={onDelete}
+              onViewQRCode={onViewQRCode}
             />
           ))}
         </TableBody>

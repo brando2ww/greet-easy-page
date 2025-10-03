@@ -20,6 +20,7 @@ import { ChargersViewToggle, ViewMode } from "@/components/chargers/ChargersView
 import { ChargerCardModern } from "@/components/chargers/ChargerCardModern";
 import { ChargerListView } from "@/components/chargers/ChargerListView";
 import { ChargerAnalyticsView } from "@/components/chargers/ChargerAnalyticsView";
+import { ChargerQRCode } from "@/components/chargers/ChargerQRCode";
 
 const chargerSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -67,6 +68,7 @@ const Carregadores = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCharger, setEditingCharger] = useState<Charger | null>(null);
   const [deletingCharger, setDeletingCharger] = useState<Charger | null>(null);
+  const [qrCodeCharger, setQrCodeCharger] = useState<Charger | null>(null);
 
   const form = useForm<ChargerFormData>({
     resolver: zodResolver(chargerSchema),
@@ -126,13 +128,25 @@ const Carregadores = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chargers"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["chargers"] });
       toast({
         title: t("common.success"),
         description: "Carregador adicionado com sucesso",
       });
       setIsDialogOpen(false);
+      
+      // Buscar o carregador recém-criado e mostrar QR code
+      const { data: newChargers } = await supabase
+        .from("chargers")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      if (newChargers && newChargers.length > 0) {
+        setQrCodeCharger(newChargers[0] as Charger);
+      }
+      
       form.reset();
     },
     onError: () => {
@@ -358,11 +372,12 @@ const Carregadores = () => {
                     style={{ animationDelay: `${index * 50}ms` }}
                     className="animate-fade-in"
                   >
-                    <ChargerCardModern
-                      charger={charger}
-                      onEdit={handleEdit}
-                      onDelete={(charger) => setDeletingCharger(charger)}
-                    />
+                <ChargerCardModern
+                  charger={charger}
+                  onEdit={handleEdit}
+                  onDelete={(charger) => setDeletingCharger(charger)}
+                  onViewQRCode={(charger) => setQrCodeCharger(charger)}
+                />
                   </div>
                 ))}
               </div>
@@ -374,6 +389,7 @@ const Carregadores = () => {
                   chargers={filteredChargers}
                   onEdit={handleEdit}
                   onDelete={(charger) => setDeletingCharger(charger)}
+                  onViewQRCode={(charger) => setQrCodeCharger(charger)}
                 />
               </div>
             )}
@@ -583,6 +599,17 @@ const Carregadores = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* QR Code Dialog */}
+      {qrCodeCharger && (
+        <ChargerQRCode
+          chargerId={qrCodeCharger.id}
+          chargerName={qrCodeCharger.name}
+          chargerLocation={qrCodeCharger.location}
+          open={!!qrCodeCharger}
+          onOpenChange={(open) => !open && setQrCodeCharger(null)}
+        />
+      )}
     </ResponsiveLayout>
   );
 };
