@@ -20,12 +20,17 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function Perfil() {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [receiveNewsletters, setReceiveNewsletters] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
 
   const handleLogout = async () => {
     await signOut();
@@ -48,7 +53,7 @@ export default function Perfil() {
               <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || "Usuário"}</h2>
             </div>
           </div>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
             Editar
           </Button>
         </div>
@@ -155,6 +160,43 @@ export default function Perfil() {
           </p>
         </div>
       </div>
+
+      {/* Dialog de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Perfil</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Nome Completo</Label>
+              <Input 
+                id="fullName" 
+                value={fullName} 
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Digite seu nome completo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                value={user?.email || ""} 
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={() => setIsEditDialogOpen(false)}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ResponsiveLayout>
   );
 }
