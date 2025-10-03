@@ -513,7 +513,17 @@ const Carregadores = () => {
                     <FormItem>
                       <FormLabel>OCPP Charge Point ID</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Ex: CP001 (opcional)" />
+                        <Input 
+                          {...field}
+                          maxLength={6}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            field.onChange(value);
+                          }}
+                          placeholder="Ex: 123456 (opcional)"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
