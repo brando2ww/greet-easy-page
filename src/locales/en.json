@@ -81,7 +81,12 @@
     "creditCard": "Credit card",
     "ticketCar": "Ticket Car",
     "semParar": "Sem Parar",
-    "flexFrota": "Flex Frota"
+    "flexFrota": "Flex Frota",
+    "testBalance": "Test Balance",
+    "testBalanceDescription": "Add R$ 25.00 for testing",
+    "balanceAdded": "Balance added successfully!",
+    "balanceAddedDescription": "R$ 25.00 has been added to your wallet",
+    "balanceError": "Error adding balance"
   },
   "charging": {
     "title": "Start Charging",

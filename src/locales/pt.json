@@ -81,7 +81,12 @@
     "creditCard": "Cartão de crédito",
     "ticketCar": "Ticket Car",
     "semParar": "Sem Parar",
-    "flexFrota": "Flex Frota"
+    "flexFrota": "Flex Frota",
+    "testBalance": "Saldo de Teste",
+    "testBalanceDescription": "Adicionar R$ 25,00 para teste",
+    "balanceAdded": "Saldo adicionado com sucesso!",
+    "balanceAddedDescription": "R$ 25,00 foram adicionados à sua carteira",
+    "balanceError": "Erro ao adicionar saldo"
   },
   "charging": {
     "title": "Iniciar Carga",

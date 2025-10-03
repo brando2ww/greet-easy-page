@@ -86,3 +86,15 @@ export const applyCEPMask = (value: string): string => {
   }
   return cleaned;
 };
+
+/**
+ * Formats a number as Brazilian Real currency
+ * @param value - The numeric value to format
+ * @returns Formatted currency string (e.g., "R$ 25,00")
+ */
+export const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+};

@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, ChevronLeft, X } from "lucide-react";
+import { ChevronRight, Plus, ChevronLeft, X, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
@@ -14,11 +14,14 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useState } from "react";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
+import { formatCurrency } from "@/utils/formatters";
 
 const Carteira = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { balance, isLoading, addTestBalance, isAddingBalance } = useWalletBalance();
 
   const paymentOptions = [
     { key: 'pix', label: t('wallet.pix') },
@@ -60,11 +63,63 @@ const Carteira = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">{t('wallet.balanceTitle')}</p>
-              <h2 className="text-4xl font-bold mt-2 mb-4">R$ 0,00</h2>
-              <Button className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white">
-                <Plus className="w-4 h-4" />
-                {t('wallet.addBalance')}
-              </Button>
+              <h2 className="text-4xl font-bold mt-2 mb-4">
+                {isLoading ? "..." : formatCurrency(balance)}
+              </h2>
+              <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>
+                  <Button className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white">
+                    <Plus className="w-4 h-4" />
+                    {t('wallet.addBalance')}
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="z-50">
+                  <DrawerHeader className="relative border-b pb-4">
+                    <DrawerTitle className="text-center font-montserrat">
+                      {t('wallet.addBalance')}
+                    </DrawerTitle>
+                    <DrawerClose className="absolute right-4 top-4">
+                      <X className="h-5 w-5" />
+                    </DrawerClose>
+                  </DrawerHeader>
+                  <div>
+                    {/* Test Balance Button */}
+                    <button
+                      onClick={() => {
+                        addTestBalance();
+                        setOpen(false);
+                      }}
+                      disabled={isAddingBalance}
+                      className="w-full flex items-center justify-between py-4 px-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b disabled:opacity-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center">
+                          <Zap className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium block">{t('wallet.testBalance')}</span>
+                          <span className="text-xs text-muted-foreground">{t('wallet.testBalanceDescription')}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </button>
+
+                    {/* Other Payment Methods */}
+                    {paymentOptions.map((option, index) => (
+                      <button
+                        key={option.key}
+                        onClick={() => handleSelectPayment(option.key)}
+                        className={`w-full flex items-center justify-between py-4 px-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                          index < paymentOptions.length - 1 ? 'border-b' : ''
+                        }`}
+                      >
+                        <span className="text-sm font-medium">{option.label}</span>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      </button>
+                    ))}
+                  </div>
+                </DrawerContent>
+              </Drawer>
             </div>
             <ChevronRight className="w-6 h-6 text-muted-foreground" />
           </div>
@@ -82,42 +137,15 @@ const Carteira = () => {
             <span className="text-sm font-medium">{t('wallet.walletBalance')}</span>
           </div>
 
-          {/* Botão Adicionar */}
-          <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-full border-green-500 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-600 dark:hover:text-white transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                {t('wallet.addPaymentMethod')}
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="z-50">
-              <DrawerHeader className="relative border-b pb-4">
-                <DrawerTitle className="text-center font-montserrat">
-                  {t('wallet.choosePaymentMethod')}
-                </DrawerTitle>
-                <DrawerClose className="absolute right-4 top-4">
-                  <X className="h-5 w-5" />
-                </DrawerClose>
-              </DrawerHeader>
-              <div>
-                {paymentOptions.map((option, index) => (
-                  <button
-                    key={option.key}
-                    onClick={() => handleSelectPayment(option.key)}
-                    className={`w-full flex items-center justify-between py-4 px-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                      index < paymentOptions.length - 1 ? 'border-b' : ''
-                    }`}
-                  >
-                    <span className="text-sm font-medium">{option.label}</span>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                ))}
-              </div>
-            </DrawerContent>
-          </Drawer>
+          {/* Botão Adicionar Forma de Pagamento */}
+          <Button 
+            variant="outline" 
+            className="w-full border-green-500 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-600 dark:hover:text-white transition-all"
+            disabled
+          >
+            <Plus className="w-4 h-4" />
+            {t('wallet.addPaymentMethod')}
+          </Button>
         </div>
       </div>
     </ResponsiveLayout>
