@@ -35,6 +35,7 @@ export const ChargingHistorySheet = ({ open, onOpenChange }: ChargingHistoryShee
             variant="ghost" 
             size="icon" 
             onClick={() => onOpenChange(false)}
+            className="hover:bg-muted"
           >
             <ChevronRight className="h-5 w-5 rotate-180" />
           </Button>
