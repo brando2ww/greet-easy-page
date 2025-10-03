@@ -132,14 +132,15 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 
-  /* Estilos de autocomplete usando variáveis do tema */
+  /* Autofill styles - prevent white background on autocomplete */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
-    box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
-    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    -webkit-text-fill-color: inherit !important;
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    box-shadow: 0 0 0px 1000px transparent inset !important;
+    background-color: transparent !important;
     transition: background-color 5000s ease-in-out 0s;
   }
 }
