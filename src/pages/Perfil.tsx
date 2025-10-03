@@ -183,7 +183,7 @@ export default function Perfil() {
             <div className="flex items-start gap-3 mb-3">
               <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium">{user?.email}</p>
+                <p className="text-xs font-medium truncate">{user?.email}</p>
               </div>
             </div>
             <div className="flex items-center justify-between pl-8">
