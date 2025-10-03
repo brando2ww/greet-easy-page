@@ -580,7 +580,7 @@ const Carregadores = () => {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-violet-600 hover:bg-violet-700">
+                <Button type="submit" className="bg-green-600 hover:bg-green-700">
                   {editingCharger ? "Salvar" : "Criar"}
                 </Button>
               </div>
