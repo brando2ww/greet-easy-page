@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export default function Configuracoes() {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { signOut } = useAuth();
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
 
@@ -52,7 +52,7 @@ export default function Configuracoes() {
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-xl font-bold">Configurações</h1>
+          <h1 className="text-xl font-bold">{t('settings.title')}</h1>
         </div>
 
         {/* Lista de Configurações */}
@@ -65,7 +65,7 @@ export default function Configuracoes() {
             <CardContent className="p-4 flex items-center gap-3">
               <Languages className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="font-medium">País e Idioma</p>
+                <p className="font-medium">{t('settings.countryAndLanguage')}</p>
                 <p className="text-sm text-muted-foreground">BR, {currentLanguageName}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -79,7 +79,7 @@ export default function Configuracoes() {
           >
             <CardContent className="p-4 flex items-center gap-3">
               <LogOut className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 font-medium">Sair da conta</span>
+              <span className="flex-1 font-medium">{t('settings.logout')}</span>
             </CardContent>
           </Card>
         </div>
@@ -88,7 +88,7 @@ export default function Configuracoes() {
         <Sheet open={languageSheetOpen} onOpenChange={setLanguageSheetOpen}>
           <SheetContent side="bottom" className="h-[50vh]">
             <SheetHeader>
-              <SheetTitle>Selecione o idioma</SheetTitle>
+              <SheetTitle>{t('settings.selectLanguage')}</SheetTitle>
             </SheetHeader>
             <div className="space-y-2 mt-6">
               {languages.map((lang) => (

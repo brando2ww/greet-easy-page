@@ -167,6 +167,12 @@
     "profileUpdateError": "更新个人资料时出错",
     "deleteNotImplemented": "账户删除功能尚未实现"
   },
+  "settings": {
+    "title": "设置",
+    "countryAndLanguage": "国家和语言",
+    "logout": "退出账户",
+    "selectLanguage": "选择语言"
+  },
   "common": {
     "loading": "加载中...",
     "error": "错误",

@@ -167,6 +167,12 @@
     "profileUpdateError": "Error al actualizar el perfil",
     "deleteNotImplemented": "Funcionalidad de eliminación de cuenta aún no implementada"
   },
+  "settings": {
+    "title": "Configuración",
+    "countryAndLanguage": "País e Idioma",
+    "logout": "Cerrar sesión",
+    "selectLanguage": "Seleccione el idioma"
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Error",

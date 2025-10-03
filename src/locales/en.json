@@ -167,6 +167,12 @@
     "profileUpdateError": "Error updating profile",
     "deleteNotImplemented": "Account deletion functionality not yet implemented"
   },
+  "settings": {
+    "title": "Settings",
+    "countryAndLanguage": "Country and Language",
+    "logout": "Log out",
+    "selectLanguage": "Select language"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",
