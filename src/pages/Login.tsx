@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import evChargingBg from "@/assets/ev-charging-bg.png";
-import speedLogo from "@/assets/speed_logo_01.png";
+import speedLogo from "@/assets/speed_logo_04-2.png";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useAuth } from "@/contexts/AuthContext";
 
