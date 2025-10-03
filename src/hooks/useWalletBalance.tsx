@@ -1,66 +1,65 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
 export const useWalletBalance = () => {
-  const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data: balance = 0, isLoading, error } = useQuery({
+  const { data: walletBalance, isLoading } = useQuery({
     queryKey: ["wallet-balance"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
 
       const { data, error } = await supabase
         .from("wallet_balances")
-        .select("balance")
+        .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) throw error;
 
-      // If no wallet exists, create one with 0 balance
+      // If no wallet exists, create one
       if (!data) {
-        const { data: newWallet, error: insertError } = await supabase
+        const { data: newWallet, error: createError } = await supabase
           .from("wallet_balances")
-          .insert({ user_id: user.id, balance: 0 })
-          .select("balance")
+          .insert([{ user_id: user.id, balance: 0 }])
+          .select()
           .single();
 
-        if (insertError) throw insertError;
-        return Number(newWallet.balance);
+        if (createError) throw createError;
+        return newWallet;
       }
 
-      return Number(data.balance);
+      return data;
     },
   });
 
   const addBalanceMutation = useMutation({
     mutationFn: async (amount: number) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const currentBalance = walletBalance?.balance || 0;
+      const newBalance = Number(currentBalance) + amount;
 
       const { data, error } = await supabase
         .from("wallet_balances")
-        .select("balance")
+        .update({ balance: newBalance })
         .eq("user_id", user.id)
+        .select()
         .single();
 
       if (error) throw error;
-
-      const newBalance = Number(data.balance) + amount;
-
-      const { error: updateError } = await supabase
-        .from("wallet_balances")
-        .update({ balance: newBalance })
-        .eq("user_id", user.id);
-
-      if (updateError) throw updateError;
-
-      return newBalance;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
@@ -69,7 +68,8 @@ export const useWalletBalance = () => {
         description: t("wallet.balanceAddedDescription"),
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error adding balance:", error);
       toast({
         title: t("wallet.balanceError"),
         variant: "destructive",
@@ -78,13 +78,12 @@ export const useWalletBalance = () => {
   });
 
   const addTestBalance = () => {
-    addBalanceMutation.mutate(25);
+    addBalanceMutation.mutate(25.00);
   };
 
   return {
-    balance,
+    balance: walletBalance?.balance || 0,
     isLoading,
-    error,
     addTestBalance,
     isAddingBalance: addBalanceMutation.isPending,
   };

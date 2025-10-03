@@ -1,4 +1,4 @@
-import { ChevronRight, Plus, ChevronLeft, X, Zap } from "lucide-react";
+import { ChevronRight, Plus, ChevronLeft, X, TestTube2, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
@@ -36,6 +36,11 @@ const Carteira = () => {
     setOpen(false);
   };
 
+  const handleTestBalance = () => {
+    addTestBalance();
+    setOpen(false);
+  };
+
   return (
     <ResponsiveLayout
       mobileHeader={
@@ -64,7 +69,11 @@ const Carteira = () => {
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">{t('wallet.balanceTitle')}</p>
               <h2 className="text-4xl font-bold mt-2 mb-4">
-                {isLoading ? "..." : formatCurrency(balance)}
+                {isLoading ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  formatCurrency(balance)
+                )}
               </h2>
               <Drawer open={open} onOpenChange={setOpen}>
                 <DrawerTrigger asChild>
@@ -85,16 +94,17 @@ const Carteira = () => {
                   <div>
                     {/* Test Balance Button */}
                     <button
-                      onClick={() => {
-                        addTestBalance();
-                        setOpen(false);
-                      }}
+                      onClick={handleTestBalance}
                       disabled={isAddingBalance}
-                      className="w-full flex items-center justify-between py-4 px-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b disabled:opacity-50"
+                      className="w-full flex items-center justify-between py-4 px-4 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-yellow-500 flex items-center justify-center">
-                          <Zap className="w-5 h-5 text-white" />
+                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                          {isAddingBalance ? (
+                            <Loader2 className="w-5 h-5 text-orange-600 dark:text-orange-400 animate-spin" />
+                          ) : (
+                            <TestTube2 className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                          )}
                         </div>
                         <div>
                           <span className="text-sm font-medium block">{t('wallet.testBalance')}</span>
@@ -136,16 +146,6 @@ const Carteira = () => {
             </div>
             <span className="text-sm font-medium">{t('wallet.walletBalance')}</span>
           </div>
-
-          {/* Botão Adicionar Forma de Pagamento */}
-          <Button 
-            variant="outline" 
-            className="w-full border-green-500 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 dark:text-green-400 dark:border-green-600 dark:hover:bg-green-600 dark:hover:text-white transition-all"
-            disabled
-          >
-            <Plus className="w-4 h-4" />
-            {t('wallet.addPaymentMethod')}
-          </Button>
         </div>
       </div>
     </ResponsiveLayout>
