@@ -170,6 +170,7 @@
   "settings": {
     "title": "Configurações",
     "countryAndLanguage": "País e Idioma",
+    "country": "Brasil",
     "logout": "Sair da conta",
     "selectLanguage": "Selecione o idioma"
   },

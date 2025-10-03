@@ -66,7 +66,7 @@ export default function Configuracoes() {
               <Languages className="w-5 h-5 text-muted-foreground" />
               <div className="flex-1">
                 <p className="font-medium">{t('settings.countryAndLanguage')}</p>
-                <p className="text-sm text-muted-foreground">BR, {currentLanguageName}</p>
+                <p className="text-sm text-muted-foreground">{t('settings.country')}, {currentLanguageName}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </CardContent>
