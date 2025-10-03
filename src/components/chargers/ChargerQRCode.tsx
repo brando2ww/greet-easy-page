@@ -223,7 +223,7 @@ export const ChargerQRCode = ({
             <Button
               variant="outline"
               onClick={handleDownload}
-              className="gap-2"
+              className="gap-2 hover:bg-muted hover:text-foreground"
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Baixar</span>
@@ -231,7 +231,7 @@ export const ChargerQRCode = ({
             <Button
               variant="outline"
               onClick={handlePrint}
-              className="gap-2"
+              className="gap-2 hover:bg-muted hover:text-foreground"
             >
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Imprimir</span>
@@ -239,7 +239,7 @@ export const ChargerQRCode = ({
             <Button
               variant="outline"
               onClick={handleCopyId}
-              className="gap-2"
+              className="gap-2 hover:bg-muted hover:text-foreground"
             >
               <Copy className="h-4 w-4" />
               <span className="hidden sm:inline">Copiar ID</span>
