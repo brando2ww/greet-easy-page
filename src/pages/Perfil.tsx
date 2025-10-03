@@ -119,7 +119,12 @@ export default function Perfil() {
               <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || t('profile.user')}</h2>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setIsEditSheetOpen(true)}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsEditSheetOpen(true)}
+            className="hover:bg-muted hover:text-foreground"
+          >
             {t('profile.edit')}
           </Button>
         </div>
