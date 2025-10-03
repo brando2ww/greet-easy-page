@@ -1,34 +1,61 @@
-const CACHE_NAME = 'speed-charger-v1';
-const RUNTIME_CACHE = 'speed-charger-runtime';
+const CACHE_NAME = 'speed-charger-v2';
+const RUNTIME_CACHE = 'speed-charger-runtime-v2';
+const FONT_CACHE = 'speed-charger-fonts';
 
 // Assets to precache
 const PRECACHE_URLS = [
   '/',
   '/offline.html',
   '/fallback-image.png',
+  '/favicon.png',
+  '/favicon.ico',
+  '/icons/icon-144.png',
   '/icons/icon-192.png',
+  '/icons/icon-256.png',
+  '/icons/icon-384.png',
   '/icons/icon-512.png',
 ];
 
-// Install event - precache essential assets
+// Install event - precache essential assets with error handling
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
+      .then((cache) => {
+        console.log('[SW] Caching essential assets');
+        return cache.addAll(PRECACHE_URLS).catch((error) => {
+          console.error('[SW] Failed to cache some assets:', error);
+          // Continue anyway - don't fail installation
+          return Promise.resolve();
+        });
+      })
+      .then(() => {
+        console.log('[SW] Service worker installed successfully');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('[SW] Installation failed:', error);
+      })
   );
 });
 
 // Activate event - cleanup old caches
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating service worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
-          .map((name) => caches.delete(name))
+          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE && name !== FONT_CACHE)
+          .map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('[SW] Service worker activated');
+      return self.clients.claim();
+    })
   );
 });
 
@@ -37,7 +64,27 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip cross-origin requests
+  // Handle Google Fonts with dedicated cache
+  if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
+    event.respondWith(
+      caches.open(FONT_CACHE).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(request).then((response) => {
+            if (response.ok) {
+              cache.put(request, response.clone());
+            }
+            return response;
+          }).catch(() => cachedResponse || new Response('', { status: 503 }));
+        });
+      })
+    );
+    return;
+  }
+
+  // Skip other cross-origin requests
   if (url.origin !== location.origin) {
     return;
   }
@@ -56,10 +103,20 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('[SW] Network failed for navigation, serving from cache:', error);
           // Fallback to cache, then offline page
           return caches.match(request)
-            .then((cachedResponse) => cachedResponse || caches.match('/offline.html'));
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              return caches.match('/offline.html')
+                .then((offlinePage) => offlinePage || new Response('Offline', { 
+                  status: 503,
+                  statusText: 'Service Unavailable'
+                }));
+            });
         })
     );
     return;
@@ -69,12 +126,26 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.open(RUNTIME_CACHE).then((cache) => {
       return cache.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request).then((networkResponse) => {
-          if (networkResponse.ok) {
-            cache.put(request, networkResponse.clone());
-          }
-          return networkResponse;
-        });
+        const fetchPromise = fetch(request)
+          .then((networkResponse) => {
+            if (networkResponse.ok) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch((error) => {
+            console.log('[SW] Network failed for asset:', request.url);
+            // If cached version exists, return it
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return fallback image for failed images
+            if (request.destination === 'image') {
+              return caches.match('/fallback-image.png');
+            }
+            // Return empty response for other failed requests
+            return new Response('', { status: 503 });
+          });
 
         return cachedResponse || fetchPromise;
       });

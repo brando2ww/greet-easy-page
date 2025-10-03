@@ -1,7 +1,10 @@
 {
+  "id": "/",
   "name": "Speed Charger",
   "short_name": "Speed Charger",
   "description": "Sistema de carregadores para veículos elétricos",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,6 +12,12 @@
   "theme_color": "#10B981",
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
