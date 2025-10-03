@@ -19,22 +19,76 @@ import {
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useState, useRef } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 export default function Perfil() {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [receiveNewsletters, setReceiveNewsletters] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || "");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogout = async () => {
     await signOut();
     navigate("/auth/login");
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      const { error } = await supabase.auth.updateUser({
+        data: { 
+          full_name: fullName,
+          avatar_url: avatarUrl
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("Perfil atualizado com sucesso!");
+      setIsEditSheetOpen(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Erro ao atualizar perfil");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarUrl("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    // Placeholder para funcionalidade de exclusão de conta
+    toast.error("Funcionalidade de exclusão de conta ainda não implementada");
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -53,7 +107,7 @@ export default function Perfil() {
               <h2 className="text-xl font-bold">{user?.user_metadata?.full_name || "Usuário"}</h2>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setIsEditSheetOpen(true)}>
             Editar
           </Button>
         </div>
@@ -161,15 +215,62 @@ export default function Perfil() {
         </div>
       </div>
 
-      {/* Dialog de Edição */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Perfil</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+      {/* Sheet de Edição */}
+      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
+          {/* Header */}
+          <div className="flex items-center gap-4 border-b p-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsEditSheetOpen(false)}
+            >
+              <ChevronRight className="h-5 w-5 rotate-180" />
+            </Button>
+            <h1 className="text-xl font-bold">Minha conta</h1>
+          </div>
+
+          {/* Conteúdo Scrollável */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Avatar */}
+            <div className="flex flex-col items-center gap-2">
+              <Avatar className="w-32 h-32">
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
+                  {user?.email?.substring(0, 2).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Carregar foto
+                </button>
+                {avatarUrl && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <button
+                      onClick={handleRemoveAvatar}
+                      className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Remover foto
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Campo de Nome */}
             <div className="space-y-2">
-              <Label htmlFor="fullName">Nome Completo</Label>
+              <Label htmlFor="fullName">Seu nome</Label>
               <Input 
                 id="fullName" 
                 value={fullName} 
@@ -177,26 +278,45 @@ export default function Perfil() {
                 placeholder="Digite seu nome completo"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                value={user?.email || ""} 
-                disabled
-                className="bg-muted"
-              />
-            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancelar
+
+          {/* Footer Fixo */}
+          <div className="border-t p-6 space-y-4">
+            <Button 
+              className="w-full" 
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+            >
+              {isSaving ? "Salvando..." : "Salvar alterações"}
             </Button>
-            <Button onClick={() => setIsEditDialogOpen(false)}>
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <button
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="flex items-center justify-center gap-2 w-full text-sm text-destructive hover:underline"
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir conta
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Sua conta e todos os dados associados serão permanentemente excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir conta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ResponsiveLayout>
   );
 }
