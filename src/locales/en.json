@@ -169,8 +169,7 @@
   },
   "settings": {
     "title": "Settings",
-    "countryAndLanguage": "Country and Language",
-    "country": "Brazil",
+    "countryAndLanguage": "Language",
     "logout": "Log out",
     "selectLanguage": "Select language"
   },

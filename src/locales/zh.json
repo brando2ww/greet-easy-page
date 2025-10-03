@@ -169,8 +169,7 @@
   },
   "settings": {
     "title": "设置",
-    "countryAndLanguage": "国家和语言",
-    "country": "巴西",
+    "countryAndLanguage": "语言",
     "logout": "退出账户",
     "selectLanguage": "选择语言"
   },

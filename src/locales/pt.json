@@ -169,8 +169,7 @@
   },
   "settings": {
     "title": "Configurações",
-    "countryAndLanguage": "País e Idioma",
-    "country": "Brasil",
+    "countryAndLanguage": "Idioma",
     "logout": "Sair da conta",
     "selectLanguage": "Selecione o idioma"
   },
