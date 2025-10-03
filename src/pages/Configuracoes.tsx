@@ -24,7 +24,6 @@ export default function Configuracoes() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/auth/login");
   };
 
   const handleLanguageChange = (langCode: string) => {
