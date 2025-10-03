@@ -27,6 +27,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { ChargingHistorySheet } from "@/components/ChargingHistorySheet";
 
 export default function Perfil() {
   const { t } = useTranslation();
@@ -38,6 +39,7 @@ export default function Perfil() {
   const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || "");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sincronizar estado local com user metadata
@@ -157,7 +159,10 @@ export default function Perfil() {
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30"
+            onClick={() => setIsHistorySheetOpen(true)}
+          >
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <History className="w-8 h-8 text-foreground" />
               <span className="text-sm font-medium text-center">Histórico</span>
@@ -328,6 +333,12 @@ export default function Perfil() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sheet de Histórico */}
+      <ChargingHistorySheet 
+        open={isHistorySheetOpen} 
+        onOpenChange={setIsHistorySheetOpen} 
+      />
     </ResponsiveLayout>
   );
 }
