@@ -60,6 +60,8 @@ export const formatAddress = (address: {
   return parts.join(', ');
 };
 
+export const formatFullAddress = formatAddress;
+
 export const applyCPFMask = (value: string): string => {
   const cleaned = value.replace(/\D/g, '');
   let masked = cleaned;
