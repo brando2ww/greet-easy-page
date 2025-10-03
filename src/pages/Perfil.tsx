@@ -127,10 +127,10 @@ export default function Perfil() {
         <Card className="bg-muted/50">
           <CardContent className="p-6">
             <div className="flex justify-center gap-6 mb-3">
-              <Zap className="w-6 h-6 text-primary" />
-              <DollarSign className="w-6 h-6 text-primary" />
-              <Leaf className="w-6 h-6 text-primary" />
-              <Clock className="w-6 h-6 text-primary" />
+              <Zap className="w-6 h-6 text-green-600" />
+              <DollarSign className="w-6 h-6 text-green-600" />
+              <Leaf className="w-6 h-6 text-green-600" />
+              <Clock className="w-6 h-6 text-green-600" />
             </div>
             <p className="text-center font-semibold text-foreground mb-1">
               Descubra o impacto positivo
