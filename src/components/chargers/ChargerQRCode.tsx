@@ -13,6 +13,7 @@ import {
 
 interface ChargerQRCodeProps {
   chargerId: string;
+  displayCode?: string;
   chargerName: string;
   chargerLocation: string;
   open: boolean;
@@ -21,6 +22,7 @@ interface ChargerQRCodeProps {
 
 export const ChargerQRCode = ({
   chargerId,
+  displayCode,
   chargerName,
   chargerLocation,
   open,
@@ -156,7 +158,7 @@ export const ChargerQRCode = ({
                 <li>Aguarde a conexão e inicie o carregamento</li>
               </ol>
             </div>
-            <div class="id">ID: ${chargerId}</div>
+            <div class="id">ID: ${displayCode || chargerId}</div>
           </div>
         </body>
       </html>
@@ -177,7 +179,7 @@ export const ChargerQRCode = ({
   };
 
   const handleCopyId = () => {
-    navigator.clipboard.writeText(chargerId).then(() => {
+    navigator.clipboard.writeText(displayCode || chargerId).then(() => {
       toast({
         title: "Copiado!",
         description: "ID do carregador copiado para a área de transferência",
@@ -215,7 +217,7 @@ export const ChargerQRCode = ({
             <div className="text-xs text-muted-foreground mb-1">
               ID do Carregador
             </div>
-            <div className="font-mono text-sm break-all">{chargerId}</div>
+            <div className="font-mono text-sm break-all">{displayCode || chargerId}</div>
           </div>
 
           {/* Botões de ação */}

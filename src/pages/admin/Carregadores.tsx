@@ -28,7 +28,9 @@ const chargerSchema = z.object({
   capacity: z.string().min(1, "Capacidade é obrigatória"),
   client_id: z.string().optional(),
   serial_number: z.string().optional(),
-  ocpp_charge_point_id: z.string().optional(),
+  ocpp_charge_point_id: z.string()
+    .regex(/^[0-9]{6}$/, "O código OCPP deve ter exatamente 6 números")
+    .optional(),
   location: z.string().min(1, "Localização é obrigatória"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -603,7 +605,8 @@ const Carregadores = () => {
       {/* QR Code Dialog */}
       {qrCodeCharger && (
         <ChargerQRCode
-          chargerId={qrCodeCharger.ocpp_charge_point_id || qrCodeCharger.id}
+          chargerId={qrCodeCharger.id}
+          displayCode={qrCodeCharger.ocpp_charge_point_id || undefined}
           chargerName={qrCodeCharger.name}
           chargerLocation={qrCodeCharger.location}
           open={!!qrCodeCharger}

@@ -42,7 +42,7 @@ export const ManualCodeInput = ({ open, onOpenChange, onSubmit, isLoading }: Man
             maxLength={6}
             value={code}
             onChange={handleValueChange}
-            pattern="^[A-Z0-9]+$"
+            pattern="^[0-9]+$"
             disabled={isLoading}
           >
             <InputOTPGroup>
