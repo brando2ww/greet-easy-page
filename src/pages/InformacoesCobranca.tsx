@@ -98,8 +98,8 @@ const InformacoesCobranca = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-5 w-5 text-primary" />
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          <User className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
                           <p className="text-sm font-medium">Informações pessoais</p>
@@ -110,7 +110,7 @@ const InformacoesCobranca = () => {
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      <ChevronRight className="h-5 w-5 text-foreground" />
                     </div>
                   </CardContent>
                 </Card>
@@ -122,8 +122,8 @@ const InformacoesCobranca = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <MapPin className="h-5 w-5 text-primary" />
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          <MapPin className="h-5 w-5 text-foreground" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium">Endereço</p>
@@ -141,7 +141,7 @@ const InformacoesCobranca = () => {
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <ChevronRight className="h-5 w-5 text-foreground flex-shrink-0" />
                     </div>
                   </CardContent>
                 </Card>
