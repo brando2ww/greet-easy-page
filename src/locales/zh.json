@@ -70,7 +70,18 @@
   },
   "wallet": {
     "title": "钱包",
-    "subtitle": "管理您的付款和积分"
+    "subtitle": "管理您的支付方式",
+    "balanceTitle": "钱包余额",
+    "addBalance": "充值",
+    "paymentMethods": "支付方式",
+    "walletBalance": "钱包余额",
+    "addPaymentMethod": "添加支付方式",
+    "choosePaymentMethod": "选择支付方式",
+    "pix": "Pix",
+    "creditCard": "信用卡",
+    "ticketCar": "Ticket Car",
+    "semParar": "Sem Parar",
+    "flexFrota": "Flex Frota"
   },
   "charging": {
     "title": "开始充电",

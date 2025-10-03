@@ -70,7 +70,18 @@
   },
   "wallet": {
     "title": "Wallet",
-    "subtitle": "Manage your payments and credits"
+    "subtitle": "Manage your payment methods",
+    "balanceTitle": "Wallet balance",
+    "addBalance": "Add balance",
+    "paymentMethods": "Payment methods",
+    "walletBalance": "Wallet balance",
+    "addPaymentMethod": "Add payment method",
+    "choosePaymentMethod": "Choose payment method",
+    "pix": "Pix",
+    "creditCard": "Credit card",
+    "ticketCar": "Ticket Car",
+    "semParar": "Sem Parar",
+    "flexFrota": "Flex Frota"
   },
   "charging": {
     "title": "Start Charging",

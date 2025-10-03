@@ -43,7 +43,7 @@ const Carteira = () => {
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-xl font-semibold font-montserrat">Pagamento</h1>
+          <h1 className="text-xl font-semibold font-montserrat">{t('wallet.title')}</h1>
         </div>
       }
       showBottomNav

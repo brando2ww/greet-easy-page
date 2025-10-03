@@ -70,7 +70,18 @@
   },
   "wallet": {
     "title": "Cartera",
-    "subtitle": "Gestiona tus pagos y créditos"
+    "subtitle": "Gestiona tus métodos de pago",
+    "balanceTitle": "Saldo de billetera",
+    "addBalance": "Añadir saldo",
+    "paymentMethods": "Métodos de pago",
+    "walletBalance": "Saldo de billetera",
+    "addPaymentMethod": "Añadir método de pago",
+    "choosePaymentMethod": "Elegir método de pago",
+    "pix": "Pix",
+    "creditCard": "Tarjeta de crédito",
+    "ticketCar": "Ticket Car",
+    "semParar": "Sem Parar",
+    "flexFrota": "Flex Frota"
   },
   "charging": {
     "title": "Iniciar Carga",
