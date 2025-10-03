@@ -27,7 +27,7 @@ const chargerSchema = z.object({
   type: z.string().min(1, "Tipo é obrigatório"),
   capacity: z.string().min(1, "Capacidade é obrigatória"),
   client_id: z.string().optional(),
-  serial_number: z.string().optional(),
+  serial_number: z.string().min(1, "Número Serial é obrigatório"),
   ocpp_charge_point_id: z.string()
     .regex(/^[0-9]{6}$/, "O código OCPP deve ter exatamente 6 números"),
   location: z.string().min(1, "Localização é obrigatória"),
@@ -499,7 +499,7 @@ const Carregadores = () => {
                     <FormItem>
                       <FormLabel>Número Serial</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Opcional" />
+                        <Input {...field} placeholder="Ex: SN123456" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
