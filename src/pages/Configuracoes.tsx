@@ -1,7 +1,7 @@
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Languages, Radio, Map, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Languages, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,24 +49,6 @@ export default function Configuracoes() {
                 <p className="font-medium">País e Idioma</p>
                 <p className="text-sm text-muted-foreground">BR, {currentLanguageName}</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </CardContent>
-          </Card>
-
-          {/* Tags RFID */}
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-3">
-              <Radio className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 font-medium">Tags RFID</span>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </CardContent>
-          </Card>
-
-          {/* Aplicativo de rota */}
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-3">
-              <Map className="w-5 h-5 text-muted-foreground" />
-              <span className="flex-1 font-medium">Aplicativo de rota</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </CardContent>
           </Card>
