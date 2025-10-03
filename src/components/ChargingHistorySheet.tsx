@@ -37,7 +37,7 @@ export const ChargingHistorySheet = ({ open, onOpenChange }: ChargingHistoryShee
             onClick={() => onOpenChange(false)}
             className="hover:bg-muted"
           >
-            <ChevronRight className="h-5 w-5 rotate-180" />
+            <ChevronRight className="h-5 w-5 rotate-180 text-foreground" />
           </Button>
           <h1 className="text-xl font-bold">Histórico</h1>
         </div>
