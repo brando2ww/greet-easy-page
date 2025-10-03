@@ -9,7 +9,6 @@ import {
   DollarSign, 
   Headphones, 
   Settings, 
-  Ticket,
   ChevronRight,
   Zap,
   Leaf,
@@ -203,17 +202,6 @@ export default function Perfil() {
             <CardContent className="p-4 flex items-center gap-3">
               <User className="w-5 h-5 text-muted-foreground" />
               <span className="flex-1 font-medium">Informações de cobrança</span>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-3">
-              <Ticket className="w-5 h-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="font-medium">Cupons</p>
-                <p className="text-sm text-muted-foreground">Nenhum cupom adicionado</p>
-              </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </CardContent>
           </Card>
