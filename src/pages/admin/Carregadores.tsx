@@ -603,7 +603,7 @@ const Carregadores = () => {
       {/* QR Code Dialog */}
       {qrCodeCharger && (
         <ChargerQRCode
-          chargerId={qrCodeCharger.id}
+          chargerId={qrCodeCharger.ocpp_charge_point_id || qrCodeCharger.id}
           chargerName={qrCodeCharger.name}
           chargerLocation={qrCodeCharger.location}
           open={!!qrCodeCharger}
