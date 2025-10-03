@@ -54,7 +54,7 @@ export default function Perfil() {
         </div>
 
         {/* Card de Impacto Ambiental */}
-        <Card className="bg-accent/50">
+        <Card className="bg-muted/50">
           <CardContent className="p-6">
             <div className="flex justify-center gap-6 mb-3">
               <Zap className="w-6 h-6 text-primary" />
@@ -73,21 +73,21 @@ export default function Perfil() {
 
         {/* Grid de 3 Cards Principais */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-accent/30">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30">
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <Headphones className="w-8 h-8 text-foreground" />
               <span className="text-sm font-medium text-center">Ajuda</span>
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-accent/30">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30">
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <DollarSign className="w-8 h-8 text-foreground" />
               <span className="text-sm font-medium text-center">Pagamento</span>
             </CardContent>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-accent/30">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow bg-muted/30">
             <CardContent className="p-4 flex flex-col items-center gap-2">
               <History className="w-8 h-8 text-foreground" />
               <span className="text-sm font-medium text-center">Histórico</span>
