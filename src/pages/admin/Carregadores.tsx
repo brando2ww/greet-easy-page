@@ -577,6 +577,7 @@ const Carregadores = () => {
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  className="bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border-red-600"
                 >
                   Cancelar
                 </Button>
