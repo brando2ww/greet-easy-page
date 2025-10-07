@@ -107,13 +107,23 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
     chargers.forEach((charger) => {
       if (!map.current) return;
 
+      // Validate coordinates before creating marker
+      const lat = Number(charger.latitude);
+      const lng = Number(charger.longitude);
+      
+      // Check if coordinates are valid
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        console.warn(`Invalid coordinates for charger ${charger.name}: lat=${charger.latitude}, lng=${charger.longitude}`);
+        return;
+      }
+
       const markerColor = 
         charger.status === 'available' ? '#22c55e' :
         charger.status === 'in_use' ? '#ef4444' :
         '#6b7280';
 
       const marker = new mapboxgl.Marker({ color: markerColor })
-        .setLngLat([charger.longitude, charger.latitude])
+        .setLngLat([lng, lat])
         .addTo(map.current);
 
       // Add click event to open drawer
