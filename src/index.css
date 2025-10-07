@@ -207,6 +207,19 @@ All colors MUST be HSL.
   }
 }
 
+/* Force light mode for dropdown selects */
+.force-light-dropdown {
+  background-color: white !important;
+}
+
+.force-light-dropdown * {
+  color: #1a202c !important;
+}
+
+.force-light-dropdown [data-radix-select-viewport] {
+  background-color: white !important;
+}
+
 /* Hide Mapbox branding */
 .mapboxgl-ctrl-logo {
   display: none !important;

@@ -3,17 +3,20 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
-import { Plus } from "lucide-react";
+import { Plus, Info, Settings, MapPin, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { ChargersHeader } from "@/components/chargers/ChargersHeader";
 import { ChargersToolbar } from "@/components/chargers/ChargersToolbar";
 import { ChargersViewToggle, ViewMode } from "@/components/chargers/ChargersViewToggle";
@@ -23,7 +26,6 @@ import { ChargerAnalyticsView } from "@/components/chargers/ChargerAnalyticsView
 import { ChargerQRCode } from "@/components/chargers/ChargerQRCode";
 import { applyCEPMask } from "@/utils/formatters";
 import { fetchAddressFromCEP, fetchCoordinatesFromAddress } from "@/utils/geocoding";
-import { Loader2 } from "lucide-react";
 
 const chargerSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -79,6 +81,8 @@ const Carregadores = () => {
   const [qrCodeCharger, setQrCodeCharger] = useState<Charger | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [isLoadingCoordinates, setIsLoadingCoordinates] = useState(false);
+  const [addressFilled, setAddressFilled] = useState(false);
+  const [coordinatesFilled, setCoordinatesFilled] = useState(false);
 
   const form = useForm<ChargerFormData>({
     resolver: zodResolver(chargerSchema),
@@ -265,9 +269,10 @@ const Carregadores = () => {
       const addressInfo = await fetchAddressFromCEP(cep);
       if (addressInfo) {
         form.setValue("location", addressInfo.fullAddress);
+        setAddressFilled(true);
         toast({
-          title: "Endereço encontrado",
-          description: "O endereço foi preenchido automaticamente",
+          title: "✓ CEP encontrado",
+          description: "Endereço preenchido automaticamente",
         });
 
         // Buscar coordenadas automaticamente se tiver número
@@ -276,9 +281,10 @@ const Carregadores = () => {
           await handleFetchCoordinates(addressInfo, addressNumber, cep);
         }
       } else {
+        setAddressFilled(false);
         toast({
           title: "CEP não encontrado",
-          description: "Verifique o CEP ou preencha o endereço manualmente",
+          description: "Verifique o CEP ou preencha manualmente",
           variant: "destructive",
         });
       }
@@ -335,14 +341,16 @@ const Carregadores = () => {
       if (coords) {
         form.setValue("latitude", coords.latitude.toString());
         form.setValue("longitude", coords.longitude.toString());
+        setCoordinatesFilled(true);
         toast({
-          title: "Coordenadas encontradas",
-          description: "Latitude e longitude foram preenchidas automaticamente",
+          title: "✓ Coordenadas calculadas",
+          description: "Localização preenchida com sucesso",
         });
       } else {
+        setCoordinatesFilled(false);
         toast({
           title: "Coordenadas não encontradas",
-          description: "Preencha as coordenadas manualmente",
+          description: "Preencha manualmente se necessário",
           variant: "destructive",
         });
       }
@@ -366,6 +374,8 @@ const Carregadores = () => {
   const handleAddNew = () => {
     setEditingCharger(null);
     form.reset();
+    setAddressFilled(false);
+    setCoordinatesFilled(false);
     setIsDialogOpen(true);
   };
 
@@ -518,247 +528,339 @@ const Carregadores = () => {
         )}
       </div>
 
-      {/* Add/Edit Dialog */}
+      {/* Add/Edit Dialog - Improved UX */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingCharger ? "Editar Carregador" : "Adicionar Carregador"}
+            <DialogTitle className="text-xl font-bold">
+              {editingCharger ? "Editar Carregador" : "Adicionar Novo Carregador"}
             </DialogTitle>
           </DialogHeader>
+          
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="AC">AC (Corrente Alternada)</SelectItem>
-                          <SelectItem value="DC">DC (Corrente Contínua)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <FormField
-                  control={form.control}
-                  name="capacity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Capacidade (kW)</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" step="0.1" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                      <FormField
-                        control={form.control}
-                        name="client_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('admin.partnerClient')}</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('admin.noClientSelected')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {clients.map((client: any) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    {client.company_name} {client.city && client.state ? `(${client.city}/${client.state})` : ''}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <FormField
-                  control={form.control}
-                  name="serial_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número Serial</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: SN123456" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="ocpp_charge_point_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>OCPP Charge Point ID</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field}
-                          maxLength={6}
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '');
-                            field.onChange(value);
-                          }}
-                          placeholder="Ex: 123456"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Seção de Endereço */}
-              <div className="space-y-3 sm:space-y-4 pt-2 border-t border-border">
-                <h3 className="text-sm font-semibold text-muted-foreground">Endereço</h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Seção 1: Informações Básicas */}
+              <Card className="border-green-200 bg-green-50/50">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                      <Info className="h-4 w-4 text-green-600" />
+                    </div>
+                    <h3 className="font-semibold text-green-900">Informações Básicas</h3>
+                  </div>
+                  
                   <FormField
                     control={form.control}
-                    name="postal_code"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CEP</FormLabel>
+                        <FormLabel>Nome do Carregador *</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              {...field}
-                              placeholder="00000-000"
-                              maxLength={9}
-                              onChange={(e) => {
-                                const masked = applyCEPMask(e.target.value);
-                                field.onChange(masked);
-                              }}
-                              onBlur={handleCEPBlur}
-                            />
-                            {isLoadingAddress && (
-                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                            )}
-                          </div>
+                          <Input {...field} placeholder="Ex: Carregador Principal A1" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Conector *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="AC">AC (Corrente Alternada)</SelectItem>
+                              <SelectItem value="DC">DC (Corrente Contínua)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="capacity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Capacidade (kW) *</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.1" placeholder="Ex: 22.0" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Seção 2: Identificação Técnica */}
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Settings className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <h3 className="font-semibold text-blue-900">Identificação Técnica</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="serial_number"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número Serial *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Ex: SN-2024-001" />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Número de série do equipamento
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="ocpp_charge_point_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>OCPP ID (6 dígitos) *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field}
+                              maxLength={6}
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                field.onChange(value);
+                              }}
+                              placeholder="123456"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Identificador único no protocolo OCPP
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
                   <FormField
                     control={form.control}
-                    name="address_number"
+                    name="client_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Número</FormLabel>
+                        <FormLabel>Cliente Parceiro (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Nenhum cliente selecionado" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clients.map((client: any) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.company_name} {client.city && client.state ? `(${client.city}/${client.state})` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className="text-xs">
+                          Associe este carregador a um cliente específico
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Seção 3: Localização */}
+              <Card className="border-purple-200 bg-purple-50/50">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-purple-900">Localização</h3>
+                      <p className="text-xs text-purple-700 mt-1">
+                        {!addressFilled && !coordinatesFilled && "Digite o CEP para buscar o endereço automaticamente"}
+                        {addressFilled && !coordinatesFilled && "✓ Endereço preenchido! Adicione o número para obter coordenadas"}
+                        {coordinatesFilled && "✓ Localização completa!"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="postal_code"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-2">
+                          <FormLabel>CEP</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                {...field}
+                                placeholder="00000-000"
+                                maxLength={9}
+                                onChange={(e) => {
+                                  const masked = applyCEPMask(e.target.value);
+                                  field.onChange(masked);
+                                  setAddressFilled(false);
+                                }}
+                                onBlur={handleCEPBlur}
+                                className={addressFilled ? "border-green-500" : ""}
+                              />
+                              {isLoadingAddress && (
+                                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-purple-600" />
+                              )}
+                              {addressFilled && !isLoadingAddress && (
+                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-600" />
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="address_number"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="123"
+                              disabled={!addressFilled}
+                              onBlur={handleAddressNumberChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Endereço Completo *</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="123"
-                            onBlur={handleAddressNumberChange}
+                          <Input 
+                            {...field} 
+                            placeholder="Será preenchido ao buscar o CEP" 
+                            disabled={!addressFilled && !field.value}
+                            className={addressFilled ? "border-green-500" : ""}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>Coordenadas GPS (preenchidas automaticamente)</span>
+                      {isLoadingCoordinates && <Badge variant="outline" className="text-xs">Buscando...</Badge>}
+                      {coordinatesFilled && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="latitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Latitude</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  {...field} 
+                                  type="number" 
+                                  step="any" 
+                                  placeholder="-23.550520"
+                                  className={coordinatesFilled ? "border-green-500 text-xs" : "text-xs"}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="longitude"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Longitude</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  {...field} 
+                                  type="number" 
+                                  step="any" 
+                                  placeholder="-46.633308"
+                                  className={coordinatesFilled ? "border-green-500 text-xs" : "text-xs"}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Localização</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Será preenchido automaticamente" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <FormField
-                  control={form.control}
-                  name="latitude"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Latitude {isLoadingCoordinates && "(buscando...)"}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input {...field} type="number" step="any" placeholder="Auto-preenchida" />
-                          {isLoadingCoordinates && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="longitude"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Longitude {isLoadingCoordinates && "(buscando...)"}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input {...field} type="number" step="any" placeholder="Auto-preenchida" />
-                          {isLoadingCoordinates && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-2 pt-2">
+              {/* Botões de Ação */}
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="bg-white text-red-600 hover:bg-red-50 hover:text-red-700 border-red-600 w-full sm:w-auto"
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setAddressFilled(false);
+                    setCoordinatesFilled(false);
+                  }}
+                  className="w-full sm:w-auto"
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
-                  {editingCharger ? "Salvar" : "Criar"}
+                <Button 
+                  type="submit" 
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {(createMutation.isPending || updateMutation.isPending) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {editingCharger ? "Salvar Alterações" : "Criar Carregador"}
                 </Button>
               </div>
             </form>
