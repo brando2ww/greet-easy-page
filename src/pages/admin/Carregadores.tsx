@@ -21,6 +21,9 @@ import { ChargerCardModern } from "@/components/chargers/ChargerCardModern";
 import { ChargerListView } from "@/components/chargers/ChargerListView";
 import { ChargerAnalyticsView } from "@/components/chargers/ChargerAnalyticsView";
 import { ChargerQRCode } from "@/components/chargers/ChargerQRCode";
+import { applyCEPMask } from "@/utils/formatters";
+import { fetchAddressFromCEP, fetchCoordinatesFromAddress } from "@/utils/geocoding";
+import { Loader2 } from "lucide-react";
 
 const chargerSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -30,6 +33,10 @@ const chargerSchema = z.object({
   serial_number: z.string().min(1, "Número Serial é obrigatório"),
   ocpp_charge_point_id: z.string()
     .regex(/^[0-9]{6}$/, "O código OCPP deve ter exatamente 6 números"),
+  postal_code: z.string()
+    .regex(/^\d{5}-?\d{3}$/, "CEP deve estar no formato XXXXX-XXX")
+    .optional(),
+  address_number: z.string().optional(),
   location: z.string().min(1, "Localização é obrigatória"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -70,6 +77,8 @@ const Carregadores = () => {
   const [editingCharger, setEditingCharger] = useState<Charger | null>(null);
   const [deletingCharger, setDeletingCharger] = useState<Charger | null>(null);
   const [qrCodeCharger, setQrCodeCharger] = useState<Charger | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [isLoadingCoordinates, setIsLoadingCoordinates] = useState(false);
 
   const form = useForm<ChargerFormData>({
     resolver: zodResolver(chargerSchema),
@@ -80,6 +89,8 @@ const Carregadores = () => {
       client_id: "",
       serial_number: "",
       ocpp_charge_point_id: "",
+      postal_code: "",
+      address_number: "",
       location: "",
       latitude: "",
       longitude: "",
@@ -236,11 +247,114 @@ const Carregadores = () => {
       client_id: charger.partner_client_id || "",
       serial_number: charger.serial_number || "",
       ocpp_charge_point_id: charger.ocpp_charge_point_id || "",
+      postal_code: "",
+      address_number: "",
       location: charger.location,
       latitude: charger.latitude?.toString() || "",
       longitude: charger.longitude?.toString() || "",
     });
     setIsDialogOpen(true);
+  };
+
+  const handleCEPBlur = async () => {
+    const cep = form.getValues("postal_code");
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+
+    setIsLoadingAddress(true);
+    try {
+      const addressInfo = await fetchAddressFromCEP(cep);
+      if (addressInfo) {
+        form.setValue("location", addressInfo.fullAddress);
+        toast({
+          title: "Endereço encontrado",
+          description: "O endereço foi preenchido automaticamente",
+        });
+
+        // Buscar coordenadas automaticamente se tiver número
+        const addressNumber = form.getValues("address_number");
+        if (addressNumber) {
+          await handleFetchCoordinates(addressInfo, addressNumber, cep);
+        }
+      } else {
+        toast({
+          title: "CEP não encontrado",
+          description: "Verifique o CEP ou preencha o endereço manualmente",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar CEP",
+        description: "Não foi possível buscar o endereço",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  };
+
+  const handleAddressNumberChange = async () => {
+    const cep = form.getValues("postal_code");
+    const addressNumber = form.getValues("address_number");
+    const location = form.getValues("location");
+
+    if (!cep || !addressNumber || !location) return;
+
+    // Extrai informações do endereço já preenchido
+    const addressParts = location.split(',');
+    if (addressParts.length < 3) return;
+
+    setIsLoadingCoordinates(true);
+    try {
+      const addressInfo = await fetchAddressFromCEP(cep);
+      if (addressInfo) {
+        await handleFetchCoordinates(addressInfo, addressNumber, cep);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar coordenadas:", error);
+    } finally {
+      setIsLoadingCoordinates(false);
+    }
+  };
+
+  const handleFetchCoordinates = async (
+    addressInfo: { street: string; city: string; state: string },
+    addressNumber: string,
+    cep: string
+  ) => {
+    setIsLoadingCoordinates(true);
+    try {
+      const coords = await fetchCoordinatesFromAddress(
+        addressInfo.street,
+        addressNumber,
+        addressInfo.city,
+        addressInfo.state,
+        cep
+      );
+
+      if (coords) {
+        form.setValue("latitude", coords.latitude.toString());
+        form.setValue("longitude", coords.longitude.toString());
+        toast({
+          title: "Coordenadas encontradas",
+          description: "Latitude e longitude foram preenchidas automaticamente",
+        });
+      } else {
+        toast({
+          title: "Coordenadas não encontradas",
+          description: "Preencha as coordenadas manualmente",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar coordenadas",
+        description: "Não foi possível buscar as coordenadas",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCoordinates(false);
+    }
   };
 
   const handleDelete = () => {
@@ -530,19 +644,71 @@ const Carregadores = () => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Localização</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Seção de Endereço */}
+              <div className="space-y-3 sm:space-y-4 pt-2 border-t border-border">
+                <h3 className="text-sm font-semibold text-muted-foreground">Endereço</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <FormField
+                    control={form.control}
+                    name="postal_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CEP</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              placeholder="00000-000"
+                              maxLength={9}
+                              onChange={(e) => {
+                                const masked = applyCEPMask(e.target.value);
+                                field.onChange(masked);
+                              }}
+                              onBlur={handleCEPBlur}
+                            />
+                            {isLoadingAddress && (
+                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="123"
+                            onBlur={handleAddressNumberChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Localização</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Será preenchido automaticamente" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <FormField
@@ -550,9 +716,14 @@ const Carregadores = () => {
                   name="latitude"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Latitude (opcional)</FormLabel>
+                      <FormLabel>Latitude {isLoadingCoordinates && "(buscando...)"}</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="any" />
+                        <div className="relative">
+                          <Input {...field} type="number" step="any" placeholder="Auto-preenchida" />
+                          {isLoadingCoordinates && (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -563,9 +734,14 @@ const Carregadores = () => {
                   name="longitude"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Longitude (opcional)</FormLabel>
+                      <FormLabel>Longitude {isLoadingCoordinates && "(buscando...)"}</FormLabel>
                       <FormControl>
-                        <Input {...field} type="number" step="any" />
+                        <div className="relative">
+                          <Input {...field} type="number" step="any" placeholder="Auto-preenchida" />
+                          {isLoadingCoordinates && (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
