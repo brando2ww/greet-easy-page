@@ -31,11 +31,11 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <I18nextProvider i18n={i18n}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <Routes>
               <Route path="/" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
@@ -54,9 +54,9 @@ const App = () => (
               <Route path="/auth/signup" element={<SignUp />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </I18nextProvider>
   </QueryClientProvider>
 );
