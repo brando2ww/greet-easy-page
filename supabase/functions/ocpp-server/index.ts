@@ -12,6 +12,50 @@ const activeConnections = new Map<string, WebSocket>();
 let transactionIdCounter = 1000;
 
 Deno.serve(async (req) => {
+  // Extrair o Charge Point ID da URL
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+  const chargePointId = pathParts[pathParts.length - 1]; // Último segmento da URL
+  
+  console.log(`[OCPP Server] Connection attempt from Charge Point ID: ${chargePointId}`);
+  console.log(`[OCPP Server] Full URL: ${req.url}`);
+  console.log(`[OCPP Server] Path: ${url.pathname}`);
+
+  // Validar se o carregador existe no banco ANTES de aceitar a conexão WebSocket
+  const { data: charger, error: chargerError } = await supabase
+    .from('chargers')
+    .select('id, name, ocpp_charge_point_id')
+    .eq('ocpp_charge_point_id', chargePointId)
+    .maybeSingle();
+
+  if (chargerError) {
+    console.error('[OCPP Server] Database error while validating charger:', chargerError);
+    return new Response(
+      JSON.stringify({ error: 'Database error', details: chargerError.message }),
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  if (!charger) {
+    console.error(`[OCPP Server] Charge Point ${chargePointId} not registered in database`);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Charger not registered', 
+        chargePointId: chargePointId,
+        message: 'This charger is not registered in the system. Please register it first.'
+      }),
+      { 
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  console.log(`[OCPP Server] Charger validated: ${charger.name} (ID: ${charger.id})`);
+
   const { headers } = req;
   const upgradeHeader = headers.get('upgrade') || '';
 
@@ -20,7 +64,6 @@ Deno.serve(async (req) => {
   }
 
   const { socket, response } = Deno.upgradeWebSocket(req);
-  let chargePointId = '';
   let heartbeatInterval: number | null = null;
 
   socket.onopen = () => {
@@ -105,31 +148,9 @@ Deno.serve(async (req) => {
   // Handlers para cada tipo de mensagem OCPP
 
   async function handleBootNotification(ws: WebSocket, messageId: string, payload: any) {
-    chargePointId = payload.chargePointSerialNumber || payload.chargePointModel || 'UNKNOWN';
-    console.log(`[BootNotification] Charge Point ID: ${chargePointId}`);
-
-    // Verificar se o carregador existe no banco
-    const { data: charger, error } = await supabase
-      .from('chargers')
-      .select('*')
-      .eq('ocpp_charge_point_id', chargePointId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('[BootNotification] Database error:', error);
-      sendCallError(ws, messageId, 'InternalError', 'Database error');
-      return;
-    }
-
-    if (!charger) {
-      console.error(`[BootNotification] Charge Point ${chargePointId} not registered`);
-      sendCallResult(ws, messageId, {
-        status: 'Rejected',
-        currentTime: new Date().toISOString(),
-        interval: 300,
-      });
-      return;
-    }
+    // O chargePointId já foi validado e está disponível no escopo superior
+    console.log(`[BootNotification] Processing for Charge Point ID: ${chargePointId}`);
+    console.log(`[BootNotification] Payload:`, payload);
 
     // Atualizar informações do carregador
     await supabase
