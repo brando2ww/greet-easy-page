@@ -2,10 +2,7 @@
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["npm ci"]
-
-[phases.build]
-cmds = ["npm run build"]
+cmds = ["cd ocpp-standalone-server && npm ci"]
 
 [start]
-cmd = "npm run preview -- --host 0.0.0.0 --port $PORT"
+cmd = "cd ocpp-standalone-server && node server.js"
