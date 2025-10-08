@@ -1,0 +1,21 @@
+{
+  "name": "ocpp-standalone-server",
+  "version": "1.0.0",
+  "description": "Standalone OCPP 1.6J WebSocket server for EV charging stations",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["ocpp", "websocket", "ev-charging"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

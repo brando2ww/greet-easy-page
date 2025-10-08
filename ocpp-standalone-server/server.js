@@ -1,0 +1,339 @@
+import { WebSocketServer } from 'ws';
+import { createClient } from '@supabase/supabase-js';
+
+// Configuração do Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('ERROR: Missing required environment variables');
+  console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Armazena conexões ativas por Charge Point ID
+const activeConnections = new Map();
+let transactionIdCounter = 1000;
+
+const PORT = process.env.PORT || 8080;
+
+// Criar servidor WebSocket
+const wss = new WebSocketServer({ port: PORT });
+
+console.log(`[OCPP Server] Starting on port ${PORT}...`);
+
+wss.on('listening', () => {
+  console.log(`[OCPP Server] WebSocket server is listening on ws://0.0.0.0:${PORT}`);
+  console.log('[OCPP Server] Ready to accept connections from chargers');
+  console.log('[OCPP Server] Expected connection format: ws://your-domain/{chargePointId}');
+});
+
+wss.on('connection', async (ws, req) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+  const chargePointId = pathParts[pathParts.length - 1];
+  
+  console.log(`[OCPP Server] New connection attempt from Charge Point ID: ${chargePointId}`);
+  console.log(`[OCPP Server] Full URL: ${req.url}`);
+  console.log(`[OCPP Server] Client IP: ${req.socket.remoteAddress}`);
+
+  if (!chargePointId) {
+    console.error('[OCPP Server] No Charge Point ID in URL');
+    ws.close(1008, 'Missing Charge Point ID in URL path');
+    return;
+  }
+
+  // Validar se o carregador existe no banco
+  const { data: charger, error: chargerError } = await supabase
+    .from('chargers')
+    .select('id, name, ocpp_charge_point_id')
+    .eq('ocpp_charge_point_id', chargePointId)
+    .maybeSingle();
+
+  if (chargerError) {
+    console.error('[OCPP Server] Database error:', chargerError);
+    ws.close(1011, 'Database error');
+    return;
+  }
+
+  if (!charger) {
+    console.error(`[OCPP Server] Charge Point ${chargePointId} not registered`);
+    ws.close(1008, 'Charger not registered in system');
+    return;
+  }
+
+  console.log(`[OCPP Server] Charger validated: ${charger.name} (ID: ${charger.id})`);
+  console.log(`[OCPP Server] Connection established with ${chargePointId}`);
+
+  let heartbeatInterval = null;
+
+  ws.on('message', async (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+      console.log(`[OCPP Server] Message from ${chargePointId}:`, message);
+
+      const [messageType, messageId, action, payload] = message;
+
+      if (messageType === 2) { // CALL
+        switch (action) {
+          case 'BootNotification':
+            await handleBootNotification(ws, messageId, payload, chargePointId);
+            break;
+          case 'Heartbeat':
+            await handleHeartbeat(ws, messageId, chargePointId);
+            break;
+          case 'StatusNotification':
+            await handleStatusNotification(ws, messageId, payload, chargePointId);
+            break;
+          case 'Authorize':
+            await handleAuthorize(ws, messageId, payload);
+            break;
+          case 'StartTransaction':
+            await handleStartTransaction(ws, messageId, payload, chargePointId);
+            break;
+          case 'StopTransaction':
+            await handleStopTransaction(ws, messageId, payload, chargePointId);
+            break;
+          case 'MeterValues':
+            await handleMeterValues(ws, messageId, payload);
+            break;
+          default:
+            console.log(`[OCPP Server] Unknown action: ${action}`);
+            sendCallError(ws, messageId, 'NotSupported', `Action ${action} not supported`);
+        }
+      } else if (messageType === 3) { // CALLRESULT
+        console.log(`[OCPP Server] Received CALLRESULT from ${chargePointId}:`, payload);
+      } else if (messageType === 4) { // CALLERROR
+        console.error(`[OCPP Server] Received CALLERROR from ${chargePointId}:`, message);
+      }
+    } catch (error) {
+      console.error(`[OCPP Server] Error processing message from ${chargePointId}:`, error);
+    }
+  });
+
+  ws.on('close', async () => {
+    console.log(`[OCPP Server] Connection closed with ${chargePointId}`);
+    activeConnections.delete(chargePointId);
+    
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+    }
+
+    await updateChargerStatus(chargePointId, 'unavailable', 'Offline');
+  });
+
+  ws.on('error', (error) => {
+    console.error(`[OCPP Server] WebSocket error for ${chargePointId}:`, error);
+  });
+
+  // Registrar conexão ativa
+  activeConnections.set(chargePointId, ws);
+});
+
+// Handlers OCPP
+
+async function handleBootNotification(ws, messageId, payload, chargePointId) {
+  console.log(`[BootNotification] Processing for ${chargePointId}`, payload);
+
+  await supabase
+    .from('chargers')
+    .update({
+      ocpp_model: payload.chargePointModel,
+      ocpp_vendor: payload.chargePointVendor,
+      firmware_version: payload.firmwareVersion,
+      serial_number: payload.chargePointSerialNumber,
+      last_heartbeat: new Date().toISOString(),
+      ocpp_protocol_status: 'Available',
+      ocpp_error_code: null,
+    })
+    .eq('ocpp_charge_point_id', chargePointId);
+
+  sendCallResult(ws, messageId, {
+    status: 'Accepted',
+    currentTime: new Date().toISOString(),
+    interval: 300,
+  });
+
+  console.log(`[BootNotification] Accepted for ${chargePointId}`);
+}
+
+async function handleHeartbeat(ws, messageId, chargePointId) {
+  await supabase
+    .from('chargers')
+    .update({ last_heartbeat: new Date().toISOString() })
+    .eq('ocpp_charge_point_id', chargePointId);
+
+  sendCallResult(ws, messageId, {
+    currentTime: new Date().toISOString(),
+  });
+}
+
+async function handleStatusNotification(ws, messageId, payload, chargePointId) {
+  console.log(`[StatusNotification] ${chargePointId} - Status: ${payload.status}, Error: ${payload.errorCode}`);
+
+  const statusMap = {
+    'Available': 'available',
+    'Occupied': 'in_use',
+    'Charging': 'in_use',
+    'Preparing': 'in_use',
+    'Finishing': 'in_use',
+    'Reserved': 'in_use',
+    'Unavailable': 'unavailable',
+    'Faulted': 'unavailable',
+  };
+
+  await supabase
+    .from('chargers')
+    .update({
+      status: statusMap[payload.status] || 'unavailable',
+      ocpp_protocol_status: payload.status,
+      ocpp_error_code: payload.errorCode !== 'NoError' ? payload.errorCode : null,
+    })
+    .eq('ocpp_charge_point_id', chargePointId);
+
+  sendCallResult(ws, messageId, {});
+}
+
+async function handleAuthorize(ws, messageId, payload) {
+  console.log(`[Authorize] ID Tag: ${payload.idTag}`);
+
+  sendCallResult(ws, messageId, {
+    idTagInfo: {
+      status: 'Accepted',
+    },
+  });
+}
+
+async function handleStartTransaction(ws, messageId, payload, chargePointId) {
+  console.log(`[StartTransaction] ${chargePointId} - Connector: ${payload.connectorId}, Meter: ${payload.meterStart}`);
+
+  const { data: charger } = await supabase
+    .from('chargers')
+    .select('id, price_per_kwh')
+    .eq('ocpp_charge_point_id', chargePointId)
+    .single();
+
+  if (!charger) {
+    sendCallError(ws, messageId, 'InternalError', 'Charger not found');
+    return;
+  }
+
+  const transactionId = transactionIdCounter++;
+
+  const { error } = await supabase
+    .from('charging_sessions')
+    .insert({
+      charger_id: charger.id,
+      user_id: '00000000-0000-0000-0000-000000000000',
+      transaction_id: transactionId,
+      meter_start: payload.meterStart,
+      id_tag: payload.idTag,
+      started_at: new Date(payload.timestamp).toISOString(),
+      status: 'in_progress',
+    });
+
+  if (error) {
+    console.error('[StartTransaction] Database error:', error);
+    sendCallError(ws, messageId, 'InternalError', 'Failed to create session');
+    return;
+  }
+
+  await updateChargerStatus(chargePointId, 'in_use', 'Charging');
+
+  sendCallResult(ws, messageId, {
+    transactionId: transactionId,
+    idTagInfo: {
+      status: 'Accepted',
+    },
+  });
+
+  console.log(`[StartTransaction] Created transaction ${transactionId} for ${chargePointId}`);
+}
+
+async function handleStopTransaction(ws, messageId, payload, chargePointId) {
+  console.log(`[StopTransaction] Transaction ${payload.transactionId} - Meter: ${payload.meterStop}`);
+
+  const { data: session } = await supabase
+    .from('charging_sessions')
+    .select('*, chargers(price_per_kwh)')
+    .eq('transaction_id', payload.transactionId)
+    .single();
+
+  if (!session) {
+    sendCallError(ws, messageId, 'InternalError', 'Session not found');
+    return;
+  }
+
+  const energyConsumed = (payload.meterStop - session.meter_start) / 1000;
+  const cost = energyConsumed * session.chargers.price_per_kwh;
+
+  await supabase
+    .from('charging_sessions')
+    .update({
+      meter_stop: payload.meterStop,
+      energy_consumed: energyConsumed,
+      cost: cost,
+      ended_at: new Date(payload.timestamp).toISOString(),
+      status: 'completed',
+      stop_reason: payload.reason,
+    })
+    .eq('transaction_id', payload.transactionId);
+
+  await updateChargerStatus(chargePointId, 'available', 'Available');
+
+  sendCallResult(ws, messageId, {
+    idTagInfo: {
+      status: 'Accepted',
+    },
+  });
+
+  console.log(`[StopTransaction] Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
+}
+
+async function handleMeterValues(ws, messageId, payload) {
+  console.log(`[MeterValues] Transaction: ${payload.transactionId}`, payload.meterValue);
+  sendCallResult(ws, messageId, {});
+}
+
+// Funções auxiliares
+
+function sendCallResult(ws, messageId, payload) {
+  const message = [3, messageId, payload];
+  ws.send(JSON.stringify(message));
+}
+
+function sendCallError(ws, messageId, errorCode, errorDescription) {
+  const message = [4, messageId, errorCode, errorDescription, {}];
+  ws.send(JSON.stringify(message));
+}
+
+async function updateChargerStatus(chargePointId, status, ocppStatus) {
+  await supabase
+    .from('chargers')
+    .update({
+      status: status,
+      ocpp_protocol_status: ocppStatus,
+    })
+    .eq('ocpp_charge_point_id', chargePointId);
+}
+
+// Tratamento de erros global
+process.on('uncaughtException', (error) => {
+  console.error('[OCPP Server] Uncaught exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[OCPP Server] Unhandled rejection at:', promise, 'reason:', reason);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('[OCPP Server] SIGTERM received, closing server...');
+  wss.close(() => {
+    console.log('[OCPP Server] Server closed');
+    process.exit(0);
+  });
+});
