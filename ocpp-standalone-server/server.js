@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { createClient } from '@supabase/supabase-js';
+import http from 'http';
 
 // Configuração do Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -20,15 +21,54 @@ let transactionIdCounter = 1000;
 
 const PORT = process.env.PORT || 8080;
 
-// Criar servidor WebSocket
-const wss = new WebSocketServer({ port: PORT });
+// Criar servidor HTTP
+const server = http.createServer((req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  
+  console.log(`[HTTP] ${req.method} ${url.pathname} from ${req.socket.remoteAddress}`);
+
+  // Health check endpoints
+  if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'online',
+      service: 'OCPP WebSocket Server',
+      version: '1.6J',
+      uptime: process.uptime(),
+      activeConnections: activeConnections.size,
+      timestamp: new Date().toISOString(),
+      message: 'Server is running. WebSocket connections available at ws:// or wss://'
+    }));
+    return;
+  }
+
+  // Para outras rotas HTTP, retornar 404
+  res.writeHead(404, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({
+    error: 'Not Found',
+    message: 'This is a WebSocket server. Use ws:// or wss:// protocol to connect.'
+  }));
+});
+
+// Criar servidor WebSocket anexado ao servidor HTTP
+const wss = new WebSocketServer({ 
+  server,
+  verifyClient: (info) => {
+    console.log(`[WebSocket] Verify client from ${info.req.socket.remoteAddress}`);
+    console.log(`[WebSocket] URL: ${info.req.url}`);
+    console.log(`[WebSocket] Origin: ${info.origin || 'No origin header'}`);
+    return true; // Accept all connections
+  }
+});
 
 console.log(`[OCPP Server] Starting on port ${PORT}...`);
 
-wss.on('listening', () => {
-  console.log(`[OCPP Server] WebSocket server is listening on ws://0.0.0.0:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[OCPP Server] HTTP server listening on http://0.0.0.0:${PORT}`);
+  console.log(`[OCPP Server] WebSocket server ready at ws://0.0.0.0:${PORT}`);
   console.log('[OCPP Server] Ready to accept connections from chargers');
   console.log('[OCPP Server] Expected connection format: ws://your-domain/{chargePointId}');
+  console.log('[OCPP Server] Health check available at: http://your-domain/health');
 });
 
 wss.on('connection', async (ws, req) => {
@@ -39,6 +79,7 @@ wss.on('connection', async (ws, req) => {
   console.log(`[OCPP Server] New connection attempt from Charge Point ID: ${chargePointId}`);
   console.log(`[OCPP Server] Full URL: ${req.url}`);
   console.log(`[OCPP Server] Client IP: ${req.socket.remoteAddress}`);
+  console.log(`[OCPP Server] Headers:`, req.headers);
 
   if (!chargePointId) {
     console.error('[OCPP Server] No Charge Point ID in URL');
@@ -332,8 +373,11 @@ process.on('unhandledRejection', (reason, promise) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('[OCPP Server] SIGTERM received, closing server...');
-  wss.close(() => {
-    console.log('[OCPP Server] Server closed');
-    process.exit(0);
+  server.close(() => {
+    console.log('[OCPP Server] HTTP server closed');
+    wss.close(() => {
+      console.log('[OCPP Server] WebSocket server closed');
+      process.exit(0);
+    });
   });
 });
