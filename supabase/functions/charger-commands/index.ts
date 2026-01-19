@@ -134,7 +134,10 @@ Deno.serve(async (req) => {
           try {
             const remoteStartResponse = await fetch(`${RAILWAY_OCPP_URL}/api/remote-start`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'x-internal-key': Deno.env.get('RAILWAY_INTERNAL_KEY')!,
+              },
               body: JSON.stringify({
                 chargePointId: charger.ocpp_charge_point_id,
                 idTag: idTag || userId,
@@ -216,7 +219,10 @@ Deno.serve(async (req) => {
           try {
             const remoteStopResponse = await fetch(`${RAILWAY_OCPP_URL}/api/remote-stop`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'x-internal-key': Deno.env.get('RAILWAY_INTERNAL_KEY')!,
+              },
               body: JSON.stringify({
                 chargePointId: charger.ocpp_charge_point_id,
                 transactionId,
