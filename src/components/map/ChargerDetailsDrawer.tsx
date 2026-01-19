@@ -11,12 +11,12 @@ interface Charger {
   id: string;
   name: string;
   location: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   status: string;
   power: number;
-  price_per_kwh: number;
-  connector_type: string;
+  pricePerKwh: number;
+  connectorType: string;
 }
 
 interface ChargerDetailsDrawerProps {
@@ -146,7 +146,7 @@ export const ChargerDetailsModal = ({
                 <div>
                   <p className="text-xs text-muted-foreground">Plugs</p>
                   <p className="text-sm font-medium text-orange-600">
-                    {charger.connector_type}
+                    {charger.connectorType}
                   </p>
                 </div>
               </div>
@@ -199,7 +199,7 @@ export const ChargerDetailsModal = ({
                       {t('stations.pricePerKwh')}
                     </p>
                     <p className="text-sm font-medium">
-                      R$ {charger.price_per_kwh.toFixed(2)}/kWh
+                      R$ {charger.pricePerKwh.toFixed(2)}/kWh
                     </p>
                   </div>
                 </div>

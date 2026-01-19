@@ -11,12 +11,12 @@ interface Charger {
   id: string;
   name: string;
   location: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   status: string;
   power: number;
-  price_per_kwh: number;
-  connector_type: string;
+  pricePerKwh: number;
+  connectorType: string;
 }
 
 interface StationsMapProps {

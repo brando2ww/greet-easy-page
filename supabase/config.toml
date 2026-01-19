@@ -1,4 +1,10 @@
 project_id = "fgvjvtglcmxzadetmmoi"
 
-[functions.ocpp-server]
+[functions.chargers-api]
+verify_jwt = false
+
+[functions.charger-commands]
+verify_jwt = false
+
+[functions.transactions-api]
 verify_jwt = false

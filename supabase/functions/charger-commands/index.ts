@@ -1,0 +1,318 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const RAILWAY_OCPP_URL = Deno.env.get('RAILWAY_OCPP_URL');
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Get authorization header for user context
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+
+    if (authHeader) {
+      const supabaseUser = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const { data: { user } } = await supabaseUser.auth.getUser();
+      if (user) {
+        userId = user.id;
+      }
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await req.json();
+    const { action, chargerId, idTag, transactionId } = body;
+
+    console.log(`[charger-commands] Action: ${action}, User: ${userId}, Charger: ${chargerId}`);
+
+    switch (action) {
+      case 'start': {
+        if (!chargerId) {
+          return new Response(JSON.stringify({ error: 'chargerId is required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Get charger details
+        const { data: charger, error: chargerError } = await supabaseAdmin
+          .from('chargers')
+          .select('*')
+          .eq('id', chargerId)
+          .single();
+
+        if (chargerError || !charger) {
+          return new Response(JSON.stringify({ error: 'Charger not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Check if charger is available
+        if (charger.status !== 'available') {
+          return new Response(JSON.stringify({ 
+            error: 'Charger not available',
+            message: `Current status: ${charger.status}` 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Check OCPP connection
+        if (charger.ocpp_protocol_status !== 'Available') {
+          return new Response(JSON.stringify({ 
+            error: 'Charger offline',
+            message: 'The charger is not connected via OCPP' 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Check user wallet balance (optional - can be disabled)
+        const { data: wallet } = await supabaseAdmin
+          .from('wallet_balances')
+          .select('balance')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const balance = wallet?.balance || 0;
+        if (balance < 5) { // Minimum R$ 5.00 to start
+          return new Response(JSON.stringify({ 
+            error: 'Insufficient balance',
+            message: 'Add funds to your wallet to start charging' 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Create charging session
+        const { data: session, error: sessionError } = await supabaseAdmin
+          .from('charging_sessions')
+          .insert({
+            charger_id: chargerId,
+            user_id: userId,
+            id_tag: idTag || userId,
+            status: 'in_progress',
+            started_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (sessionError) {
+          console.error('[charger-commands] Session creation error:', sessionError);
+          return new Response(JSON.stringify({ error: 'Failed to create session' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Call Railway OCPP server to send RemoteStartTransaction
+        if (RAILWAY_OCPP_URL && charger.ocpp_charge_point_id) {
+          try {
+            const remoteStartResponse = await fetch(`${RAILWAY_OCPP_URL}/api/remote-start`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chargePointId: charger.ocpp_charge_point_id,
+                idTag: idTag || userId,
+                connectorId: 1,
+              }),
+            });
+
+            const remoteResult = await remoteStartResponse.json();
+            console.log('[charger-commands] Remote start result:', remoteResult);
+
+            if (!remoteResult.success) {
+              // Rollback session if remote start failed
+              await supabaseAdmin
+                .from('charging_sessions')
+                .delete()
+                .eq('id', session.id);
+
+              return new Response(JSON.stringify({ 
+                error: 'Remote start failed',
+                message: remoteResult.message || 'Could not start charging remotely'
+              }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+
+            // Update session with transaction ID from OCPP
+            if (remoteResult.transactionId) {
+              await supabaseAdmin
+                .from('charging_sessions')
+                .update({ transaction_id: remoteResult.transactionId })
+                .eq('id', session.id);
+            }
+          } catch (fetchError) {
+            console.error('[charger-commands] Railway API error:', fetchError);
+            // Continue anyway - charger might start locally
+          }
+        }
+
+        // Update charger status
+        await supabaseAdmin
+          .from('chargers')
+          .update({ status: 'in_use' })
+          .eq('id', chargerId);
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Charging session started',
+          sessionId: session.id,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      case 'stop': {
+        if (!chargerId || !transactionId) {
+          return new Response(JSON.stringify({ error: 'chargerId and transactionId are required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Get charger details
+        const { data: charger } = await supabaseAdmin
+          .from('chargers')
+          .select('ocpp_charge_point_id')
+          .eq('id', chargerId)
+          .single();
+
+        if (!charger) {
+          return new Response(JSON.stringify({ error: 'Charger not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Call Railway OCPP server to send RemoteStopTransaction
+        if (RAILWAY_OCPP_URL && charger.ocpp_charge_point_id) {
+          try {
+            const remoteStopResponse = await fetch(`${RAILWAY_OCPP_URL}/api/remote-stop`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chargePointId: charger.ocpp_charge_point_id,
+                transactionId,
+              }),
+            });
+
+            const remoteResult = await remoteStopResponse.json();
+            console.log('[charger-commands] Remote stop result:', remoteResult);
+
+            if (!remoteResult.success) {
+              return new Response(JSON.stringify({ 
+                error: 'Remote stop failed',
+                message: remoteResult.message || 'Could not stop charging remotely'
+              }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+          } catch (fetchError) {
+            console.error('[charger-commands] Railway API error:', fetchError);
+          }
+        }
+
+        // Update session status
+        await supabaseAdmin
+          .from('charging_sessions')
+          .update({
+            status: 'completed',
+            ended_at: new Date().toISOString(),
+            stop_reason: 'Remote',
+          })
+          .eq('transaction_id', transactionId);
+
+        // Update charger status
+        await supabaseAdmin
+          .from('chargers')
+          .update({ status: 'available' })
+          .eq('id', chargerId);
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Charging session stopped',
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      case 'status': {
+        if (!chargerId) {
+          return new Response(JSON.stringify({ error: 'chargerId is required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { data: charger, error } = await supabaseAdmin
+          .from('chargers')
+          .select('ocpp_charge_point_id, ocpp_protocol_status, last_heartbeat')
+          .eq('id', chargerId)
+          .single();
+
+        if (error || !charger) {
+          return new Response(JSON.stringify({ error: 'Charger not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Check if charger is connected (heartbeat within last 2 minutes)
+        const lastHeartbeat = charger.last_heartbeat ? new Date(charger.last_heartbeat) : null;
+        const isConnected = lastHeartbeat 
+          ? (Date.now() - lastHeartbeat.getTime()) < 120000 
+          : false;
+
+        return new Response(JSON.stringify({
+          chargePointId: charger.ocpp_charge_point_id,
+          isConnected,
+          ocppStatus: charger.ocpp_protocol_status,
+          lastHeartbeat: charger.last_heartbeat,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      default:
+        return new Response(JSON.stringify({ error: 'Invalid action' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+  } catch (error) {
+    console.error('[charger-commands] Error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
