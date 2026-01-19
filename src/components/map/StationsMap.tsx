@@ -55,39 +55,58 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken) {
+      console.warn('[StationsMap] Missing container or token:', { 
+        hasContainer: !!mapContainer.current, 
+        hasToken: !!mapboxToken 
+      });
+      return;
+    }
 
+    console.log('[StationsMap] Initializing map...');
     mapboxgl.accessToken = mapboxToken;
 
     const initialCenter: [number, number] = userLocation || [-46.6333, -23.5505]; // São Paulo as default
     const initialZoom = userLocation ? 13 : 11;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: initialCenter,
-      zoom: initialZoom,
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: initialCenter,
+        zoom: initialZoom,
+      });
 
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
+      map.current.on('load', () => {
+        console.log('[StationsMap] Map loaded successfully');
+      });
 
-    // Add user location marker
-    if (userLocation) {
-      new mapboxgl.Marker({ color: '#3b82f6' })
-        .setLngLat(userLocation)
-        .setPopup(
-          new mapboxgl.Popup().setHTML(`
-            <div class="p-2">
-              <p class="font-semibold">${t('stations.myLocation')}</p>
-            </div>
-          `)
-        )
-        .addTo(map.current);
+      map.current.on('error', (e) => {
+        console.error('[StationsMap] Map error:', e);
+      });
+
+      map.current.addControl(
+        new mapboxgl.NavigationControl({
+          visualizePitch: true,
+        }),
+        'top-right'
+      );
+
+      // Add user location marker
+      if (userLocation) {
+        new mapboxgl.Marker({ color: '#3b82f6' })
+          .setLngLat(userLocation)
+          .setPopup(
+            new mapboxgl.Popup().setHTML(`
+              <div class="p-2">
+                <p class="font-semibold">${t('stations.myLocation')}</p>
+              </div>
+            `)
+          )
+          .addTo(map.current);
+      }
+    } catch (error) {
+      console.error('[StationsMap] Failed to initialize map:', error);
     }
 
     return () => {
@@ -97,11 +116,19 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
 
   // Add charger markers
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current) {
+      console.warn('[StationsMap] Map not initialized, skipping markers');
+      return;
+    }
+
+    console.log('[StationsMap] Adding markers for', chargers.length, 'chargers');
 
     // Remove existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
+
+    let addedCount = 0;
+    let skippedCount = 0;
 
     // Add new markers
     chargers.forEach((charger) => {
@@ -113,7 +140,8 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
       
       // Check if coordinates are valid
       if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        console.warn(`Invalid coordinates for charger ${charger.name}: lat=${charger.latitude}, lng=${charger.longitude}`);
+        console.warn(`[StationsMap] Invalid coordinates for charger ${charger.name}: lat=${charger.latitude}, lng=${charger.longitude}`);
+        skippedCount++;
         return;
       }
 
@@ -133,7 +161,10 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
       });
 
       markersRef.current.push(marker);
+      addedCount++;
     });
+
+    console.log(`[StationsMap] Markers added: ${addedCount}, skipped: ${skippedCount}`);
   }, [chargers, t]);
 
   const centerOnUserLocation = () => {

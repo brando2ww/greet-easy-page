@@ -15,7 +15,15 @@ export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const { t } = useTranslation();
-  const { data: chargers, isLoading } = useChargers();
+  const { data: chargers, isLoading, error, refetch } = useChargers();
+
+  // Debug logging
+  console.log('[Estacoes] Render state:', { 
+    isLoading, 
+    chargersCount: chargers?.length ?? 0,
+    error: error?.message,
+    hasMapboxToken: !!MAPBOX_TOKEN
+  });
 
   const filterChips = [
     { key: 'all', label: t('stations.all') },
@@ -113,8 +121,24 @@ export default function Estacoes() {
     <ResponsiveLayout mobileHeader={header} showBottomNav>
       <div className="h-full flex flex-col">
         {isLoading ? (
-          <div className="h-full flex items-center justify-center">
+          <div className="h-full flex items-center justify-center flex-col gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">{t('stations.loading')}</p>
+          </div>
+        ) : error ? (
+          <div className="h-full bg-muted flex items-center justify-center">
+            <div className="text-center p-8">
+              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">{t('common.error')}</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {error.message}
+              </p>
+              <Button onClick={() => refetch()} variant="outline">
+                {t('common.retry')}
+              </Button>
+            </div>
           </div>
         ) : filteredChargers.length === 0 ? (
           <div className="h-full bg-muted flex items-center justify-center">
@@ -123,9 +147,12 @@ export default function Estacoes() {
                 <Search className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">{t('stations.noChargers')}</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 {t('stations.tryDifferentFilters')}
               </p>
+              <Button onClick={() => refetch()} variant="outline">
+                {t('common.retry')}
+              </Button>
             </div>
           </div>
         ) : (
