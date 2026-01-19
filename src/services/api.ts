@@ -13,8 +13,18 @@ async function invokeFunction<T>(
   body?: Record<string, unknown>
 ): Promise<ApiResponse<T>> {
   try {
+    // Ensure the user's access token is sent to Edge Functions.
+    // (In some environments it is not automatically attached.)
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`;
+    }
+
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: body || {},
+      headers,
     });
 
     if (error) {
