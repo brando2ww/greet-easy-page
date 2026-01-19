@@ -69,11 +69,11 @@ export const ChargingHistorySheet = ({ open, onOpenChange }: ChargingHistoryShee
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-sm">
-                          {session.chargers?.name || "Carregador"}
+                          {session.charger?.name || "Carregador"}
                         </h3>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                           <MapPin className="w-3 h-3" />
-                          {session.chargers?.location || "Localização não disponível"}
+                          {session.charger?.location || "Localização não disponível"}
                         </p>
                       </div>
                       {getStatusBadge(session.status)}
@@ -83,17 +83,17 @@ export const ChargingHistorySheet = ({ open, onOpenChange }: ChargingHistoryShee
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="w-3.5 h-3.5" />
                       <span>
-                        {format(new Date(session.started_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        {format(new Date(session.startedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </span>
                     </div>
 
                     {/* Energia e Custo */}
-                    {(session.energy_consumed || session.cost) && (
+                    {(session.energyConsumed || session.cost) && (
                       <div className="flex items-center justify-between pt-2 border-t">
-                        {session.energy_consumed && (
+                        {session.energyConsumed && (
                           <div className="flex items-center gap-1.5 text-sm">
                             <Battery className="w-4 h-4 text-green-600" />
-                            <span className="font-medium">{session.energy_consumed.toFixed(2)} kWh</span>
+                            <span className="font-medium">{session.energyConsumed.toFixed(2)} kWh</span>
                           </div>
                         )}
                         {session.cost && (

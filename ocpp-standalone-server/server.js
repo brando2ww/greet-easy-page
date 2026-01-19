@@ -21,15 +21,29 @@ let transactionIdCounter = 1000;
 
 const PORT = process.env.PORT || 8080;
 
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 // Criar servidor HTTP
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   
   console.log(`[HTTP] ${req.method} ${url.pathname} from ${req.socket.remoteAddress}`);
 
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, corsHeaders);
+    res.end();
+    return;
+  }
+
   // Health check endpoints
   if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status: 'online',
       service: 'OCPP WebSocket Server',
@@ -37,17 +51,79 @@ const server = http.createServer((req, res) => {
       uptime: process.uptime(),
       activeConnections: activeConnections.size,
       timestamp: new Date().toISOString(),
-      message: 'Server is running. WebSocket connections available at ws:// or wss://'
     }));
     return;
   }
 
-  // Para outras rotas HTTP, retornar 404
-  res.writeHead(404, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({
-    error: 'Not Found',
-    message: 'This is a WebSocket server. Use ws:// or wss:// protocol to connect.'
-  }));
+  // API: List active connections
+  if (req.method === 'GET' && url.pathname === '/api/connections') {
+    const connections = Array.from(activeConnections.keys());
+    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ connections, count: connections.length }));
+    return;
+  }
+
+  // API: Remote Start Transaction
+  if (req.method === 'POST' && url.pathname === '/api/remote-start') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { chargePointId, idTag, connectorId = 1 } = JSON.parse(body);
+        const ws = activeConnections.get(chargePointId);
+        
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+
+        const messageId = `remote-start-${Date.now()}`;
+        const message = [2, messageId, 'RemoteStartTransaction', { connectorId, idTag: idTag || 'REMOTE' }];
+        ws.send(JSON.stringify(message));
+
+        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'RemoteStartTransaction sent' }));
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
+  // API: Remote Stop Transaction
+  if (req.method === 'POST' && url.pathname === '/api/remote-stop') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { chargePointId, transactionId } = JSON.parse(body);
+        const ws = activeConnections.get(chargePointId);
+        
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+
+        const messageId = `remote-stop-${Date.now()}`;
+        const message = [2, messageId, 'RemoteStopTransaction', { transactionId }];
+        ws.send(JSON.stringify(message));
+
+        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'RemoteStopTransaction sent' }));
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
+  // 404 for other routes
+  res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: 'Not Found' }));
 });
 
 // Criar servidor WebSocket anexado ao servidor HTTP

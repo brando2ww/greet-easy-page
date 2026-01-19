@@ -1,18 +1,7 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-
-interface Charger {
-  id: string;
-  name: string;
-  location: string;
-  status: string;
-  ocpp_protocol_status: string | null;
-  power: number;
-  price_per_kwh: number;
-  connector_type: string;
-}
+import { chargersApi, commandsApi } from "@/services/api";
 
 export const useChargerValidation = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,14 +12,10 @@ export const useChargerValidation = () => {
     setIsLoading(true);
     
     try {
-      // Try to find charger by ID or charge point ID
-      const { data: charger, error } = await supabase
-        .from('chargers')
-        .select('*')
-        .or(`id.eq.${code},ocpp_charge_point_id.eq.${code}`)
-        .single();
+      // Get charger by code (UUID or OCPP charge point ID)
+      const chargerResult = await chargersApi.getByCode(code);
 
-      if (error || !charger) {
+      if (chargerResult.error || !chargerResult.data) {
         toast({
           title: "Estação não encontrada",
           description: "Verifique o código e tente novamente",
@@ -39,6 +24,8 @@ export const useChargerValidation = () => {
         setIsLoading(false);
         return;
       }
+
+      const charger = chargerResult.data;
 
       // Check if charger is available
       if (charger.status !== 'available') {
@@ -57,7 +44,7 @@ export const useChargerValidation = () => {
       }
 
       // Check OCPP connection status
-      if (charger.ocpp_protocol_status !== 'Available') {
+      if (charger.ocppProtocolStatus !== 'Available') {
         toast({
           title: "Estação offline",
           description: "Esta estação não está conectada. Tente outra.",
@@ -67,38 +54,33 @@ export const useChargerValidation = () => {
         return;
       }
 
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Erro de autenticação",
-          description: "Faça login para iniciar o carregamento",
-          variant: "destructive",
-        });
-        navigate('/auth');
-        setIsLoading(false);
-        return;
-      }
+      // Start charging session via API
+      const startResult = await commandsApi.startCharge(charger.id);
 
-      // Create charging session
-      const { data: session, error: sessionError } = await supabase
-        .from('charging_sessions')
-        .insert({
-          charger_id: charger.id,
-          user_id: user.id,
-          status: 'in_progress',
-          started_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (sessionError || !session) {
-        toast({
-          title: "Erro ao iniciar sessão",
-          description: "Tente novamente",
-          variant: "destructive",
-        });
+      if (startResult.error || !startResult.data?.success) {
+        const errorMessage = startResult.data?.message || startResult.error || 'Erro ao iniciar sessão';
+        
+        // Handle specific errors
+        if (errorMessage.includes('Insufficient balance')) {
+          toast({
+            title: "Saldo insuficiente",
+            description: "Adicione créditos à sua carteira para carregar",
+            variant: "destructive",
+          });
+        } else if (errorMessage.includes('Authentication required')) {
+          toast({
+            title: "Erro de autenticação",
+            description: "Faça login para iniciar o carregamento",
+            variant: "destructive",
+          });
+          navigate('/auth');
+        } else {
+          toast({
+            title: "Erro ao iniciar sessão",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
         setIsLoading(false);
         return;
       }
@@ -110,8 +92,8 @@ export const useChargerValidation = () => {
       });
 
       // Navigate to active charging page with session data
-      navigate(`/carregamento/${session.id}`, {
-        state: { charger, session }
+      navigate(`/carregamento/${startResult.data.sessionId}`, {
+        state: { charger, sessionId: startResult.data.sessionId }
       });
 
     } catch (error) {
