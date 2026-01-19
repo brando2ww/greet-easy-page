@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useTranslation } from 'react-i18next';
-import { Navigation, MapPin } from 'lucide-react';
+import { Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ChargerDetailsModal } from './ChargerDetailsDrawer';
@@ -32,7 +32,9 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [selectedCharger, setSelectedCharger] = useState<Charger | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
 
   // Get user location
   useEffect(() => {
@@ -53,21 +55,17 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
     }
   }, [t, toast]);
 
-  // Initialize map
+  // Initialize map ONCE
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken) {
-      console.warn('[StationsMap] Missing container or token:', { 
-        hasContainer: !!mapContainer.current, 
-        hasToken: !!mapboxToken 
-      });
+    if (!mapContainer.current || !mapboxToken || map.current) {
       return;
     }
 
     console.log('[StationsMap] Initializing map...');
     mapboxgl.accessToken = mapboxToken;
 
-    const initialCenter: [number, number] = userLocation || [-46.6333, -23.5505]; // São Paulo as default
-    const initialZoom = userLocation ? 13 : 11;
+    const initialCenter: [number, number] = [-46.6333, -23.5505]; // São Paulo as default
+    const initialZoom = 11;
 
     try {
       map.current = new mapboxgl.Map({
@@ -79,6 +77,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
 
       map.current.on('load', () => {
         console.log('[StationsMap] Map loaded successfully');
+        setMapLoaded(true);
       });
 
       map.current.on('error', (e) => {
@@ -91,33 +90,52 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
         }),
         'top-right'
       );
-
-      // Add user location marker
-      if (userLocation) {
-        new mapboxgl.Marker({ color: '#3b82f6' })
-          .setLngLat(userLocation)
-          .setPopup(
-            new mapboxgl.Popup().setHTML(`
-              <div class="p-2">
-                <p class="font-semibold">${t('stations.myLocation')}</p>
-              </div>
-            `)
-          )
-          .addTo(map.current);
-      }
     } catch (error) {
       console.error('[StationsMap] Failed to initialize map:', error);
     }
 
     return () => {
-      map.current?.remove();
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        setMapLoaded(false);
+      }
     };
-  }, [mapboxToken, userLocation, t]);
+  }, [mapboxToken]);
 
-  // Add charger markers
+  // Handle user location marker separately (without recreating map)
   useEffect(() => {
-    if (!map.current) {
-      console.warn('[StationsMap] Map not initialized, skipping markers');
+    if (!map.current || !mapLoaded || !userLocation) return;
+
+    // Remove existing user marker if any
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
+    }
+
+    // Add user location marker
+    userMarkerRef.current = new mapboxgl.Marker({ color: '#3b82f6' })
+      .setLngLat(userLocation)
+      .setPopup(
+        new mapboxgl.Popup().setHTML(`
+          <div class="p-2">
+            <p class="font-semibold">${t('stations.myLocation')}</p>
+          </div>
+        `)
+      )
+      .addTo(map.current);
+
+    // Center on user location
+    map.current.flyTo({
+      center: userLocation,
+      zoom: 13,
+      duration: 1500,
+    });
+  }, [userLocation, mapLoaded, t]);
+
+  // Add charger markers when map is loaded
+  useEffect(() => {
+    if (!map.current || !mapLoaded) {
+      console.warn('[StationsMap] Map not ready, skipping markers');
       return;
     }
 
@@ -165,7 +183,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
     });
 
     console.log(`[StationsMap] Markers added: ${addedCount}, skipped: ${skippedCount}`);
-  }, [chargers, t]);
+  }, [chargers, mapLoaded]);
 
   const centerOnUserLocation = () => {
     if (map.current && userLocation) {
