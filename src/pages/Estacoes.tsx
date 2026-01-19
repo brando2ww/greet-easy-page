@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
   const { t } = useTranslation();
   const { data: chargers, isLoading, error, refetch } = useChargers();
 
