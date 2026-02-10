@@ -127,7 +127,19 @@ const server = http.createServer(async (req, res) => {
 });
 
 // Criar servidor WebSocket em modo noServer para controle total do upgrade
-const wss = new WebSocketServer({ noServer: true });
+const wss = new WebSocketServer({
+  noServer: true,
+  handleProtocols: (protocols) => {
+    if (protocols.has('ocpp1.6')) return 'ocpp1.6';
+    if (protocols.has('ocpp1.6j')) return 'ocpp1.6j';
+    if (protocols.has('ocpp2.0')) return 'ocpp2.0';
+    if (protocols.has('ocpp1.5')) return 'ocpp1.5';
+    for (const p of protocols) {
+      if (p.includes('ocpp')) return p;
+    }
+    return false;
+  },
+});
 
 console.log(`[OCPP Server] Starting on port ${PORT}...`);
 
@@ -144,24 +156,8 @@ server.on('upgrade', (request, socket, head) => {
   console.log(`[WebSocket Upgrade] URL: ${request.url}`);
   console.log(`[WebSocket Upgrade] Protocol: ${request.headers['sec-websocket-protocol'] || 'none'}`);
   console.log(`[WebSocket Upgrade] From: ${request.socket.remoteAddress}`);
-  console.log(`[WebSocket Upgrade] Headers:`, JSON.stringify(request.headers));
-
-  // Negociar subprotocolo manualmente (case-insensitive, aceita variantes)
-  const requestedProtocols = (request.headers['sec-websocket-protocol'] || '')
-    .split(',').map(p => p.trim().toLowerCase()).filter(p => p.length > 0);
-
-  let selectedProtocol = null;
-
-  // Priorizar ocpp1.6 (incluindo ocpp1.6j, ocpp1.6J, etc.)
-  selectedProtocol = requestedProtocols.find(p => p.startsWith('ocpp1.6'));
-  if (!selectedProtocol) selectedProtocol = requestedProtocols.find(p => p.startsWith('ocpp2.0'));
-  if (!selectedProtocol) selectedProtocol = requestedProtocols.find(p => p.startsWith('ocpp1.5'));
-  if (!selectedProtocol) selectedProtocol = requestedProtocols.find(p => p.includes('ocpp'));
-
-  console.log(`[WebSocket Upgrade] Selected protocol: ${selectedProtocol || 'none (accepting anyway)'}`);
 
   wss.handleUpgrade(request, socket, head, (ws) => {
-    ws.protocol = selectedProtocol || '';
     wss.emit('connection', ws, request);
   });
 });
