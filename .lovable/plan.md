@@ -1,33 +1,29 @@
 
 
-## Corrigir Label do Status "Preparing" para "Aguardando plugue"
+## Traduzir Status do Carregador no Drawer do Mapa
 
 ### Problema
-Depois de iniciar uma sessao remota (RemoteStartTransaction), o carregador envia status OCPP `Preparing` -- que significa exatamente "transacao iniciada, aguardando o cabo ser conectado". O mapeamento atual mostra "Preparando..." para esse estado, mas o texto correto deveria ser **"Aguardando plugue"**, ja que e isso que o carregador esta esperando.
-
-O status so vai mudar para `Charging` quando o cabo for efetivamente conectado ao carro.
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
 ### Solucao
-Alterar o mapeamento do status `Preparing` no arquivo `src/pages/Carregamento.tsx`:
-
-- **Antes:** `Preparing` -> "Preparando..." (amarelo)
-- **Depois:** `Preparing` -> "Aguardando plugue" (amarelo, pulsando)
-
-O status `Available` tambem pode significar "aguardando plugue" em outros contextos, mas apos um RemoteStart o carregador tipicamente vai direto para `Preparing`.
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
 ### Mudanca Tecnica
 
-**Arquivo: `src/pages/Carregamento.tsx`** (funcao `getOcppStatusInfo`, linha ~20)
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
 
-Alterar o case `Preparing` de:
-```
-case "Preparing":
-  return { label: "Preparando...", color: "bg-yellow-500", pulse: true };
-```
-Para:
-```
-case "Preparing":
-  return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
+Adicionar um objeto de mapeamento antes do return:
+
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
 ```
 
-Mudanca de uma unica linha. Nenhuma outra alteracao necessaria.
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+
