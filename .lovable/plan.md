@@ -1,43 +1,50 @@
 
 
-## Fix: Accept "Preparing" as Valid OCPP Status for Starting Charge
+## Usar Dados Reais no Grafico e Comparativo da Tela de Carregamento
 
-### Problem
-The charger 140414 has `ocpp_protocol_status: 'Preparing'` in the database. This is a valid OCPP status that means the cable is plugged in and the charger is ready. However, the code checks for exactly `'Available'` and rejects anything else as "offline".
+### O que muda
 
-After the first rejection, the auto-fix logic correctly reset the app-level `status` to `available`, but on the second attempt the `ocpp_protocol_status` is still `Preparing`, so it gets rejected again with "Estacao offline". Meanwhile, the first attempt's auto-fix changed status to `in_use` momentarily, causing a "station in use" error on retry.
+O grafico de barras semanal e o texto "12% menos energia" atualmente usam dados inventados. Vamos buscar o historico real de sessoes do usuario no servidor e exibir os dados verdadeiros.
 
-### Solution
-Accept multiple valid OCPP statuses that indicate the charger is connected and ready to charge. In OCPP 1.6, the valid statuses for starting a session are:
-- **Available** - idle, ready
-- **Preparing** - cable connected, awaiting authorization
+### Como vai funcionar
 
-### Technical Changes
+1. O servidor vai receber uma nova acao (`weeklyStats`) que retorna o consumo de energia do usuario nos ultimos 7 dias, agrupado por dia, e tambem o total do periodo anterior (7 dias antes) para calcular a comparacao real.
 
-**File 1: `src/hooks/useChargerValidation.tsx` (line 47)**
+2. A tela de carregamento vai chamar essa nova acao e alimentar o grafico e o texto comparativo com os dados reais.
 
-Change the strict equality check to accept both statuses:
+Se nao houver dados suficientes, o grafico mostrara barras zeradas nos dias sem sessoes (comportamento honesto).
 
-```typescript
-// Before
-if (charger.ocppProtocolStatus !== 'Available') {
+### Detalhes Tecnicos
 
-// After
-const validOcppStatuses = ['Available', 'Preparing'];
-if (!validOcppStatuses.includes(charger.ocppProtocolStatus || '')) {
+**Arquivo 1: `supabase/functions/transactions-api/index.ts`**
+
+Adicionar um novo case `weeklyStats` no switch:
+
+- Busca sessoes dos ultimos 7 dias (`completed` ou `in_progress`) do usuario
+- Agrupa por dia e soma `energy_consumed`
+- Busca tambem sessoes dos 7 dias anteriores para calcular a variacao percentual
+- Retorna:
+```json
+{
+  "dailyData": [
+    { "date": "2026-02-04", "dayLabel": "Ter", "energy": 5.2 },
+    { "date": "2026-02-05", "dayLabel": "Qua", "energy": 0 },
+    ...
+  ],
+  "currentPeriodTotal": 12.5,
+  "previousPeriodTotal": 14.2,
+  "changePercent": -12
+}
 ```
 
-**File 2: `supabase/functions/charger-commands/index.ts` (line ~103)**
+**Arquivo 2: `src/services/api.ts`**
 
-Same fix on the backend validation:
+Adicionar metodo `transactionsApi.weeklyStats()` que chama a nova acao.
 
-```typescript
-// Before
-if (charger.ocpp_protocol_status !== 'Available') {
+**Arquivo 3: `src/pages/Carregamento.tsx`**
 
-// After
-const validOcppStatuses = ['Available', 'Preparing'];
-if (!validOcppStatuses.includes(charger.ocpp_protocol_status || '')) {
-```
+- Substituir o `useMemo` com dados mock por um `useQuery` que chama `transactionsApi.weeklyStats()`
+- Alimentar o `chartData` com `dailyData` real
+- Substituir o texto hardcoded "12% menos" pelo `changePercent` real, mostrando "X% menos" ou "X% mais" conforme o valor
+- Se nao houver dados, mostrar texto como "Sem dados anteriores para comparar"
 
-These are the only two places where this check exists. Both need to be updated and the edge function redeployed.
