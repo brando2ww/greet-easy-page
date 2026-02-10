@@ -159,4 +159,16 @@ export const transactionsApi = {
   getActive: async (): Promise<ApiResponse<Transaction | null>> => {
     return invokeFunction<Transaction | null>('transactions-api', { action: 'getActive' });
   },
+
+  /**
+   * Get weekly energy stats for the current user
+   */
+  weeklyStats: async (): Promise<ApiResponse<{
+    dailyData: { date: string; dayLabel: string; energy: number }[];
+    currentPeriodTotal: number;
+    previousPeriodTotal: number;
+    changePercent: number;
+  }>> => {
+    return invokeFunction('transactions-api', { action: 'weeklyStats' });
+  },
 };

@@ -200,6 +200,77 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'weeklyStats': {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const fourteenDaysAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+        // Current period (last 7 days)
+        const { data: currentSessions, error: csErr } = await supabaseAdmin
+          .from('charging_sessions')
+          .select('started_at, energy_consumed')
+          .eq('user_id', userId)
+          .in('status', ['completed', 'in_progress'])
+          .gte('started_at', sevenDaysAgo.toISOString())
+          .order('started_at', { ascending: true });
+
+        if (csErr) throw csErr;
+
+        // Previous period (7-14 days ago)
+        const { data: prevSessions, error: psErr } = await supabaseAdmin
+          .from('charging_sessions')
+          .select('energy_consumed')
+          .eq('user_id', userId)
+          .in('status', ['completed', 'in_progress'])
+          .gte('started_at', fourteenDaysAgo.toISOString())
+          .lt('started_at', sevenDaysAgo.toISOString());
+
+        if (psErr) throw psErr;
+
+        // Build daily data for last 7 days
+        const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const dailyData: { date: string; dayLabel: string; energy: number }[] = [];
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+          const dateStr = d.toISOString().split('T')[0];
+          const dayLabel = i === 0 ? 'Hoje' : dayLabels[d.getDay()];
+          dailyData.push({ date: dateStr, dayLabel, energy: 0 });
+        }
+
+        // Aggregate energy per day
+        for (const s of (currentSessions || [])) {
+          const dateStr = new Date(s.started_at).toISOString().split('T')[0];
+          const entry = dailyData.find(d => d.date === dateStr);
+          if (entry) {
+            entry.energy += Number(s.energy_consumed || 0);
+          }
+        }
+
+        // Round values
+        dailyData.forEach(d => { d.energy = Math.round(d.energy * 100) / 100; });
+
+        const currentPeriodTotal = dailyData.reduce((sum, d) => sum + d.energy, 0);
+        const previousPeriodTotal = (prevSessions || []).reduce(
+          (sum, s) => sum + Number(s.energy_consumed || 0), 0
+        );
+
+        let changePercent = 0;
+        if (previousPeriodTotal > 0) {
+          changePercent = Math.round(((currentPeriodTotal - previousPeriodTotal) / previousPeriodTotal) * 100);
+        }
+
+        return new Response(JSON.stringify({
+          dailyData,
+          currentPeriodTotal: Math.round(currentPeriodTotal * 100) / 100,
+          previousPeriodTotal: Math.round(previousPeriodTotal * 100) / 100,
+          changePercent,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       case 'getActive': {
         const { data: session, error } = await supabaseAdmin
           .from('charging_sessions')
