@@ -18,16 +18,17 @@ Deno.serve(async (req) => {
   try {
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Get authorization header for user context
+    // Extract token from Authorization header
     const authHeader = req.headers.get('Authorization');
     let userId: string | null = null;
 
     if (authHeader) {
-      const supabaseUser = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
-        global: { headers: { Authorization: authHeader } }
-      });
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
       
-      const { data: { user } } = await supabaseUser.auth.getUser();
+      if (authError) {
+        console.error('[charger-commands] Auth error:', authError.message);
+      }
       if (user) {
         userId = user.id;
       }
