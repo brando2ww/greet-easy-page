@@ -107,12 +107,14 @@ export const commandsApi = {
    */
   stopCharge: async (
     chargerId: string, 
-    transactionId: number
+    transactionId: number,
+    sessionId?: string
   ): Promise<ApiResponse<RemoteCommandResponse>> => {
     return invokeFunction<RemoteCommandResponse>('charger-commands', {
       action: 'stop',
       chargerId,
-      transactionId,
+      transactionId: transactionId || undefined,
+      sessionId,
     });
   },
 
