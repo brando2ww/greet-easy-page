@@ -1,87 +1,74 @@
 
 
-# Corrigir handler do BootNotification no servidor OCPP
+# Corrigir erro "Cannot set property protocol" no servidor OCPP
 
-## Problema identificado
+## Problema
 
-O wscat conecta com sucesso usando o ID `140414`, mas o servidor nao responde ao BootNotification. A conexao permanece aberta (o charger foi validado no banco), porem nenhuma resposta `[3, ...]` e devolvida.
+Os logs do Digital Ocean mostram o erro:
+```
+TypeError: Cannot set property protocol of #<WebSocket> which has only a getter
+```
 
-A causa mais provavel: o `await supabase.update()` dentro de `handleBootNotification` esta falhando silenciosamente. O erro e capturado pelo `try/catch` generico no handler de mensagens, que apenas loga o erro no console do servidor -- mas nunca envia a resposta ao cliente.
+Isso acontece na linha `ws.protocol = selectedProtocol || '';` dentro do handler `server.on('upgrade')`. Na biblioteca `ws`, a propriedade `protocol` e somente leitura (getter). O servidor crasha antes de processar qualquer mensagem, por isso o BootNotification nunca recebe resposta.
 
 ## Solucao
 
-Reorganizar o `handleBootNotification` (e os demais handlers) para garantir que a resposta OCPP seja **sempre enviada**, independentemente do sucesso ou falha da operacao no banco de dados.
+Remover a linha `ws.protocol = selectedProtocol || '';` e passar o subprotocolo corretamente atraves do `WebSocketServer` usando a opcao `handleProtocols` no construtor, ou simplesmente remover o `noServer` e usar a opcao `server` diretamente com `handleProtocols`.
 
-## Alteracoes no arquivo `ocpp-standalone-server/server.js`
+A abordagem mais simples: manter `noServer: true`, mas em vez de tentar setar `ws.protocol` manualmente, basta remover essa linha. O protocolo ja sera negociado automaticamente se passarmos as opcoes corretas no `handleUpgrade`.
 
-### 1. Corrigir `handleBootNotification`
+## Alteracao no arquivo `ocpp-standalone-server/server.js`
 
-Mover o `sendCallResult` para **antes** da operacao no banco, ou envolver o update em try/catch proprio garantindo que a resposta sempre seja enviada:
+### Opcao escolhida: Usar `handleProtocols` no construtor do WebSocketServer
+
+Trocar:
 
 ```javascript
-async function handleBootNotification(ws, messageId, payload, chargePointId) {
-  console.log(`[BootNotification] Processing for ${chargePointId}`, payload);
-
-  // SEMPRE responder primeiro - o charger precisa da resposta
-  sendCallResult(ws, messageId, {
-    status: 'Accepted',
-    currentTime: new Date().toISOString(),
-    interval: 300,
-  });
-
-  console.log(`[BootNotification] Accepted for ${chargePointId}`);
-
-  // Atualizar banco em segundo plano (nao bloqueia a resposta)
-  try {
-    const { error } = await supabase
-      .from('chargers')
-      .update({
-        ocpp_model: payload.chargePointModel || null,
-        ocpp_vendor: payload.chargePointVendor || null,
-        firmware_version: payload.firmwareVersion || null,
-        serial_number: payload.chargePointSerialNumber || null,
-        last_heartbeat: new Date().toISOString(),
-        ocpp_protocol_status: 'Available',
-        ocpp_error_code: null,
-      })
-      .eq('ocpp_charge_point_id', chargePointId);
-
-    if (error) {
-      console.error('[BootNotification] DB update error:', error);
-    }
-  } catch (dbError) {
-    console.error('[BootNotification] DB exception:', dbError);
-  }
-}
+const wss = new WebSocketServer({ noServer: true });
 ```
 
-### 2. Adicionar logging no handler de mensagens
-
-Melhorar o `try/catch` principal para logar exatamente qual etapa falhou:
+Por:
 
 ```javascript
-ws.on('message', async (data) => {
-  try {
-    const raw = data.toString();
-    console.log(`[OCPP Server] Raw message from ${chargePointId}:`, raw);
-    const message = JSON.parse(raw);
-    // ... rest of handler
-  } catch (error) {
-    console.error(`[OCPP Server] Error processing message:`, error.message);
-    console.error(`[OCPP Server] Stack:`, error.stack);
-  }
+const wss = new WebSocketServer({
+  noServer: true,
+  handleProtocols: (protocols) => {
+    if (protocols.has('ocpp1.6')) return 'ocpp1.6';
+    if (protocols.has('ocpp1.6j')) return 'ocpp1.6j';
+    if (protocols.has('ocpp2.0')) return 'ocpp2.0';
+    if (protocols.has('ocpp1.5')) return 'ocpp1.5';
+    for (const p of protocols) {
+      if (p.includes('ocpp')) return p;
+    }
+    return false;
+  },
 });
 ```
 
-### 3. Aplicar o mesmo padrao nos demais handlers
+E no handler de `upgrade`, remover a linha problematica:
 
-Os handlers `handleStartTransaction`, `handleStopTransaction`, e `handleStatusNotification` tambem devem enviar a resposta OCPP antes de fazer operacoes no banco, ou pelo menos garantir que a resposta seja enviada em caso de erro.
+```javascript
+// REMOVER esta linha:
+ws.protocol = selectedProtocol || '';
+
+// E simplificar o upgrade handler para:
+server.on('upgrade', (request, socket, head) => {
+  console.log(`[WebSocket Upgrade] URL: ${request.url}`);
+  console.log(`[WebSocket Upgrade] Protocol: ${request.headers['sec-websocket-protocol'] || 'none'}`);
+  console.log(`[WebSocket Upgrade] From: ${request.socket.remoteAddress}`);
+
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+```
+
+A negociacao de subprotocolo sera feita automaticamente pelo `handleProtocols` do construtor.
 
 ## Resultado esperado
 
-Apos o deploy:
-1. `wscat` conecta com ID `140414`
-2. Envia BootNotification
-3. Recebe imediatamente: `[3,"test-001",{"status":"Accepted","currentTime":"...","interval":300}]`
-4. Banco e atualizado em segundo plano
+1. O servidor inicia sem erros
+2. `wscat` conecta com subprotocolo `ocpp1.6`
+3. BootNotification recebe resposta `[3,"test-001",{"status":"Accepted",...}]`
+4. Sem mais `TypeError` nos logs
 
