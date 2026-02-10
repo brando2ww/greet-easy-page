@@ -208,8 +208,9 @@ wss.on('connection', async (ws, req) => {
 
   ws.on('message', async (data) => {
     try {
-      const message = JSON.parse(data.toString());
-      console.log(`[OCPP Server] Message from ${chargePointId}:`, message);
+      const raw = data.toString();
+      console.log(`[OCPP Server] Raw message from ${chargePointId}:`, raw);
+      const message = JSON.parse(raw);
 
       const [messageType, messageId, action, payload] = message;
 
@@ -246,7 +247,8 @@ wss.on('connection', async (ws, req) => {
         console.error(`[OCPP Server] Received CALLERROR from ${chargePointId}:`, message);
       }
     } catch (error) {
-      console.error(`[OCPP Server] Error processing message from ${chargePointId}:`, error);
+      console.error(`[OCPP Server] Error processing message from ${chargePointId}:`, error.message);
+      console.error(`[OCPP Server] Stack:`, error.stack);
     }
   });
 
@@ -274,19 +276,7 @@ wss.on('connection', async (ws, req) => {
 async function handleBootNotification(ws, messageId, payload, chargePointId) {
   console.log(`[BootNotification] Processing for ${chargePointId}`, payload);
 
-  await supabase
-    .from('chargers')
-    .update({
-      ocpp_model: payload.chargePointModel,
-      ocpp_vendor: payload.chargePointVendor,
-      firmware_version: payload.firmwareVersion,
-      serial_number: payload.chargePointSerialNumber,
-      last_heartbeat: new Date().toISOString(),
-      ocpp_protocol_status: 'Available',
-      ocpp_error_code: null,
-    })
-    .eq('ocpp_charge_point_id', chargePointId);
-
+  // SEMPRE responder primeiro - o charger precisa da resposta
   sendCallResult(ws, messageId, {
     status: 'Accepted',
     currentTime: new Date().toISOString(),
@@ -294,21 +284,50 @@ async function handleBootNotification(ws, messageId, payload, chargePointId) {
   });
 
   console.log(`[BootNotification] Accepted for ${chargePointId}`);
+
+  // Atualizar banco em segundo plano (nao bloqueia a resposta)
+  try {
+    const { error } = await supabase
+      .from('chargers')
+      .update({
+        ocpp_model: payload.chargePointModel || null,
+        ocpp_vendor: payload.chargePointVendor || null,
+        firmware_version: payload.firmwareVersion || null,
+        serial_number: payload.chargePointSerialNumber || null,
+        last_heartbeat: new Date().toISOString(),
+        ocpp_protocol_status: 'Available',
+        ocpp_error_code: null,
+      })
+      .eq('ocpp_charge_point_id', chargePointId);
+
+    if (error) {
+      console.error('[BootNotification] DB update error:', error);
+    }
+  } catch (dbError) {
+    console.error('[BootNotification] DB exception:', dbError);
+  }
 }
 
 async function handleHeartbeat(ws, messageId, chargePointId) {
-  await supabase
-    .from('chargers')
-    .update({ last_heartbeat: new Date().toISOString() })
-    .eq('ocpp_charge_point_id', chargePointId);
-
   sendCallResult(ws, messageId, {
     currentTime: new Date().toISOString(),
   });
+
+  try {
+    const { error } = await supabase
+      .from('chargers')
+      .update({ last_heartbeat: new Date().toISOString() })
+      .eq('ocpp_charge_point_id', chargePointId);
+    if (error) console.error('[Heartbeat] DB update error:', error);
+  } catch (dbError) {
+    console.error('[Heartbeat] DB exception:', dbError);
+  }
 }
 
 async function handleStatusNotification(ws, messageId, payload, chargePointId) {
   console.log(`[StatusNotification] ${chargePointId} - Status: ${payload.status}, Error: ${payload.errorCode}`);
+
+  sendCallResult(ws, messageId, {});
 
   const statusMap = {
     'Available': 'available',
@@ -321,16 +340,19 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     'Faulted': 'unavailable',
   };
 
-  await supabase
-    .from('chargers')
-    .update({
-      status: statusMap[payload.status] || 'unavailable',
-      ocpp_protocol_status: payload.status,
-      ocpp_error_code: payload.errorCode !== 'NoError' ? payload.errorCode : null,
-    })
-    .eq('ocpp_charge_point_id', chargePointId);
-
-  sendCallResult(ws, messageId, {});
+  try {
+    const { error } = await supabase
+      .from('chargers')
+      .update({
+        status: statusMap[payload.status] || 'unavailable',
+        ocpp_protocol_status: payload.status,
+        ocpp_error_code: payload.errorCode !== 'NoError' ? payload.errorCode : null,
+      })
+      .eq('ocpp_charge_point_id', chargePointId);
+    if (error) console.error('[StatusNotification] DB update error:', error);
+  } catch (dbError) {
+    console.error('[StatusNotification] DB exception:', dbError);
+  }
 }
 
 async function handleAuthorize(ws, messageId, payload) {
