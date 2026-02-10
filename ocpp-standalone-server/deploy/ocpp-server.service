@@ -1,0 +1,17 @@
+[Unit]
+Description=OCPP WebSocket Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ocpp-server/ocpp-standalone-server
+EnvironmentFile=/opt/ocpp-server/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
