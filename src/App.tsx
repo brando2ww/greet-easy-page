@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { RoleBasedRedirect } from "./components/RoleBasedRedirect";
 import Estacoes from "./pages/Estacoes";
+import Carregamento from "./pages/Carregamento";
 import Dicas from "./pages/Dicas";
 import Carteira from "./pages/Carteira";
 import IniciarCarga from "./pages/IniciarCarga";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
               <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
               <Route path="/iniciar-carga" element={<ProtectedRoute><IniciarCarga /></ProtectedRoute>} />
+              <Route path="/carregamento/:sessionId" element={<ProtectedRoute><Carregamento /></ProtectedRoute>} />
               <Route path="/veiculos" element={<ProtectedRoute><Veiculos /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
               <Route path="/perfil/informacoes-cobranca" element={<ProtectedRoute><InformacoesCobranca /></ProtectedRoute>} />
