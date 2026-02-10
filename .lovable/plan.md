@@ -1,74 +1,84 @@
 
 
-# Corrigir erro "Cannot set property protocol" no servidor OCPP
+# Migrar servidor OCPP para aceitar conexoes ws:// (sem SSL)
 
 ## Problema
 
-Os logs do Digital Ocean mostram o erro:
-```
-TypeError: Cannot set property protocol of #<WebSocket> which has only a getter
-```
-
-Isso acontece na linha `ws.protocol = selectedProtocol || '';` dentro do handler `server.on('upgrade')`. Na biblioteca `ws`, a propriedade `protocol` e somente leitura (getter). O servidor crasha antes de processar qualquer mensagem, por isso o BootNotification nunca recebe resposta.
+O carregador Zeta Uno so suporta conexoes `ws://` (WebSocket sem SSL/TLS). O Digital Ocean App Platform forca todas as conexoes para HTTPS/WSS, rejeitando conexoes `ws://` antes de chegarem ao servidor Node.js. Por isso, o charger conecta no WiFi (indicador verde) mas o OCPP fica vermelho -- a conexao nunca chega ao servidor.
 
 ## Solucao
 
-Remover a linha `ws.protocol = selectedProtocol || '';` e passar o subprotocolo corretamente atraves do `WebSocketServer` usando a opcao `handleProtocols` no construtor, ou simplesmente remover o `noServer` e usar a opcao `server` diretamente com `handleProtocols`.
+Migrar o servidor OCPP do Digital Ocean App Platform para um **Digital Ocean Droplet** (VPS), que permite aceitar conexoes `ws://` diretamente na porta desejada (ex: 80 ou 8080).
 
-A abordagem mais simples: manter `noServer: true`, mas em vez de tentar setar `ws.protocol` manualmente, basta remover essa linha. O protocolo ja sera negociado automaticamente se passarmos as opcoes corretas no `handleUpgrade`.
+## Passos
 
-## Alteracao no arquivo `ocpp-standalone-server/server.js`
+### 1. Criar um Droplet no Digital Ocean
 
-### Opcao escolhida: Usar `handleProtocols` no construtor do WebSocketServer
+- Imagem: Ubuntu 24.04
+- Plano: Basic ($6/mes, 1 vCPU, 1GB RAM -- suficiente para OCPP)
+- Regiao: mesma do App Platform atual (para menor latencia)
+- Habilitar IPv4 publico
 
-Trocar:
+### 2. Configurar o Droplet
 
-```javascript
-const wss = new WebSocketServer({ noServer: true });
+Acessar via SSH e instalar Node.js:
+
+```text
+ssh root@IP_DO_DROPLET
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs
 ```
 
-Por:
+### 3. Clonar e configurar o servidor
 
-```javascript
-const wss = new WebSocketServer({
-  noServer: true,
-  handleProtocols: (protocols) => {
-    if (protocols.has('ocpp1.6')) return 'ocpp1.6';
-    if (protocols.has('ocpp1.6j')) return 'ocpp1.6j';
-    if (protocols.has('ocpp2.0')) return 'ocpp2.0';
-    if (protocols.has('ocpp1.5')) return 'ocpp1.5';
-    for (const p of protocols) {
-      if (p.includes('ocpp')) return p;
-    }
-    return false;
-  },
-});
+```text
+git clone https://github.com/SEU_REPO.git /opt/ocpp-server
+cd /opt/ocpp-server/ocpp-standalone-server
+npm install
 ```
 
-E no handler de `upgrade`, remover a linha problematica:
+Criar arquivo de variaveis de ambiente:
 
-```javascript
-// REMOVER esta linha:
-ws.protocol = selectedProtocol || '';
-
-// E simplificar o upgrade handler para:
-server.on('upgrade', (request, socket, head) => {
-  console.log(`[WebSocket Upgrade] URL: ${request.url}`);
-  console.log(`[WebSocket Upgrade] Protocol: ${request.headers['sec-websocket-protocol'] || 'none'}`);
-  console.log(`[WebSocket Upgrade] From: ${request.socket.remoteAddress}`);
-
-  wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit('connection', ws, request);
-  });
-});
+```text
+cat > /opt/ocpp-server/.env << EOF
+SUPABASE_URL=https://fgvjvtglcmxzadetmmoi.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sua_chave_aqui
+PORT=80
+EOF
 ```
 
-A negociacao de subprotocolo sera feita automaticamente pelo `handleProtocols` do construtor.
+### 4. Configurar como servico systemd
+
+Criar `/etc/systemd/system/ocpp-server.service` para o servidor iniciar automaticamente e reiniciar em caso de falha.
+
+### 5. Abrir porta no firewall
+
+```text
+ufw allow 80/tcp
+```
+
+### 6. Configurar o Zeta Uno
+
+No app do Zeta Uno, configurar:
+- **Endereco do Servidor OCPP**: `ws://IP_DO_DROPLET:80/ocpp`
+- **ID do Carregador**: `140414`
+
+### 7. (Opcional) Configurar dominio
+
+Apontar um subdominio como `ocpp.seudominio.com` para o IP do Droplet via DNS A record. Assim a URL ficaria `ws://ocpp.seudominio.com/ocpp`.
+
+## Alternativa: Usar porta 80 no servidor atual
+
+Isso **nao funciona** no App Platform porque ele intercepta todas as conexoes HTTP/WS e forca upgrade para HTTPS/WSS. O Droplet e a unica opcao no Digital Ocean que permite `ws://` direto.
+
+## Nenhuma alteracao no codigo
+
+O arquivo `server.js` nao precisa de mudancas. Basta alterar a variavel `PORT` para 80 no ambiente do Droplet. O servidor ja aceita conexoes `ws://` nativamente -- o problema era apenas a camada de proxy SSL do App Platform.
 
 ## Resultado esperado
 
-1. O servidor inicia sem erros
-2. `wscat` conecta com subprotocolo `ocpp1.6`
-3. BootNotification recebe resposta `[3,"test-001",{"status":"Accepted",...}]`
-4. Sem mais `TypeError` nos logs
+1. Droplet rodando o servidor OCPP na porta 80
+2. Zeta Uno conecta via `ws://IP_DO_DROPLET:80/ocpp/140414`
+3. WiFi verde + OCPP verde no app do charger
+4. BootNotification aparece nos logs do servidor
 
