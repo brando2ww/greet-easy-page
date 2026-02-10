@@ -69,15 +69,39 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Check if charger is available
+        // Check if charger is available (with auto-fix for stale status)
         if (charger.status !== 'available') {
-          return new Response(JSON.stringify({ 
-            error: 'Charger not available',
-            message: `Current status: ${charger.status}` 
-          }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          // Auto-fix: check if there are actually active sessions
+          if (charger.status === 'in_use') {
+            const { data: activeSessions } = await supabaseAdmin
+              .from('charging_sessions')
+              .select('id')
+              .eq('charger_id', chargerId)
+              .eq('status', 'in_progress')
+              .limit(1);
+
+            if (!activeSessions || activeSessions.length === 0) {
+              // No active sessions — fix the stale status and continue
+              await supabaseAdmin
+                .from('chargers')
+                .update({ status: 'available' })
+                .eq('id', chargerId);
+              console.log('[charger-commands] Auto-fixed stale in_use status for charger:', chargerId);
+              // Update local reference so subsequent checks pass
+              charger.status = 'available';
+            }
+          }
+
+          // If still not available after auto-fix attempt, reject
+          if (charger.status !== 'available') {
+            return new Response(JSON.stringify({ 
+              error: 'Charger not available',
+              message: `Current status: ${charger.status}` 
+            }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
         }
 
         // Check OCPP connection
@@ -267,11 +291,15 @@ Deno.serve(async (req) => {
             .eq('user_id', userId);
         }
 
-        // Update charger status
-        await supabaseAdmin
+        // Update charger status (with error handling)
+        const { error: updateError } = await supabaseAdmin
           .from('chargers')
           .update({ status: 'available' })
           .eq('id', chargerId);
+
+        if (updateError) {
+          console.error('[charger-commands] Failed to update charger status to available:', updateError);
+        }
 
         return new Response(JSON.stringify({
           success: true,
@@ -291,7 +319,7 @@ Deno.serve(async (req) => {
 
         const { data: charger, error } = await supabaseAdmin
           .from('chargers')
-          .select('ocpp_charge_point_id, ocpp_protocol_status, last_heartbeat')
+          .select('ocpp_charge_point_id, ocpp_protocol_status, last_heartbeat, status')
           .eq('id', chargerId)
           .single();
 
@@ -300,6 +328,24 @@ Deno.serve(async (req) => {
             status: 404,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
+        }
+
+        // Auto-fix: if charger is "in_use" but no active sessions exist, reset to available
+        if (charger.status === 'in_use') {
+          const { data: activeSessions } = await supabaseAdmin
+            .from('charging_sessions')
+            .select('id')
+            .eq('charger_id', chargerId)
+            .eq('status', 'in_progress')
+            .limit(1);
+
+          if (!activeSessions || activeSessions.length === 0) {
+            await supabaseAdmin
+              .from('chargers')
+              .update({ status: 'available' })
+              .eq('id', chargerId);
+            console.log('[charger-commands] Auto-fixed stale in_use status for charger:', chargerId);
+          }
         }
 
         // Check if charger is connected (heartbeat within last 2 minutes)
