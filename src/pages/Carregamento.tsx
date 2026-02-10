@@ -22,7 +22,7 @@ function getOcppStatusInfo(ocppStatus: string | null | undefined): { label: stri
     case "Available":
       return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
     case "Preparing":
-      return { label: "Preparando...", color: "bg-yellow-500", pulse: true };
+      return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
     case "Charging":
       return { label: "Plugue Conectado", color: "bg-primary", pulse: true };
     case "SuspendedEVSE":
