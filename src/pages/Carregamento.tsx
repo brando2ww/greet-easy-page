@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { transactionsApi, commandsApi } from "@/services/api";
@@ -64,19 +64,19 @@ export default function Carregamento() {
   const estimatedCost = cost > 0 ? cost : energyConsumed * pricePerKwh;
   const isCompleted = session?.status === "completed" || session?.status === "cancelled";
 
-  // Simple mock chart data based on energy consumed
-  const chartData = useMemo(() => {
-    const base = energyConsumed || 0.5;
-    return [
-      { name: "Seg", value: base * 0.6 },
-      { name: "Ter", value: base * 0.8 },
-      { name: "Qua", value: base * 1.1 },
-      { name: "Qui", value: base * 0.7 },
-      { name: "Sex", value: base * 0.9 },
-      { name: "Sab", value: base * 1.0 },
-      { name: "Hoje", value: base },
-    ];
-  }, [energyConsumed]);
+  // Fetch real weekly stats
+  const { data: weeklyStats } = useQuery({
+    queryKey: ["weekly-stats"],
+    queryFn: async () => {
+      const res = await transactionsApi.weeklyStats();
+      return res.data ?? null;
+    },
+  });
+
+  const chartData = (weeklyStats?.dailyData ?? []).map(d => ({
+    name: d.dayLabel,
+    value: d.energy,
+  }));
 
   const handleStop = async () => {
     if (!session || !sessionId) return;
@@ -197,10 +197,20 @@ export default function Carregamento() {
               </ResponsiveContainer>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <TrendingDown className="h-3.5 w-3.5 text-primary" />
-              <span>Você está usando <strong className="text-foreground">12% menos</strong> energia que o mês passado</span>
-            </div>
+            {weeklyStats && weeklyStats.previousPeriodTotal > 0 ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <TrendingDown className="h-3.5 w-3.5 text-primary" />
+                <span>
+                  Você está usando{" "}
+                  <strong className="text-foreground">
+                    {Math.abs(weeklyStats.changePercent)}% {weeklyStats.changePercent <= 0 ? "menos" : "mais"}
+                  </strong>{" "}
+                  energia que a semana passada
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Sem dados anteriores para comparar</p>
+            )}
           </CardContent>
         </Card>
 
