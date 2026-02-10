@@ -36,6 +36,13 @@ export const ChargerDetailsModal = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showNavigationModal, setShowNavigationModal] = useState(false);
 
+  const statusLabels: Record<string, string> = {
+    available: 'Disponível',
+    in_use: 'Em Uso',
+    maintenance: 'Manutenção',
+    offline: 'Offline',
+  };
+
   if (!charger) return null;
 
   // Calculate distance if user location is available
@@ -172,7 +179,7 @@ export const ChargerDetailsModal = ({
                 <div className="flex items-center gap-2 py-2">
                   <div className={`w-2 h-2 rounded-full ${statusColor}`} />
                   <span className="text-sm capitalize">
-                    {charger.status.replace('_', ' ')}
+                    {statusLabels[charger.status] || charger.status.replace('_', ' ')}
                   </span>
                 </div>
 
