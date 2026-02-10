@@ -1,25 +1,39 @@
 
 
-## Fix: Distance Calculation Has Swapped Coordinates
+## Add Cost Estimate Per Hour to Charger Details
 
-### Problem
-The distance shown (e.g., 3066.3 km) is wrong because `userLocation` is stored as `[longitude, latitude]` (Mapbox convention), but the distance calculation destructures it as `[userLat, userLon]` -- the values are swapped, producing incorrect results.
+### What Changes
+Below the "R$ 0,80/kWh" price line, add an estimate showing how much 1 hour of charging costs at that charger, based on its power output.
 
-### Solution
-Fix the destructuring in `ChargerDetailsDrawer.tsx` to match the `[longitude, latitude]` format.
+Formula: `estimatedCostPerHour = charger.power * charger.pricePerKwh`
+
+Example for a 7 kW charger at R$ 0,80/kWh: **~R$ 5,60/h**
 
 ### Technical Change
 
-**File: `src/components/map/ChargerDetailsDrawer.tsx` (line 44)**
+**File: `src/components/map/ChargerDetailsDrawer.tsx` (lines 193-205)**
 
-Change:
+Add a line below the price showing the hourly estimate:
+
 ```typescript
-const [userLat, userLon] = userLocation;
-```
-To:
-```typescript
-const [userLon, userLat] = userLocation;
+{/* Price */}
+<div className="flex items-center gap-3">
+  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+    <span className="text-sm font-semibold text-green-600">R$</span>
+  </div>
+  <div>
+    <p className="text-xs text-muted-foreground">
+      {t('stations.pricePerKwh')}
+    </p>
+    <p className="text-sm font-medium">
+      R$ {charger.pricePerKwh.toFixed(2)}/kWh
+    </p>
+    <p className="text-xs text-muted-foreground mt-0.5">
+      Estimativa (1h): ~R$ {(charger.power * charger.pricePerKwh).toFixed(2)}
+    </p>
+  </div>
+</div>
 ```
 
-This single-line fix ensures latitude and longitude are correctly assigned, producing accurate Haversine distance calculations.
+This gives users immediate clarity on actual cost, reducing confusion between "per kWh" and "per hour".
 
