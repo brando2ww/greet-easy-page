@@ -172,12 +172,29 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Try to find by UUID or OCPP charge point ID
-        const { data: charger, error } = await supabaseAdmin
-          .from('chargers')
-          .select('*')
-          .or(`id.eq.${code},ocpp_charge_point_id.eq.${code}`)
-          .maybeSingle();
+        // Check if code looks like a UUID
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code);
+        
+        let charger, error;
+        if (isUuid) {
+          // Try both UUID id and ocpp_charge_point_id
+          const result = await supabaseAdmin
+            .from('chargers')
+            .select('*')
+            .or(`id.eq.${code},ocpp_charge_point_id.eq.${code}`)
+            .maybeSingle();
+          charger = result.data;
+          error = result.error;
+        } else {
+          // Only search by ocpp_charge_point_id
+          const result = await supabaseAdmin
+            .from('chargers')
+            .select('*')
+            .eq('ocpp_charge_point_id', code)
+            .maybeSingle();
+          charger = result.data;
+          error = result.error;
+        }
 
         if (error) throw error;
 
