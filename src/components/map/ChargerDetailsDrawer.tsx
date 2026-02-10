@@ -201,6 +201,9 @@ export const ChargerDetailsModal = ({
                     <p className="text-sm font-medium">
                       R$ {charger.pricePerKwh.toFixed(2)}/kWh
                     </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Estimativa (1h): ~R$ {(charger.power * charger.pricePerKwh).toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </div>
