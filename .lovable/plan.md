@@ -1,21 +1,25 @@
 
 
-## Add Confirmation Dialog Before Stopping Charging Session
+## Fix: Distance Calculation Has Swapped Coordinates
 
-### Overview
-Add an AlertDialog that appears when the user taps "Parar Carregamento", requiring them to confirm before the stop command is sent. This prevents accidental session stops.
+### Problem
+The distance shown (e.g., 3066.3 km) is wrong because `userLocation` is stored as `[longitude, latitude]` (Mapbox convention), but the distance calculation destructures it as `[userLat, userLon]` -- the values are swapped, producing incorrect results.
+
+### Solution
+Fix the destructuring in `ChargerDetailsDrawer.tsx` to match the `[longitude, latitude]` format.
 
 ### Technical Change
 
-**File: `src/pages/Carregamento.tsx`**
+**File: `src/components/map/ChargerDetailsDrawer.tsx` (line 44)**
 
-1. Import `AlertDialog` components from `@/components/ui/alert-dialog`
-2. Add a `showStopConfirm` state (boolean, default `false`)
-3. Change the "Parar Carregamento" button's `onClick` to set `showStopConfirm = true` instead of calling `handleStop` directly
-4. Add an `AlertDialog` controlled by `showStopConfirm`:
-   - Title: "Parar Carregamento?"
-   - Description: "Tem certeza que deseja encerrar esta sessao de carregamento? Esta acao nao pode ser desfeita."
-   - Cancel button: "Cancelar" (closes dialog)
-   - Confirm button: "Sim, Parar" (calls `handleStop`, closes dialog)
+Change:
+```typescript
+const [userLat, userLon] = userLocation;
+```
+To:
+```typescript
+const [userLon, userLat] = userLocation;
+```
 
-No other files need changes -- the AlertDialog component already exists in the project.
+This single-line fix ensures latitude and longitude are correctly assigned, producing accurate Haversine distance calculations.
+
