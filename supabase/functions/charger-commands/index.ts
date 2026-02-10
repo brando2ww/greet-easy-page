@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const RAILWAY_OCPP_URL = Deno.env.get('RAILWAY_OCPP_URL');
+const OCPP_SERVER_URL = Deno.env.get('OCPP_SERVER_URL');
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -130,13 +130,13 @@ Deno.serve(async (req) => {
         }
 
         // Call Railway OCPP server to send RemoteStartTransaction
-        if (RAILWAY_OCPP_URL && charger.ocpp_charge_point_id) {
+        if (OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
           try {
-            const remoteStartResponse = await fetch(`${RAILWAY_OCPP_URL}/api/remote-start`, {
+            const remoteStartResponse = await fetch(`${OCPP_SERVER_URL}/api/remote-start`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'x-internal-key': Deno.env.get('RAILWAY_INTERNAL_KEY')!,
+                'x-internal-key': Deno.env.get('OCPP_INTERNAL_KEY')!,
               },
               body: JSON.stringify({
                 chargePointId: charger.ocpp_charge_point_id,
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
                 .eq('id', session.id);
             }
           } catch (fetchError) {
-            console.error('[charger-commands] Railway API error:', fetchError);
+            console.error('[charger-commands] OCPP API error:', fetchError);
             // Continue anyway - charger might start locally
           }
         }
@@ -215,13 +215,13 @@ Deno.serve(async (req) => {
         }
 
         // Call Railway OCPP server to send RemoteStopTransaction
-        if (RAILWAY_OCPP_URL && charger.ocpp_charge_point_id) {
+        if (OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
           try {
-            const remoteStopResponse = await fetch(`${RAILWAY_OCPP_URL}/api/remote-stop`, {
+            const remoteStopResponse = await fetch(`${OCPP_SERVER_URL}/api/remote-stop`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'x-internal-key': Deno.env.get('RAILWAY_INTERNAL_KEY')!,
+                'x-internal-key': Deno.env.get('OCPP_INTERNAL_KEY')!,
               },
               body: JSON.stringify({
                 chargePointId: charger.ocpp_charge_point_id,
@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
               });
             }
           } catch (fetchError) {
-            console.error('[charger-commands] Railway API error:', fetchError);
+            console.error('[charger-commands] OCPP API error:', fetchError);
           }
         }
 
