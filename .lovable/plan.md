@@ -1,33 +1,33 @@
 
 
-## Mostrar Status Real do Plugue na Tela de Carregamento
+## Corrigir Label do Status "Preparing" para "Aguardando plugue"
 
 ### Problema
-O texto "Plugue Conectado" na linha 125 e hardcoded -- sempre aparece independentemente de o cabo estar realmente conectado ao carro. O status real do conector vem do protocolo OCPP e esta disponivel no banco de dados (`ocpp_protocol_status`), mas a tela nao consulta essa informacao.
+Depois de iniciar uma sessao remota (RemoteStartTransaction), o carregador envia status OCPP `Preparing` -- que significa exatamente "transacao iniciada, aguardando o cabo ser conectado". O mapeamento atual mostra "Preparando..." para esse estado, mas o texto correto deveria ser **"Aguardando plugue"**, ja que e isso que o carregador esta esperando.
 
-### Como vai funcionar
-A tela vai consultar o status OCPP real do carregador a cada 10 segundos (mesmo intervalo do polling da sessao). O texto vai mudar dinamicamente conforme o estado real:
+O status so vai mudar para `Charging` quando o cabo for efetivamente conectado ao carro.
 
-| Status OCPP       | Texto exibido         | Indicador  |
-|--------------------|-----------------------|------------|
-| Available          | Aguardando plugue     | Amarelo    |
-| Preparing          | Preparando...         | Amarelo    |
-| Charging           | Plugue Conectado      | Verde      |
-| SuspendedEVSE      | Pausado (Estacao)     | Amarelo    |
-| SuspendedEV        | Pausado (Veiculo)     | Amarelo    |
-| Finishing          | Finalizando...        | Azul       |
-| Faulted            | Erro no carregador    | Vermelho   |
-| Unavailable        | Indisponivel          | Vermelho   |
-| (outro/null)       | Conectando...         | Cinza      |
+### Solucao
+Alterar o mapeamento do status `Preparing` no arquivo `src/pages/Carregamento.tsx`:
 
-### Mudancas Tecnicas
+- **Antes:** `Preparing` -> "Preparando..." (amarelo)
+- **Depois:** `Preparing` -> "Aguardando plugue" (amarelo, pulsando)
 
-**Arquivo: `src/pages/Carregamento.tsx`**
+O status `Available` tambem pode significar "aguardando plugue" em outros contextos, mas apos um RemoteStart o carregador tipicamente vai direto para `Preparing`.
 
-1. Adicionar um `useQuery` que chama `commandsApi.getStatus(chargerId)` com `refetchInterval: 10000` (poll a cada 10s)
-2. Extrair o `chargerId` de `chargerFromState?.id` ou `session?.chargerId`
-3. Substituir o texto hardcoded "Plugue Conectado" por um mapeamento do `ocppStatus` real para labels em portugues
-4. Ajustar a cor do indicador pulsante conforme o status (verde para Charging, amarelo para Preparing, etc.)
-5. Se a sessao estiver completed, continuar mostrando "Finalizado" como ja faz
+### Mudanca Tecnica
 
-Nenhuma mudanca no backend -- o endpoint `charger-commands` com action `status` ja retorna o `ocppStatus` real.
+**Arquivo: `src/pages/Carregamento.tsx`** (funcao `getOcppStatusInfo`, linha ~20)
+
+Alterar o case `Preparing` de:
+```
+case "Preparing":
+  return { label: "Preparando...", color: "bg-yellow-500", pulse: true };
+```
+Para:
+```
+case "Preparing":
+  return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
+```
+
+Mudanca de uma unica linha. Nenhuma outra alteracao necessaria.
