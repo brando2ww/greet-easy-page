@@ -126,23 +126,8 @@ const server = http.createServer(async (req, res) => {
   res.end(JSON.stringify({ error: 'Not Found' }));
 });
 
-// Criar servidor WebSocket anexado ao servidor HTTP
-const wss = new WebSocketServer({ 
-  server,
-  handleProtocols: (protocols, request) => {
-    console.log(`[WebSocket] Requested protocols:`, Array.from(protocols));
-    if (protocols.has('ocpp1.6')) return 'ocpp1.6';
-    if (protocols.has('ocpp1.5')) return 'ocpp1.5';
-    if (protocols.has('ocpp2.0')) return 'ocpp2.0';
-    return false;
-  },
-  verifyClient: (info) => {
-    console.log(`[WebSocket] Verify client from ${info.req.socket.remoteAddress}`);
-    console.log(`[WebSocket] URL: ${info.req.url}`);
-    console.log(`[WebSocket] Protocols: ${info.req.headers['sec-websocket-protocol'] || 'none'}`);
-    return true;
-  }
-});
+// Criar servidor WebSocket em modo noServer para controle total do upgrade
+const wss = new WebSocketServer({ noServer: true });
 
 console.log(`[OCPP Server] Starting on port ${PORT}...`);
 
@@ -150,8 +135,35 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`[OCPP Server] HTTP server listening on http://0.0.0.0:${PORT}`);
   console.log(`[OCPP Server] WebSocket server ready at ws://0.0.0.0:${PORT}`);
   console.log('[OCPP Server] Ready to accept connections from chargers');
-  console.log('[OCPP Server] Expected connection format: ws://your-domain/{chargePointId}');
+  console.log('[OCPP Server] Expected connection format: ws://your-domain/ocpp/{chargePointId}');
   console.log('[OCPP Server] Health check available at: http://your-domain/health');
+});
+
+// Handler explicito para upgrade WebSocket - garante que HTTP 404 nunca interfira
+server.on('upgrade', (request, socket, head) => {
+  console.log(`[WebSocket Upgrade] URL: ${request.url}`);
+  console.log(`[WebSocket Upgrade] Protocol: ${request.headers['sec-websocket-protocol'] || 'none'}`);
+  console.log(`[WebSocket Upgrade] From: ${request.socket.remoteAddress}`);
+  console.log(`[WebSocket Upgrade] Headers:`, JSON.stringify(request.headers));
+
+  // Negociar subprotocolo manualmente (case-insensitive, aceita variantes)
+  const requestedProtocols = (request.headers['sec-websocket-protocol'] || '')
+    .split(',').map(p => p.trim().toLowerCase()).filter(p => p.length > 0);
+
+  let selectedProtocol = null;
+
+  // Priorizar ocpp1.6 (incluindo ocpp1.6j, ocpp1.6J, etc.)
+  selectedProtocol = requestedProtocols.find(p => p.startsWith('ocpp1.6'));
+  if (!selectedProtocol) selectedProtocol = requestedProtocols.find(p => p.startsWith('ocpp2.0'));
+  if (!selectedProtocol) selectedProtocol = requestedProtocols.find(p => p.startsWith('ocpp1.5'));
+  if (!selectedProtocol) selectedProtocol = requestedProtocols.find(p => p.includes('ocpp'));
+
+  console.log(`[WebSocket Upgrade] Selected protocol: ${selectedProtocol || 'none (accepting anyway)'}`);
+
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    ws.protocol = selectedProtocol || '';
+    wss.emit('connection', ws, request);
+  });
 });
 
 wss.on('connection', async (ws, req) => {
