@@ -9,6 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Zap, Clock, Battery, TrendingDown, PlugZap } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from "recharts";
 import type { ChargePoint, Transaction } from "@/types/charger";
 
@@ -19,6 +23,7 @@ export default function Carregamento() {
   const { toast } = useToast();
   const [isStopping, setIsStopping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
 
@@ -213,7 +218,7 @@ export default function Carregamento() {
         {/* Stop button */}
         {!isCompleted && (
           <Button
-            onClick={handleStop}
+            onClick={() => setShowStopConfirm(true)}
             disabled={isStopping}
             variant="destructive"
             className="w-full h-14 text-base font-semibold rounded-2xl"
@@ -221,6 +226,23 @@ export default function Carregamento() {
             {isStopping ? "Parando..." : "Parar Carregamento"}
           </Button>
         )}
+
+        <AlertDialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Parar Carregamento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja encerrar esta sessão de carregamento? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { setShowStopConfirm(false); handleStop(); }}>
+                Sim, Parar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {isCompleted && (
           <Button
