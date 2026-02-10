@@ -1,84 +1,33 @@
 
 
-# Migrar servidor OCPP para aceitar conexoes ws:// (sem SSL)
+## Atualizar Edge Function charger-commands para o novo servidor OCPP
 
-## Problema
+### O que vai mudar
 
-O carregador Zeta Uno so suporta conexoes `ws://` (WebSocket sem SSL/TLS). O Digital Ocean App Platform forca todas as conexoes para HTTPS/WSS, rejeitando conexoes `ws://` antes de chegarem ao servidor Node.js. Por isso, o charger conecta no WiFi (indicador verde) mas o OCPP fica vermelho -- a conexao nunca chega ao servidor.
+A Edge Function `charger-commands` precisa apontar para o novo servidor OCPP no Droplet Digital Ocean em `http://68.183.152.189:80` em vez da URL antiga.
 
-## Solucao
+### Passos
 
-Migrar o servidor OCPP do Digital Ocean App Platform para um **Digital Ocean Droplet** (VPS), que permite aceitar conexoes `ws://` diretamente na porta desejada (ex: 80 ou 8080).
+1. **Adicionar secret `RAILWAY_OCPP_URL`** no Supabase com o valor `http://68.183.152.189:80`
+   - A Edge Function ja usa `Deno.env.get('RAILWAY_OCPP_URL')` para buscar a URL do servidor OCPP
+   - Tambem usa `RAILWAY_INTERNAL_KEY` para autenticacao interna -- precisamos confirmar se esse secret esta configurado
 
-## Passos
+2. **Atualizar a Edge Function** `charger-commands/index.ts`:
+   - Renomear as variaveis de `RAILWAY_OCPP_URL` / `RAILWAY_INTERNAL_KEY` para nomes mais adequados como `OCPP_SERVER_URL` / `OCPP_INTERNAL_KEY` (opcional mas recomendado ja que nao e mais Railway)
+   - Ajustar os endpoints de `/api/remote-start` e `/api/remote-stop` para os endpoints corretos do novo servidor: `/api/remote-start` e `/api/remote-stop` (devem ser os mesmos, pois o `server.js` usa esses paths)
 
-### 1. Criar um Droplet no Digital Ocean
+### Detalhes tecnicos
 
-- Imagem: Ubuntu 24.04
-- Plano: Basic ($6/mes, 1 vCPU, 1GB RAM -- suficiente para OCPP)
-- Regiao: mesma do App Platform atual (para menor latencia)
-- Habilitar IPv4 publico
+A Edge Function atualmente referencia:
+- `RAILWAY_OCPP_URL` -- URL base do servidor OCPP
+- `RAILWAY_INTERNAL_KEY` -- chave para autenticacao entre a Edge Function e o servidor OCPP
 
-### 2. Configurar o Droplet
+Como o servidor `server.js` no Droplet nao valida `x-internal-key` (nao ha middleware de autenticacao no codigo), podemos simplificar removendo esse header ou manter para seguranca futura.
 
-Acessar via SSH e instalar Node.js:
+**Secrets a configurar no Supabase:**
+- `OCPP_SERVER_URL` = `http://68.183.152.189:80`
+- `OCPP_INTERNAL_KEY` = uma chave qualquer (para uso futuro)
 
-```text
-ssh root@IP_DO_DROPLET
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt-get install -y nodejs
-```
-
-### 3. Clonar e configurar o servidor
-
-```text
-git clone https://github.com/SEU_REPO.git /opt/ocpp-server
-cd /opt/ocpp-server/ocpp-standalone-server
-npm install
-```
-
-Criar arquivo de variaveis de ambiente:
-
-```text
-cat > /opt/ocpp-server/.env << EOF
-SUPABASE_URL=https://fgvjvtglcmxzadetmmoi.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=sua_chave_aqui
-PORT=80
-EOF
-```
-
-### 4. Configurar como servico systemd
-
-Criar `/etc/systemd/system/ocpp-server.service` para o servidor iniciar automaticamente e reiniciar em caso de falha.
-
-### 5. Abrir porta no firewall
-
-```text
-ufw allow 80/tcp
-```
-
-### 6. Configurar o Zeta Uno
-
-No app do Zeta Uno, configurar:
-- **Endereco do Servidor OCPP**: `ws://IP_DO_DROPLET:80/ocpp`
-- **ID do Carregador**: `140414`
-
-### 7. (Opcional) Configurar dominio
-
-Apontar um subdominio como `ocpp.seudominio.com` para o IP do Droplet via DNS A record. Assim a URL ficaria `ws://ocpp.seudominio.com/ocpp`.
-
-## Alternativa: Usar porta 80 no servidor atual
-
-Isso **nao funciona** no App Platform porque ele intercepta todas as conexoes HTTP/WS e forca upgrade para HTTPS/WSS. O Droplet e a unica opcao no Digital Ocean que permite `ws://` direto.
-
-## Nenhuma alteracao no codigo
-
-O arquivo `server.js` nao precisa de mudancas. Basta alterar a variavel `PORT` para 80 no ambiente do Droplet. O servidor ja aceita conexoes `ws://` nativamente -- o problema era apenas a camada de proxy SSL do App Platform.
-
-## Resultado esperado
-
-1. Droplet rodando o servidor OCPP na porta 80
-2. Zeta Uno conecta via `ws://IP_DO_DROPLET:80/ocpp/140414`
-3. WiFi verde + OCPP verde no app do charger
-4. BootNotification aparece nos logs do servidor
+**Alteracoes no codigo:**
+- `supabase/functions/charger-commands/index.ts`: trocar `RAILWAY_OCPP_URL` por `OCPP_SERVER_URL` e `RAILWAY_INTERNAL_KEY` por `OCPP_INTERNAL_KEY`
 
