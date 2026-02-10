@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, chargerId, idTag, transactionId } = body;
+    const { action, chargerId, idTag, transactionId, sessionId } = body;
 
     console.log(`[charger-commands] Action: ${action}, User: ${userId}, Charger: ${chargerId}`);
 
@@ -194,8 +194,8 @@ Deno.serve(async (req) => {
       }
 
       case 'stop': {
-        if (!chargerId || !transactionId) {
-          return new Response(JSON.stringify({ error: 'chargerId and transactionId are required' }), {
+        if (!chargerId || (!transactionId && !sessionId)) {
+          return new Response(JSON.stringify({ error: 'chargerId and transactionId or sessionId are required' }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -215,8 +215,8 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Call Railway OCPP server to send RemoteStopTransaction
-        if (OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
+        // Call Railway OCPP server to send RemoteStopTransaction (only if we have a transactionId)
+        if (OCPP_SERVER_URL && charger.ocpp_charge_point_id && transactionId) {
           try {
             const remoteStopResponse = await fetch(`${OCPP_SERVER_URL}/api/remote-stop`, {
               method: 'POST',
@@ -247,15 +247,25 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Update session status
-        await supabaseAdmin
-          .from('charging_sessions')
-          .update({
-            status: 'completed',
-            ended_at: new Date().toISOString(),
-            stop_reason: 'Remote',
-          })
-          .eq('transaction_id', transactionId);
+        // Update session status - find by transactionId or fall back to sessionId
+        const updateData = {
+          status: 'completed',
+          ended_at: new Date().toISOString(),
+          stop_reason: 'Remote',
+        };
+
+        if (transactionId) {
+          await supabaseAdmin
+            .from('charging_sessions')
+            .update(updateData)
+            .eq('transaction_id', transactionId);
+        } else {
+          await supabaseAdmin
+            .from('charging_sessions')
+            .update(updateData)
+            .eq('id', sessionId)
+            .eq('user_id', userId);
+        }
 
         // Update charger status
         await supabaseAdmin

@@ -77,7 +77,7 @@ export default function Carregamento() {
     if (!session || !sessionId) return;
     setIsStopping(true);
     try {
-      const res = await commandsApi.stopCharge(session.chargerId, session.transactionId ?? 0);
+      const res = await commandsApi.stopCharge(session.chargerId, session.transactionId ?? 0, sessionId);
       if (res.error || !res.data?.success) {
         toast({ title: "Erro ao parar", description: res.data?.message || res.error, variant: "destructive" });
       } else {
