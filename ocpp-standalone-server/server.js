@@ -129,11 +129,18 @@ const server = http.createServer(async (req, res) => {
 // Criar servidor WebSocket anexado ao servidor HTTP
 const wss = new WebSocketServer({ 
   server,
+  handleProtocols: (protocols, request) => {
+    console.log(`[WebSocket] Requested protocols:`, Array.from(protocols));
+    if (protocols.has('ocpp1.6')) return 'ocpp1.6';
+    if (protocols.has('ocpp1.5')) return 'ocpp1.5';
+    if (protocols.has('ocpp2.0')) return 'ocpp2.0';
+    return false;
+  },
   verifyClient: (info) => {
     console.log(`[WebSocket] Verify client from ${info.req.socket.remoteAddress}`);
     console.log(`[WebSocket] URL: ${info.req.url}`);
-    console.log(`[WebSocket] Origin: ${info.origin || 'No origin header'}`);
-    return true; // Accept all connections
+    console.log(`[WebSocket] Protocols: ${info.req.headers['sec-websocket-protocol'] || 'none'}`);
+    return true;
   }
 });
 
