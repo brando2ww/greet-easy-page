@@ -1,48 +1,53 @@
 
 
-## Fix: charger-commands Edge Function Authentication Failure
+## Active Charging Session Page
 
-### Problem
-The `charger-commands` edge function returns 401 "Authentication required" even when the user is logged in and the Authorization header with a valid JWT is sent. The `getUser()` call is silently failing, leaving `userId` as null.
+Create a real-time charging page at `/carregamento/:sessionId` matching the reference design -- a clean, card-based mobile layout showing charging status, energy usage, cost, and a stop button.
 
-### Root Cause
-The edge function creates a Supabase client to validate the user but does not check or log errors from `getUser()`. This makes it impossible to diagnose why auth fails. Possible causes include the `esm.sh` import caching an old Supabase client version or `getUser()` returning an error object.
+### Layout (matching the reference image)
 
-### Solution
-1. Add error logging to the `getUser()` call so we can see why it fails
-2. Use the token directly with `supabaseAdmin.auth.getUser(token)` instead of creating a second client -- this is simpler and more reliable
-3. Parse the body before the auth check to avoid any request body consumption issues
+**Header**: Back arrow + "Charging Mode" title
 
-### Technical Changes
+**Card 1 - Status**:
+- "Plug Connected" label + "Charging..." text with a charging station icon
+- Green progress bar (animated)
+- Large energy percentage or kWh display + "Duration" showing elapsed time
 
-**File:** `supabase/functions/charger-commands/index.ts`
+**Card 2 - Usage**:
+- "Current Usage" (kWh) and "Total Spent" (R$) side by side
+- Simple bar chart visualization using Recharts (already installed)
+- Comparison text: "You are using X% less energy than last month"
 
-Replace the auth block (lines 22-41) with a simpler approach:
+**Stop Button**: Full-width blue/red button at the bottom -- "Stop Charging"
 
-```typescript
-// Extract token from Authorization header
-const authHeader = req.headers.get('Authorization');
-let userId: string | null = null;
+### Technical Details
 
-if (authHeader) {
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-  
-  if (authError) {
-    console.error('[charger-commands] Auth error:', authError.message);
-  }
-  if (user) {
-    userId = user.id;
-  }
-}
+**New file: `src/pages/Carregamento.tsx`**
+- Uses `useParams()` to get `sessionId` from URL
+- Uses `useLocation().state` to get charger data passed from `useChargerValidation`, with a fallback fetch via `transactionsApi.get(sessionId)` if state is missing (e.g., page refresh)
+- Polls session data every 10 seconds using `useQuery` with `refetchInterval: 10000`
+- Live elapsed timer via `useState` + `useEffect` with `setInterval` (updates every second)
+- "Stop Charging" calls `commandsApi.stopCharge(chargerId, transactionId)`, then navigates to home on success
+- Uses `ResponsiveLayout` or `MobileLayout` pattern with `BottomNavigation`
+- Formats currency as BRL (R$) using existing `formatters.ts` utilities
 
-if (!userId) {
-  return new Response(JSON.stringify({ error: 'Authentication required' }), {
-    status: 401,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
-```
+**Updated file: `src/App.tsx`**
+- Import `Carregamento` page
+- Add route: `<Route path="/carregamento/:sessionId" element={<ProtectedRoute><Carregamento /></ProtectedRoute>} />`
 
-Key change: Use `supabaseAdmin.auth.getUser(token)` (with the service role client) instead of creating a separate client with the anon key. This avoids potential issues with the second client setup and is the recommended approach for edge functions.
+### Data Flow
+
+1. User starts charge on `IniciarCarga` page
+2. `useChargerValidation` navigates to `/carregamento/:sessionId` with `{ charger, sessionId }` in state
+3. `Carregamento` page reads state, starts polling `transactionsApi.get(sessionId)` every 10s
+4. User taps "Stop Charging" -> calls `commandsApi.stopCharge()` -> navigates home
+5. If session ends externally (e.g., unplug), polling detects `status: 'completed'` and shows summary
+
+### UI Components Used
+- `Button` (existing) for stop charging
+- `Card` (existing) for the two content sections
+- `Badge` for status indicator
+- `BarChart` from Recharts for the usage visualization
+- Lucide icons: `ArrowLeft`, `Zap`, `Clock`, `Battery`
+- Tailwind animations for the charging pulse effect
 
