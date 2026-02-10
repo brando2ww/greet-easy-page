@@ -41,7 +41,7 @@ export const ChargerDetailsModal = ({
   // Calculate distance if user location is available
   const calculateDistance = () => {
     if (!userLocation) return null;
-    const [userLat, userLon] = userLocation;
+    const [userLon, userLat] = userLocation;
     const R = 6371; // Earth's radius in km
     const dLat = (charger.latitude - userLat) * Math.PI / 180;
     const dLon = (charger.longitude - userLon) * Math.PI / 180;
