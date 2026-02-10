@@ -105,7 +105,8 @@ Deno.serve(async (req) => {
         }
 
         // Check OCPP connection
-        if (charger.ocpp_protocol_status !== 'Available') {
+        const validOcppStatuses = ['Available', 'Preparing'];
+        if (!validOcppStatuses.includes(charger.ocpp_protocol_status || '')) {
           return new Response(JSON.stringify({ 
             error: 'Charger offline',
             message: 'The charger is not connected via OCPP' 

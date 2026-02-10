@@ -44,7 +44,8 @@ export const useChargerValidation = () => {
       }
 
       // Check OCPP connection status
-      if (charger.ocppProtocolStatus !== 'Available') {
+      const validOcppStatuses = ['Available', 'Preparing'];
+      if (!validOcppStatuses.includes(charger.ocppProtocolStatus || '')) {
         toast({
           title: "Estação offline",
           description: "Esta estação não está conectada. Tente outra.",
