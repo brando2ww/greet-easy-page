@@ -16,6 +16,30 @@ import {
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from "recharts";
 import type { ChargePoint, Transaction } from "@/types/charger";
 
+// OCPP status → label + indicator color
+function getOcppStatusInfo(ocppStatus: string | null | undefined): { label: string; color: string; pulse: boolean } {
+  switch (ocppStatus) {
+    case "Available":
+      return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
+    case "Preparing":
+      return { label: "Preparando...", color: "bg-yellow-500", pulse: true };
+    case "Charging":
+      return { label: "Plugue Conectado", color: "bg-primary", pulse: true };
+    case "SuspendedEVSE":
+      return { label: "Pausado (Estação)", color: "bg-yellow-500", pulse: false };
+    case "SuspendedEV":
+      return { label: "Pausado (Veículo)", color: "bg-yellow-500", pulse: false };
+    case "Finishing":
+      return { label: "Finalizando...", color: "bg-blue-500", pulse: false };
+    case "Faulted":
+      return { label: "Erro no carregador", color: "bg-destructive", pulse: false };
+    case "Unavailable":
+      return { label: "Indisponível", color: "bg-destructive", pulse: false };
+    default:
+      return { label: "Conectando...", color: "bg-muted-foreground", pulse: true };
+  }
+}
+
 export default function Carregamento() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const location = useLocation();
@@ -63,6 +87,25 @@ export default function Carregamento() {
   const pricePerKwh = chargerFromState?.pricePerKwh ?? 0;
   const estimatedCost = cost > 0 ? cost : energyConsumed * pricePerKwh;
   const isCompleted = session?.status === "completed" || session?.status === "cancelled";
+
+  const chargerId = chargerFromState?.id ?? session?.chargerId;
+
+  // Poll real OCPP status every 10s
+  const { data: chargerStatusRes } = useQuery({
+    queryKey: ["charger-ocpp-status", chargerId],
+    queryFn: async () => {
+      if (!chargerId) return null;
+      const res = await commandsApi.getStatus(chargerId);
+      return res.data ?? null;
+    },
+    refetchInterval: 10000,
+    enabled: !!chargerId && !isCompleted,
+  });
+
+  const ocppStatus = chargerStatusRes?.ocppStatus;
+  const statusInfo = isCompleted
+    ? { label: "Finalizado", color: "bg-muted-foreground", pulse: false }
+    : getOcppStatusInfo(ocppStatus);
 
   // Fetch real weekly stats
   const { data: weeklyStats } = useQuery({
@@ -123,17 +166,17 @@ export default function Carregamento() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Plugue Conectado
+                  {statusInfo.label}
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
-                    {!isCompleted && (
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    {statusInfo.pulse && (
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusInfo.color} opacity-75`} />
                     )}
-                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isCompleted ? "bg-muted-foreground" : "bg-primary"}`} />
+                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusInfo.color}`} />
                   </span>
                   <p className="text-sm font-medium text-foreground">
-                    {isCompleted ? "Finalizado" : "Carregando..."}
+                    {isCompleted ? "Finalizado" : statusInfo.label}
                   </p>
                 </div>
               </div>
