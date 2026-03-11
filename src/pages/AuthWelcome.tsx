@@ -28,7 +28,7 @@ const AuthWelcome = () => {
       <div className="w-full max-w-sm space-y-8 animate-fade-in relative z-10">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-12">
-          <div className="w-16 h-16 flex items-center justify-center">
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
             <img src={newLogo} alt="Speed Logo" className="w-full h-full object-contain" />
           </div>
         </div>
