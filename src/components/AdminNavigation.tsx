@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Zap, BarChart3, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Zap, BarChart3, Wallet, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 export const AdminNavigation = () => {
   const location = useLocation();
