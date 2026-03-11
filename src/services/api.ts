@@ -161,6 +161,13 @@ export const transactionsApi = {
   },
 
   /**
+   * Get admin report with aggregated data
+   */
+  adminReport: async (): Promise<ApiResponse<any>> => {
+    return invokeFunction('transactions-api', { action: 'adminReport' });
+  },
+
+  /**
    * Get weekly energy stats for the current user
    */
   weeklyStats: async (): Promise<ApiResponse<{

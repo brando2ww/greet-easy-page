@@ -271,6 +271,147 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'adminReport': {
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // All sessions
+        const { data: allSessions, error: allErr } = await supabaseAdmin
+          .from('charging_sessions')
+          .select('*, chargers (name, location)')
+          .order('started_at', { ascending: false });
+
+        if (allErr) throw allErr;
+
+        // All profiles
+        const { data: allProfiles } = await supabaseAdmin
+          .from('profiles')
+          .select('id, email, full_name');
+
+        // All chargers
+        const { data: allChargers } = await supabaseAdmin
+          .from('chargers')
+          .select('id, name, location');
+
+        const profileMap = new Map((allProfiles || []).map(p => [p.id, p]));
+        const sessions = allSessions || [];
+
+        const completedSessions = sessions.filter(s => s.status === 'completed');
+        const totalEnergy = sessions.reduce((sum, s) => sum + Number(s.energy_consumed || 0), 0);
+        const totalRevenue = sessions.reduce((sum, s) => sum + Number(s.cost || 0), 0);
+        const uniqueUsers = new Set(sessions.map(s => s.user_id)).size;
+
+        // Average duration (minutes)
+        const durationsMs = completedSessions
+          .filter(s => s.ended_at)
+          .map(s => new Date(s.ended_at!).getTime() - new Date(s.started_at).getTime());
+        const avgDurationMin = durationsMs.length > 0
+          ? Math.round(durationsMs.reduce((a, b) => a + b, 0) / durationsMs.length / 60000)
+          : 0;
+
+        // Sessions by day (last 30 days)
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const dailyMap: Record<string, { count: number; energy: number; revenue: number }> = {};
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+          dailyMap[d.toISOString().split('T')[0]] = { count: 0, energy: 0, revenue: 0 };
+        }
+        for (const s of sessions) {
+          const dateStr = new Date(s.started_at).toISOString().split('T')[0];
+          if (dailyMap[dateStr]) {
+            dailyMap[dateStr].count++;
+            dailyMap[dateStr].energy += Number(s.energy_consumed || 0);
+            dailyMap[dateStr].revenue += Number(s.cost || 0);
+          }
+        }
+        const dailyData = Object.entries(dailyMap).map(([date, v]) => ({ date, ...v }));
+
+        // Sessions by charger
+        const chargerMap: Record<string, { name: string; location: string; count: number; energy: number; revenue: number; totalDurationMin: number }> = {};
+        for (const s of sessions) {
+          if (!chargerMap[s.charger_id]) {
+            const ch = s.chargers as any;
+            chargerMap[s.charger_id] = { name: ch?.name || 'Desconhecido', location: ch?.location || '', count: 0, energy: 0, revenue: 0, totalDurationMin: 0 };
+          }
+          chargerMap[s.charger_id].count++;
+          chargerMap[s.charger_id].energy += Number(s.energy_consumed || 0);
+          chargerMap[s.charger_id].revenue += Number(s.cost || 0);
+          if (s.ended_at) {
+            chargerMap[s.charger_id].totalDurationMin += (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000;
+          }
+        }
+        const byCharger = Object.values(chargerMap).map(c => ({
+          ...c,
+          energy: Math.round(c.energy * 100) / 100,
+          revenue: Math.round(c.revenue * 100) / 100,
+          avgDurationMin: c.count > 0 ? Math.round(c.totalDurationMin / c.count) : 0,
+        }));
+
+        // Recent sessions (last 20)
+        const recentSessions = sessions.slice(0, 20).map(s => {
+          const profile = profileMap.get(s.user_id);
+          const durationMin = s.ended_at
+            ? Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000)
+            : null;
+          return {
+            id: s.id,
+            startedAt: s.started_at,
+            endedAt: s.ended_at,
+            chargerName: (s.chargers as any)?.name || 'Desconhecido',
+            userEmail: profile?.email || 'Desconhecido',
+            userName: profile?.full_name || '',
+            durationMin,
+            energyConsumed: s.energy_consumed,
+            cost: s.cost,
+            status: s.status,
+          };
+        });
+
+        // Sessions by user
+        const userMap: Record<string, { email: string; name: string; count: number; energy: number; revenue: number; totalDurationMin: number }> = {};
+        for (const s of sessions) {
+          if (!userMap[s.user_id]) {
+            const profile = profileMap.get(s.user_id);
+            userMap[s.user_id] = { email: profile?.email || 'Desconhecido', name: profile?.full_name || '', count: 0, energy: 0, revenue: 0, totalDurationMin: 0 };
+          }
+          userMap[s.user_id].count++;
+          userMap[s.user_id].energy += Number(s.energy_consumed || 0);
+          userMap[s.user_id].revenue += Number(s.cost || 0);
+          if (s.ended_at) {
+            userMap[s.user_id].totalDurationMin += (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000;
+          }
+        }
+        const byUser = Object.values(userMap).map(u => ({
+          ...u,
+          energy: Math.round(u.energy * 100) / 100,
+          revenue: Math.round(u.revenue * 100) / 100,
+          avgDurationMin: u.count > 0 ? Math.round(u.totalDurationMin / u.count) : 0,
+        }));
+
+        return new Response(JSON.stringify({
+          summary: {
+            totalSessions: sessions.length,
+            completedSessions: completedSessions.length,
+            totalEnergy: Math.round(totalEnergy * 100) / 100,
+            totalRevenue: Math.round(totalRevenue * 100) / 100,
+            avgDurationMin,
+            uniqueUsers,
+            totalChargers: (allChargers || []).length,
+          },
+          dailyData,
+          byCharger,
+          recentSessions,
+          byUser,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       case 'getActive': {
         const { data: session, error } = await supabaseAdmin
           .from('charging_sessions')
