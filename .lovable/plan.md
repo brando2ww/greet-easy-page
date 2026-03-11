@@ -1,12 +1,29 @@
 
 
-## Substituir logo na página Estações
+## Traduzir Status do Carregador no Drawer do Mapa
 
-O usuário quer trocar o logo atual pelo novo upload (versão preta do nexcharge).
+### Problema
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-### Mudanças
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-1. **Copiar** `user-uploads://Design_sem_nome_11.png` para `src/assets/nexcharge-logo.png` (sobrescrever o existente)
+### Mudanca Tecnica
 
-O import em `src/pages/Estacoes.tsx` já aponta para este arquivo, então a troca será automática.
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+
+Adicionar um objeto de mapeamento antes do return:
+
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
+```
+
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 
