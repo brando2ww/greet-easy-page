@@ -8,7 +8,7 @@
     },
     "login": {
       "title": "Welcome back",
-      "subtitle": "Sign in to your SpeedCharger account",
+      "subtitle": "Sign in to your Nexcharge account",
       "email": "Email",
       "password": "Password",
       "forgotPassword": "Forgot password?",
