@@ -412,6 +412,46 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'seedSessionData': {
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { sessions: sessionsToUpdate } = body;
+        if (!Array.isArray(sessionsToUpdate)) {
+          return new Response(JSON.stringify({ error: 'sessions array required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const results = [];
+        for (const s of sessionsToUpdate) {
+          const updateData: Record<string, any> = {};
+          if (s.energy_consumed !== undefined) updateData.energy_consumed = s.energy_consumed;
+          if (s.cost !== undefined) updateData.cost = s.cost;
+          if (s.meter_start !== undefined) updateData.meter_start = s.meter_start;
+          if (s.meter_stop !== undefined) updateData.meter_stop = s.meter_stop;
+          if (s.status !== undefined) updateData.status = s.status;
+          if (s.ended_at !== undefined) updateData.ended_at = s.ended_at;
+          if (s.stop_reason !== undefined) updateData.stop_reason = s.stop_reason;
+
+          const { error } = await supabaseAdmin
+            .from('charging_sessions')
+            .update(updateData)
+            .eq('id', s.id);
+
+          results.push({ id: s.id, success: !error, error: error?.message });
+        }
+
+        return new Response(JSON.stringify({ results }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       case 'getActive': {
         const { data: session, error } = await supabaseAdmin
           .from('charging_sessions')
