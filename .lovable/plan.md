@@ -1,29 +1,15 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Mover "Carteira" para ao lado de "Dashboard" na navegação
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+Reordenar o array `navItems` nos 3 componentes de navegação para que "Carteira" fique na segunda posição, logo após "Dashboard".
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+**Ordem atual:** Dashboard → Carregadores → Relatórios → Carteira → Perfil
+**Nova ordem:** Dashboard → Carteira → Carregadores → Relatórios → Perfil
 
-### Mudanca Tecnica
-
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
-
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
-
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+| Arquivo | Mudança |
+|---------|---------|
+| `src/components/AdminNavigation.tsx` | Mover item Wallet para 2ª posição |
+| `src/components/AdminSidebar.tsx` | Mover item Wallet para 2ª posição |
+| `src/components/AdminHeader.tsx` | Mover item Wallet para 2ª posição |
 
