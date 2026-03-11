@@ -102,8 +102,8 @@ export default function Perfil() {
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("A imagem deve ter no máximo 2MB");
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 5MB");
         return;
       }
       setAvatarFile(file);
