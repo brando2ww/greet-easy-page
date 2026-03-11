@@ -1,29 +1,45 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Criar Templates de Email de Autenticação — Nexcharge
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+### O que será feito
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+1. **Scaffold dos templates** via `scaffold_auth_email_templates` — cria os 6 templates + edge function `auth-email-hook`
+2. **Aplicar branding Nexcharge** em todos os templates:
+   - Cor primária (botões): `hsl(142, 71%, 45%)` (verde)
+   - Cor do texto: `hsl(240, 10%, 15%)`
+   - Texto muted: `hsl(240, 5%, 45%)`
+   - Border radius: `0.75rem`
+   - Background do body: `#ffffff`
+   - Logo: upload do `nexcharge-logo.png` para bucket `email-assets`
+   - Idioma: Português
+3. **Deploy** da edge function `auth-email-hook`
+4. **Previews** dos templates para validação visual
 
-### Mudanca Tecnica
+### Arquivos criados/modificados
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+| Ação | Arquivo |
+|------|---------|
+| Criar (scaffold) | `supabase/functions/auth-email-hook/index.ts` |
+| Criar (scaffold) | `supabase/functions/auth-email-hook/deno.json` |
+| Criar (scaffold) | `supabase/functions/_shared/email-templates/signup.tsx` |
+| Criar (scaffold) | `supabase/functions/_shared/email-templates/recovery.tsx` |
+| Criar (scaffold) | `supabase/functions/_shared/email-templates/magic-link.tsx` |
+| Criar (scaffold) | `supabase/functions/_shared/email-templates/invite.tsx` |
+| Criar (scaffold) | `supabase/functions/_shared/email-templates/email-change.tsx` |
+| Criar (scaffold) | `supabase/functions/_shared/email-templates/reauthentication.tsx` |
+| Criar | Bucket `email-assets` + upload logo |
+| Deploy | Edge function `auth-email-hook` |
 
-Adicionar um objeto de mapeamento antes do return:
+### Fluxo de execução
 
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
+1. Chamar `scaffold_auth_email_templates`
+2. Upload do logo para storage bucket `email-assets`
+3. Ler cada template gerado e aplicar branding (cores, logo, textos em português)
+4. Deploy da edge function
+5. Mostrar previews dos templates
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+### Nota sobre DNS
+
+Os registros TXT já estão configurados no registro.br. A verificação do DNS acontece automaticamente. Os emails customizados serão ativados assim que a verificação concluir. Enquanto isso, os emails padrão do Supabase continuam funcionando.
 
