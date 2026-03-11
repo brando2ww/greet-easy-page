@@ -13,12 +13,14 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      react: path.resolve(__dirname, "./node_modules/react"),
+      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react-i18next", "i18next"],
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react-i18next", "i18next", "@tanstack/react-query"],
   },
   optimizeDeps: {
     force: true,
-    include: ["@tanstack/react-query", "react", "react-dom", "react-i18next"],
+    include: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query", "react-i18next"],
     exclude: ["@huggingface/transformers"],
   },
 }));
