@@ -9,9 +9,9 @@ export const AdminHeader = () => {
 
   const navItems = [
     { icon: LayoutDashboard, label: t('admin.dashboard'), path: '/admin/dashboard' },
+    { icon: Wallet, label: t('adminWallet.title'), path: '/admin/carteira' },
     { icon: Zap, label: t('admin.chargers'), path: '/admin/carregadores', special: true },
     { icon: BarChart3, label: t('admin.reports'), path: '/admin/relatorios' },
-    { icon: Wallet, label: t('adminWallet.title'), path: '/admin/carteira' },
     { icon: UserCircle, label: t('profile.title'), path: '/perfil' },
   ];
 
