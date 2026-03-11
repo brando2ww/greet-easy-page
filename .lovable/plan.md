@@ -1,29 +1,29 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Alinhar imagem do texto logo à esquerda, abaixo do logo
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+### Mudança
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+**Arquivo: `src/pages/AuthWelcome.tsx` — Linhas 38-46**
 
-### Mudanca Tecnica
+O problema é que a imagem `h-40` com `object-contain` fica centralizada por padrão e o `-mt-32` no texto cria sobreposição desorganizada. A solução é:
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+1. Alinhar a imagem à esquerda com `object-left`
+2. Remover o `space-y-4` que adiciona espaço desnecessário
+3. Manter o `-mt-32` no subtitle para sobrepor corretamente
 
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
+```tsx
+<div className="mb-16">
+  <img 
+    src={speedTextLogo} 
+    alt="SpeedCharger" 
+    className="h-40 object-contain object-left pointer-events-none" 
+  />
+  <p className="text-white/90 text-xl leading-relaxed font-light -mt-32">
+    {t('auth.welcome.subtitle')}
+  </p>
+</div>
 ```
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+A imagem fica alinhada à esquerda, diretamente abaixo do logo quadrado, criando um layout organizado e coerente.
 
