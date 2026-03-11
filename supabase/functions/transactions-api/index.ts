@@ -79,39 +79,50 @@ Deno.serve(async (req) => {
     // Get authorization header for user context
     const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
 
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Check for service role key (for internal/seeding operations)
+    const isServiceRole = authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
+
+    let userId = '';
+    let isAdmin = false;
+
+    if (isServiceRole) {
+      isAdmin = true;
+      userId = 'service-role';
+    } else {
+      if (!authHeader?.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+
+      // Validate token by fetching the user
+      const supabaseUser = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!);
+
+      const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
+
+      if (userError || !userData?.user) {
+        console.warn('[transactions-api] Invalid token:', userError);
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      userId = userData.user.id;
+
+      // Check if user is admin
+      const { data: roleData } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      isAdmin = !!roleData;
     }
-
-    const token = authHeader.replace('Bearer ', '');
-
-    // Validate token by fetching the user
-    const supabaseUser = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!);
-
-    const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
-
-    if (userError || !userData?.user) {
-      console.warn('[transactions-api] Invalid token:', userError);
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const userId = userData.user.id;
-
-    // Check if user is admin
-    const { data: roleData } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    const isAdmin = !!roleData;
 
     const body = await req.json();
     const { action, id } = body;
