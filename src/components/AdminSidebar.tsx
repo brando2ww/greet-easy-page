@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
