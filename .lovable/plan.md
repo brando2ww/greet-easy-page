@@ -1,29 +1,27 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Corrigir erro de múltiplas instâncias do React (definitivamente)
+
+A configuração atual de dedupe e aliases já está parcialmente correta, mas faltam subpaths importantes do React que também precisam ser resolvidos para a mesma instância.
 
 ### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+O `@tanstack/react-query` importa React via um caminho que não está sendo capturado pelos aliases atuais (ex: `react/jsx-dev-runtime`, `react-dom/client`), resultando em duas instâncias do React.
 
-### Mudanca Tecnica
+### Solução
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+Atualizar `vite.config.ts` com aliases mais abrangentes:
 
-Adicionar um objeto de mapeamento antes do return:
+| Arquivo | Mudança |
+|---------|---------|
+| `vite.config.ts` | Adicionar aliases para `react/jsx-runtime`, `react/jsx-dev-runtime`, `react-dom/client`; expandir dedupe e optimizeDeps.include |
 
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
+**Aliases adicionais:**
+- `react/jsx-runtime` → `node_modules/react/jsx-runtime.js`
+- `react/jsx-dev-runtime` → `node_modules/react/jsx-dev-runtime.js`
+- `react-dom/client` → `node_modules/react-dom/client.js`
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+**Dedupe expandido** para incluir `react-dom/client`, `react/jsx-dev-runtime`.
+
+**optimizeDeps.include** expandido para incluir `react-dom/client`.
 
