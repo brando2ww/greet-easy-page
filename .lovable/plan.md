@@ -1,29 +1,17 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Substituir "SpeedCharger" por "Nexcharge" em todo o projeto
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+Encontradas 3 referências restantes em 3 arquivos:
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+### Mudanças
 
-### Mudanca Tecnica
+1. **`src/components/Header.tsx` (linha 23)**
+   - `SpeedCharger` → `Nexcharge`
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+2. **`src/pages/Auth.tsx` (linha 83)**
+   - `SpeedCharger` → `Nexcharge`
 
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
-
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+3. **`src/components/AdminHeader.tsx` (linha 23)**
+   - `SpeedCharger Admin` → `Nexcharge Admin`
 
