@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_payment_config: {
+        Row: {
+          account_email: string | null
+          account_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_email?: string | null
+          account_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_email?: string | null
+          account_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       billing_info: {
         Row: {
           city: string | null

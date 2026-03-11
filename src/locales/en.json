@@ -308,5 +308,21 @@
     "noClientSelected": "No client selected",
     "chargersInstalled": "Chargers Installed",
     "selectState": "Select a state"
+  },
+  "adminWallet": {
+    "title": "Wallet",
+    "subtitle": "Manage your earnings and payment methods",
+    "totalRevenue": "Total Revenue",
+    "monthRevenue": "Monthly Revenue",
+    "billedSessions": "Billed Sessions",
+    "paymentMethods": "Payment Methods",
+    "linked": "Linked",
+    "notLinked": "Not linked",
+    "link": "Link",
+    "emailPlaceholder": "Account email",
+    "configSaved": "Configuration saved successfully",
+    "configRemoved": "Configuration removed",
+    "billingHistory": "Billing History",
+    "noSessions": "No billed sessions found"
   }
 }

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Zap, BarChart3, Wallet, UserCircle, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'admin.dashboard', path: '/admin/dashboard' },
   { icon: Zap, label: 'admin.chargers', path: '/admin/carregadores' },
   { icon: BarChart3, label: 'admin.reports', path: '/admin/relatorios' },
+  { icon: Wallet, label: 'adminWallet.title', path: '/admin/carteira' },
   { icon: UserCircle, label: 'profile.title', path: '/perfil' },
 ];
 

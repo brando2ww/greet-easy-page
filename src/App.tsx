@@ -29,6 +29,7 @@ import Dashboard from "./pages/admin/Dashboard";
 
 import Carregadores from "./pages/admin/Carregadores";
 import Relatorios from "./pages/admin/Relatorios";
+import CarteiraAdmin from "./pages/admin/CarteiraAdmin";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
               
               <Route path="/admin/carregadores" element={<AdminRoute><Carregadores /></AdminRoute>} />
               <Route path="/admin/relatorios" element={<AdminRoute><Relatorios /></AdminRoute>} />
+              <Route path="/admin/carteira" element={<AdminRoute><CarteiraAdmin /></AdminRoute>} />
               <Route path="/auth" element={<AuthWelcome />} />
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/signup" element={<SignUp />} />

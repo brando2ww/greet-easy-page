@@ -412,6 +412,129 @@ Deno.serve(async (req) => {
         });
       }
 
+      case 'adminWallet': {
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Total revenue from completed sessions
+        const { data: allCompleted, error: acErr } = await supabaseAdmin
+          .from('charging_sessions')
+          .select('cost, started_at, charger_id')
+          .eq('status', 'completed')
+          .gt('cost', 0);
+
+        if (acErr) throw acErr;
+
+        const sessions = allCompleted || [];
+        const totalRevenue = sessions.reduce((sum, s) => sum + Number(s.cost || 0), 0);
+
+        // Month revenue
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const monthRevenue = sessions
+          .filter(s => s.started_at >= monthStart)
+          .reduce((sum, s) => sum + Number(s.cost || 0), 0);
+
+        const totalBilledSessions = sessions.length;
+
+        // Recent billed sessions
+        const { data: recentBilled, error: rbErr } = await supabaseAdmin
+          .from('charging_sessions')
+          .select('id, started_at, ended_at, cost, energy_consumed, chargers (name, location)')
+          .eq('status', 'completed')
+          .gt('cost', 0)
+          .order('started_at', { ascending: false })
+          .limit(20);
+
+        if (rbErr) throw rbErr;
+
+        // Payment config
+        const { data: paymentConfig } = await supabaseAdmin
+          .from('admin_payment_config')
+          .select('*')
+          .eq('user_id', userId);
+
+        return new Response(JSON.stringify({
+          totalRevenue: Math.round(totalRevenue * 100) / 100,
+          monthRevenue: Math.round(monthRevenue * 100) / 100,
+          totalBilledSessions,
+          recentBilled: (recentBilled || []).map(s => ({
+            id: s.id,
+            startedAt: s.started_at,
+            endedAt: s.ended_at,
+            cost: s.cost,
+            energyConsumed: s.energy_consumed,
+            chargerName: (s.chargers as any)?.name || 'Desconhecido',
+            chargerLocation: (s.chargers as any)?.location || '',
+          })),
+          paymentConfig: paymentConfig || [],
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      case 'savePaymentConfig': {
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { provider, account_id, account_email, is_active } = body;
+        if (!provider || !['stripe', 'mercado_pago'].includes(provider)) {
+          return new Response(JSON.stringify({ error: 'Invalid provider' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { data: config, error: cfgErr } = await supabaseAdmin
+          .from('admin_payment_config')
+          .upsert({
+            user_id: userId,
+            provider,
+            account_id: account_id || null,
+            account_email: account_email || null,
+            is_active: is_active !== undefined ? is_active : true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,provider' })
+          .select()
+          .single();
+
+        if (cfgErr) throw cfgErr;
+
+        return new Response(JSON.stringify(config), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      case 'deletePaymentConfig': {
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { provider: delProvider } = body;
+        const { error: delErr } = await supabaseAdmin
+          .from('admin_payment_config')
+          .delete()
+          .eq('user_id', userId)
+          .eq('provider', delProvider);
+
+        if (delErr) throw delErr;
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       case 'seedSessionData': {
         if (!isAdmin) {
           return new Response(JSON.stringify({ error: 'Admin access required' }), {

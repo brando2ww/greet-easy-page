@@ -1,4 +1,4 @@
-import { LayoutDashboard, Zap, BarChart3, UserCircle } from "lucide-react";
+import { LayoutDashboard, Zap, BarChart3, Wallet, UserCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ export const AdminHeader = () => {
     { icon: LayoutDashboard, label: t('admin.dashboard'), path: '/admin/dashboard' },
     { icon: Zap, label: t('admin.chargers'), path: '/admin/carregadores', special: true },
     { icon: BarChart3, label: t('admin.reports'), path: '/admin/relatorios' },
+    { icon: Wallet, label: t('adminWallet.title'), path: '/admin/carteira' },
     { icon: UserCircle, label: t('profile.title'), path: '/perfil' },
   ];
 
