@@ -260,6 +260,56 @@ export type Database = {
         }
         Relationships: []
       }
+      meter_values: {
+        Row: {
+          connector_id: number | null
+          context: string | null
+          created_at: string
+          id: string
+          measurand: string
+          phase: string | null
+          session_id: string | null
+          timestamp: string
+          transaction_id: number | null
+          unit: string
+          value: number
+        }
+        Insert: {
+          connector_id?: number | null
+          context?: string | null
+          created_at?: string
+          id?: string
+          measurand?: string
+          phase?: string | null
+          session_id?: string | null
+          timestamp?: string
+          transaction_id?: number | null
+          unit?: string
+          value: number
+        }
+        Update: {
+          connector_id?: number | null
+          context?: string | null
+          created_at?: string
+          id?: string
+          measurand?: string
+          phase?: string | null
+          session_id?: string | null
+          timestamp?: string
+          transaction_id?: number | null
+          unit?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meter_values_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "charging_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
