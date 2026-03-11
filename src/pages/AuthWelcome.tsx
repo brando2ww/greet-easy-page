@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import evChargingBg from "@/assets/ev-charging-bg.png";
-import speedLogo from "@/assets/speed_logo_04-2.png";
+import newLogo from "@/assets/logo-speed.png";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
