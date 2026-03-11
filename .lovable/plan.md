@@ -1,29 +1,8 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Substituir logo na página Estações
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
-
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
-
-### Mudanca Tecnica
-
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
-
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
-
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+1. Copiar a imagem `Design_sem_nome_14.png` para `src/assets/nexcharge-logo-new.png`
+2. Atualizar o import em `src/pages/Estacoes.tsx` (linha 8) para usar o novo logo
+3. O elemento `img` na linha 77 já referencia `speedLogo` — basta trocar o import
 
