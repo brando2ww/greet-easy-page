@@ -117,6 +117,7 @@ export default function Perfil() {
 
   const handleRemoveAvatar = () => {
     setAvatarUrl("");
+    setAvatarFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
