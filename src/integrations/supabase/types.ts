@@ -380,6 +380,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["wallet_transaction_status"]
+          stripe_session_id: string | null
+          type: Database["public"]["Enums"]["wallet_transaction_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["wallet_transaction_status"]
+          stripe_session_id?: string | null
+          type: Database["public"]["Enums"]["wallet_transaction_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["wallet_transaction_status"]
+          stripe_session_id?: string | null
+          type?: Database["public"]["Enums"]["wallet_transaction_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -397,6 +433,12 @@ export type Database = {
       app_role: "admin" | "support" | "user"
       charger_status: "available" | "in_use" | "maintenance" | "offline"
       vehicle_type: "hybrid" | "electric"
+      wallet_transaction_status:
+        | "pending"
+        | "completed"
+        | "failed"
+        | "cancelled"
+      wallet_transaction_type: "deposit" | "withdrawal" | "charge"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -527,6 +569,13 @@ export const Constants = {
       app_role: ["admin", "support", "user"],
       charger_status: ["available", "in_use", "maintenance", "offline"],
       vehicle_type: ["hybrid", "electric"],
+      wallet_transaction_status: [
+        "pending",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
+      wallet_transaction_type: ["deposit", "withdrawal", "charge"],
     },
   },
 } as const

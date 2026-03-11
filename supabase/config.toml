@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.transactions-api]
 verify_jwt = false
+
+[functions.wallet-api]
+verify_jwt = false
