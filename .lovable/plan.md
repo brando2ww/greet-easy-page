@@ -1,29 +1,16 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Remover opacidade da imagem do logo
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+**Arquivo: `src/pages/AuthWelcome.tsx`** — Remover `opacity-20` da classe da imagem para exibir com opacidade original (100%).
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
-
-### Mudanca Tecnica
-
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
-
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
+**Antes:**
+```tsx
+className="h-40 object-contain opacity-20 pointer-events-none"
 ```
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+**Depois:**
+```tsx
+className="h-40 object-contain pointer-events-none"
+```
 
