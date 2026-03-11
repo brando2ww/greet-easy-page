@@ -11,7 +11,7 @@ export const BottomNavigation = () => {
   const navItems = [
     { icon: MapPin, label: t('navigation.stations'), path: "/" },
     { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
-    { icon: Zap, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
+    { icon: null, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
     { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
     { icon: User, label: t('navigation.profile'), path: "/perfil" },
   ];
