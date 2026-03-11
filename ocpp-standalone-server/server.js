@@ -231,7 +231,7 @@ wss.on('connection', async (ws, req) => {
             await handleStopTransaction(ws, messageId, payload, chargePointId);
             break;
           case 'MeterValues':
-            await handleMeterValues(ws, messageId, payload);
+            await handleMeterValues(ws, messageId, payload, chargePointId);
             break;
           default:
             console.log(`[OCPP Server] Unknown action: ${action}`);
@@ -361,6 +361,22 @@ async function handleAuthorize(ws, messageId, payload) {
   });
 }
 
+// Resolve user_id from idTag (email or UUID)
+async function resolveUserId(idTag) {
+  if (!idTag || idTag === 'REMOTE') return null;
+  
+  // If it looks like a UUID, check profiles directly
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(idTag)) {
+    const { data } = await supabase.from('profiles').select('id').eq('id', idTag).maybeSingle();
+    return data?.id || null;
+  }
+  
+  // Try as email
+  const { data } = await supabase.from('profiles').select('id').eq('email', idTag).maybeSingle();
+  return data?.id || null;
+}
+
 async function handleStartTransaction(ws, messageId, payload, chargePointId) {
   console.log(`[StartTransaction] ${chargePointId} - Connector: ${payload.connectorId}, Meter: ${payload.meterStart}`);
 
@@ -375,13 +391,18 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     return;
   }
 
+  // Resolve real user_id from idTag
+  const resolvedUserId = await resolveUserId(payload.idTag);
+  const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
+  console.log(`[StartTransaction] Resolved user_id: ${userId} (from idTag: ${payload.idTag})`);
+
   const transactionId = transactionIdCounter++;
 
   const { error } = await supabase
     .from('charging_sessions')
     .insert({
       charger_id: charger.id,
-      user_id: '00000000-0000-0000-0000-000000000000',
+      user_id: userId,
       transaction_id: transactionId,
       meter_start: payload.meterStart,
       id_tag: payload.idTag,
@@ -404,7 +425,7 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     },
   });
 
-  console.log(`[StartTransaction] Created transaction ${transactionId} for ${chargePointId}`);
+  console.log(`[StartTransaction] Created transaction ${transactionId} for ${chargePointId} (user: ${userId})`);
 }
 
 async function handleStopTransaction(ws, messageId, payload, chargePointId) {
@@ -447,9 +468,99 @@ async function handleStopTransaction(ws, messageId, payload, chargePointId) {
   console.log(`[StopTransaction] Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
 }
 
-async function handleMeterValues(ws, messageId, payload) {
-  console.log(`[MeterValues] Transaction: ${payload.transactionId}`, payload.meterValue);
+async function handleMeterValues(ws, messageId, payload, chargePointId) {
+  console.log(`[MeterValues] Transaction: ${payload.transactionId}`, JSON.stringify(payload.meterValue));
+  
+  // Respond immediately
   sendCallResult(ws, messageId, {});
+
+  // Parse and save meter values to database
+  try {
+    const transactionId = payload.transactionId;
+    const connectorId = payload.connectorId;
+
+    // Find session by transaction_id
+    let sessionId = null;
+    if (transactionId) {
+      const { data: session } = await supabase
+        .from('charging_sessions')
+        .select('id')
+        .eq('transaction_id', transactionId)
+        .maybeSingle();
+      sessionId = session?.id || null;
+    }
+
+    // OCPP 1.6: meterValue is an array of { timestamp, sampledValue: [{ value, measurand, unit, phase, context }] }
+    const meterValues = payload.meterValue || [];
+    const rows = [];
+    let latestEnergyWh = null;
+
+    for (const mv of meterValues) {
+      const ts = mv.timestamp || new Date().toISOString();
+      const sampledValues = mv.sampledValue || [];
+
+      for (const sv of sampledValues) {
+        const measurand = sv.measurand || 'Energy.Active.Import.Register';
+        const value = parseFloat(sv.value);
+        const unit = sv.unit || (measurand.includes('Energy') ? 'Wh' : measurand.includes('Power') ? 'W' : measurand.includes('Voltage') ? 'V' : measurand.includes('Current') ? 'A' : '');
+        const phase = sv.phase || null;
+        const context = sv.context || 'Sample.Periodic';
+
+        if (isNaN(value)) continue;
+
+        rows.push({
+          session_id: sessionId,
+          transaction_id: transactionId,
+          timestamp: ts,
+          connector_id: connectorId,
+          measurand,
+          value,
+          unit,
+          phase,
+          context,
+        });
+
+        // Track latest energy reading
+        if (measurand === 'Energy.Active.Import.Register') {
+          latestEnergyWh = value;
+        }
+      }
+    }
+
+    if (rows.length > 0) {
+      const { error } = await supabase.from('meter_values').insert(rows);
+      if (error) {
+        console.error('[MeterValues] DB insert error:', error);
+      } else {
+        console.log(`[MeterValues] Saved ${rows.length} readings for transaction ${transactionId}`);
+      }
+    }
+
+    // Update energy_consumed on the session for real-time display
+    if (latestEnergyWh !== null && sessionId) {
+      const energyKwh = latestEnergyWh / 1000;
+      const { data: session } = await supabase
+        .from('charging_sessions')
+        .select('meter_start, chargers(price_per_kwh)')
+        .eq('id', sessionId)
+        .single();
+
+      if (session) {
+        const meterStartWh = session.meter_start || 0;
+        const consumed = (latestEnergyWh - meterStartWh) / 1000;
+        const cost = consumed * (session.chargers?.price_per_kwh || 0.80);
+
+        await supabase
+          .from('charging_sessions')
+          .update({ energy_consumed: consumed, cost })
+          .eq('id', sessionId);
+
+        console.log(`[MeterValues] Updated session ${sessionId}: ${consumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
+      }
+    }
+  } catch (dbError) {
+    console.error('[MeterValues] DB exception:', dbError);
+  }
 }
 
 // Funções auxiliares
