@@ -17,6 +17,23 @@
       "noAccount": "Don't have an account?",
       "signupLink": "Sign up"
     },
+    "forgotPassword": {
+      "title": "Recover Password",
+      "subtitle": "Enter your email to receive a reset link",
+      "submit": "Send Link",
+      "sentTitle": "Email Sent!",
+      "sentDescription": "Check your inbox and click the link to reset your password.",
+      "backToLogin": "Back to Login"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Choose a new password for your account",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Reset Password",
+      "successTitle": "Password Reset!",
+      "successDescription": "Your password has been changed successfully. You can now log in."
+    },
     "signup": {
       "title": "Create Account",
       "subtitle": "Start your electric vehicle journey",

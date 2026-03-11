@@ -17,6 +17,23 @@
       "noAccount": "还没有账户？",
       "signupLink": "注册"
     },
+    "forgotPassword": {
+      "title": "找回密码",
+      "subtitle": "输入您的邮箱以接收重置链接",
+      "submit": "发送链接",
+      "sentTitle": "邮件已发送！",
+      "sentDescription": "请检查您的收件箱并点击链接重置密码。",
+      "backToLogin": "返回登录"
+    },
+    "resetPassword": {
+      "title": "重置密码",
+      "subtitle": "为您的账户选择新密码",
+      "newPassword": "新密码",
+      "confirmPassword": "确认新密码",
+      "submit": "重置密码",
+      "successTitle": "密码已重置！",
+      "successDescription": "您的密码已成功更改。您现在可以登录了。"
+    },
     "signup": {
       "title": "创建账户",
       "subtitle": "开始您的电动汽车之旅",
