@@ -1,14 +1,29 @@
 
 
-## Fix: Hover dos botões de valor rápido
+## Traduzir Status do Carregador no Drawer do Mapa
 
-**Arquivo:** `src/pages/Carteira.tsx` (linha 191)
+### Problema
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-Adicionar classe `hover:bg-muted` nos botões de valor rápido para sobrescrever o hover roxo/rosa do variant `outline`.
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-**Mudança:**
-```tsx
-// Linha 191 - adicionar hover:bg-muted em ambos os estados
-className={amount === v.toString() ? "border-primary bg-primary/10 hover:bg-primary/10" : "hover:bg-muted"}
+### Mudanca Tecnica
+
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+
+Adicionar um objeto de mapeamento antes do return:
+
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
 ```
+
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 
