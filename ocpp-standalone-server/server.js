@@ -361,6 +361,22 @@ async function handleAuthorize(ws, messageId, payload) {
   });
 }
 
+// Resolve user_id from idTag (email or UUID)
+async function resolveUserId(idTag) {
+  if (!idTag || idTag === 'REMOTE') return null;
+  
+  // If it looks like a UUID, check profiles directly
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(idTag)) {
+    const { data } = await supabase.from('profiles').select('id').eq('id', idTag).maybeSingle();
+    return data?.id || null;
+  }
+  
+  // Try as email
+  const { data } = await supabase.from('profiles').select('id').eq('email', idTag).maybeSingle();
+  return data?.id || null;
+}
+
 async function handleStartTransaction(ws, messageId, payload, chargePointId) {
   console.log(`[StartTransaction] ${chargePointId} - Connector: ${payload.connectorId}, Meter: ${payload.meterStart}`);
 
