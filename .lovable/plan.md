@@ -1,30 +1,29 @@
 
 
-## Corrigir upload de foto de perfil
+## Traduzir Status do Carregador no Drawer do Mapa
 
-**Problema:** A foto está sendo convertida para base64 e enviada diretamente no `user_metadata`, o que gera um payload enorme e causa timeout 504.
+### Problema
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-**Solução:** Fazer upload da imagem para o Supabase Storage (bucket `avatars`) e salvar apenas a URL pública no metadata.
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-### Mudanças
+### Mudanca Tecnica
 
-1. **Supabase Storage** — Criar bucket `avatars` (público) via migration SQL
-2. **`src/pages/Perfil.tsx`** — Refatorar `handleSaveProfile`:
-   - Fazer upload do arquivo para `storage.from('avatars').upload(...)` usando o `user.id` como path
-   - Obter a URL pública com `getPublicUrl()`
-   - Salvar apenas a URL no `user_metadata.avatar_url`
-   - Manter o base64 apenas para preview local antes de salvar
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
 
-### Detalhes técnicos
+Adicionar um objeto de mapeamento antes do return:
 
-- Migration SQL:
-  ```sql
-  INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true);
-  CREATE POLICY "Users can upload own avatar" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
-  CREATE POLICY "Users can update own avatar" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
-  CREATE POLICY "Anyone can view avatars" ON storage.objects FOR SELECT TO public USING (bucket_id = 'avatars');
-  ```
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
+```
 
-- No `handleSaveProfile`, guardar o `File` object original (não só o base64) para fazer o upload via Storage API
-- Limitar tamanho do arquivo a 2MB no frontend
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 
