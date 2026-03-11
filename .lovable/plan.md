@@ -1,45 +1,26 @@
 
 
-## Criar Templates de Email de Autenticação — Nexcharge
+## Admin Dashboard = Tela de Estações (com mapa)
 
-### O que será feito
+### Problema
+O admin vê um dashboard com gráficos em `/admin/dashboard`, mas o desejado é que veja a mesma tela do usuário comum (logo, busca, filtros, mapa com carregadores), mantendo apenas o bottom menu de admin.
 
-1. **Scaffold dos templates** via `scaffold_auth_email_templates` — cria os 6 templates + edge function `auth-email-hook`
-2. **Aplicar branding Nexcharge** em todos os templates:
-   - Cor primária (botões): `hsl(142, 71%, 45%)` (verde)
-   - Cor do texto: `hsl(240, 10%, 15%)`
-   - Texto muted: `hsl(240, 5%, 45%)`
-   - Border radius: `0.75rem`
-   - Background do body: `#ffffff`
-   - Logo: upload do `nexcharge-logo.png` para bucket `email-assets`
-   - Idioma: Português
-3. **Deploy** da edge function `auth-email-hook`
-4. **Previews** dos templates para validação visual
+### Solução
 
-### Arquivos criados/modificados
+A tela `Estacoes` já usa `ResponsiveLayout` com `showBottomNav`, e o `ResponsiveLayout` já detecta admin para mostrar `AdminNavigation`. Portanto, basta reutilizar `Estacoes` como dashboard admin.
 
-| Ação | Arquivo |
-|------|---------|
-| Criar (scaffold) | `supabase/functions/auth-email-hook/index.ts` |
-| Criar (scaffold) | `supabase/functions/auth-email-hook/deno.json` |
-| Criar (scaffold) | `supabase/functions/_shared/email-templates/signup.tsx` |
-| Criar (scaffold) | `supabase/functions/_shared/email-templates/recovery.tsx` |
-| Criar (scaffold) | `supabase/functions/_shared/email-templates/magic-link.tsx` |
-| Criar (scaffold) | `supabase/functions/_shared/email-templates/invite.tsx` |
-| Criar (scaffold) | `supabase/functions/_shared/email-templates/email-change.tsx` |
-| Criar (scaffold) | `supabase/functions/_shared/email-templates/reauthentication.tsx` |
-| Criar | Bucket `email-assets` + upload logo |
-| Deploy | Edge function `auth-email-hook` |
+### Alterações
 
-### Fluxo de execução
+1. **`src/pages/admin/Dashboard.tsx`** — Substituir todo o conteúdo do componente por um re-export de `Estacoes`:
+   ```tsx
+   import Estacoes from "@/pages/Estacoes";
+   const Dashboard = () => <Estacoes />;
+   export default Dashboard;
+   ```
 
-1. Chamar `scaffold_auth_email_templates`
-2. Upload do logo para storage bucket `email-assets`
-3. Ler cada template gerado e aplicar branding (cores, logo, textos em português)
-4. Deploy da edge function
-5. Mostrar previews dos templates
+2. **`src/components/RoleBasedRedirect.tsx`** — Manter o redirect para `/admin/dashboard` (sem mudança, pois o admin dashboard agora mostrará o mapa).
 
-### Nota sobre DNS
+3. **`src/components/AdminNavigation.tsx`** — Atualizar o path do primeiro item (Dashboard) para apontar para `/admin/dashboard` e garantir que o ícone ativo funcione corretamente (já está correto).
 
-Os registros TXT já estão configurados no registro.br. A verificação do DNS acontece automaticamente. Os emails customizados serão ativados assim que a verificação concluir. Enquanto isso, os emails padrão do Supabase continuam funcionando.
+Resultado: Admin logado vê logo Nexcharge, barra de busca, filtros, mapa com carregadores + bottom nav de admin. As outras páginas admin (clientes, carregadores, relatórios) continuam iguais.
 
