@@ -1,14 +1,29 @@
 
 
-## Fix: Adicionar navegação na Carteira Admin
+## Traduzir Status do Carregador no Drawer do Mapa
 
-O problema é que `CarteiraAdmin.tsx` usa `<ResponsiveLayout>` mas não passa `showBottomNav={true}`, então a navegação inferior (mobile) não aparece.
+### Problema
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-### Alteração
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/admin/CarteiraAdmin.tsx` | Alterar `<ResponsiveLayout>` para `<ResponsiveLayout showBottomNav>` |
+### Mudanca Tecnica
 
-Isso resolve tanto o menu inferior no mobile quanto a sidebar no desktop (que já funciona via `ResponsiveLayout` quando detecta admin).
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+
+Adicionar um objeto de mapeamento antes do return:
+
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
+```
+
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 

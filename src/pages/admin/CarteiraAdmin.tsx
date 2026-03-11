@@ -82,7 +82,7 @@ const CarteiraAdmin = () => {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 
   return (
-    <ResponsiveLayout>
+    <ResponsiveLayout showBottomNav>
       <div className="p-4 md:p-6 space-y-6 pb-28">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('adminWallet.title')}</h1>
