@@ -1,29 +1,10 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Reduzir tamanho do logo
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+Diminuir a altura do logo de `h-16` (64px) para `h-10` (~42px), que é aproximadamente 1.5x menor.
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+### Mudança
 
-### Mudanca Tecnica
-
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
-
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
-
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+**`src/pages/Estacoes.tsx`** — Linha 80: trocar `className="h-16"` por `className="h-10"`.
 
