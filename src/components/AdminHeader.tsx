@@ -20,7 +20,7 @@ export const AdminHeader = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/admin/dashboard" className="flex items-center gap-2">
           <Zap className="w-8 h-8 text-primary" />
-          <span className="text-xl font-bold text-foreground">SpeedCharger Admin</span>
+          <span className="text-xl font-bold text-foreground"><span className="text-xl font-bold text-foreground">Nexcharge Admin</span></span>
         </Link>
         
         <nav className="flex items-center gap-1">

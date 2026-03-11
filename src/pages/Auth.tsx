@@ -80,7 +80,7 @@ const Auth = () => {
             </div>
           </div>
           <div>
-            <CardTitle className="text-3xl">SpeedCharger</CardTitle>
+            <CardTitle className="text-3xl"><CardTitle className="text-3xl">Nexcharge</CardTitle></CardTitle>
             <CardDescription>Carregue seu veículo elétrico com facilidade</CardDescription>
           </div>
         </CardHeader>
