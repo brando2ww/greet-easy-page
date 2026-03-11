@@ -1,4 +1,5 @@
-import { MapPin, Wallet, Zap, Car, User } from "lucide-react";
+import { MapPin, Wallet, Car, User } from "lucide-react";
+import chargingIcon from "@/assets/charging-icon.png";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -10,7 +11,7 @@ export const BottomNavigation = () => {
   const navItems = [
     { icon: MapPin, label: t('navigation.stations'), path: "/" },
     { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
-    { icon: Zap, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
+    { icon: null, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
     { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
     { icon: User, label: t('navigation.profile'), path: "/perfil" },
   ];
@@ -39,10 +40,7 @@ export const BottomNavigation = () => {
                       {/* Círculo animado para iniciar carga */}
                       <div className="relative z-20">
                         <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
-                          <Icon
-                            strokeWidth={1.5}
-                            className="w-8 h-8 text-background"
-                          />
+                          <img src={chargingIcon} alt="Iniciar Carga" className="h-8 w-8 object-contain" />
                         </div>
                       </div>
                       
