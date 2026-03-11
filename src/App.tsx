@@ -42,6 +42,7 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
               <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
+              <Route path="/carteira/sucesso" element={<ProtectedRoute><CarteiraSucesso /></ProtectedRoute>} />
               <Route path="/iniciar-carga" element={<ProtectedRoute><IniciarCarga /></ProtectedRoute>} />
               <Route path="/carregamento/:sessionId" element={<ProtectedRoute><Carregamento /></ProtectedRoute>} />
               <Route path="/veiculos" element={<ProtectedRoute><Veiculos /></ProtectedRoute>} />
