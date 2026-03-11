@@ -13,14 +13,17 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      react: path.resolve(__dirname, "./node_modules/react"),
+      "react": path.resolve(__dirname, "./node_modules/react"),
       "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime.js"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "./node_modules/react/jsx-dev-runtime.js"),
+      "react-dom/client": path.resolve(__dirname, "./node_modules/react-dom/client.js"),
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react-i18next", "i18next", "@tanstack/react-query"],
+    dedupe: ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime", "react-i18next", "i18next", "@tanstack/react-query"],
   },
   optimizeDeps: {
     force: true,
-    include: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query", "react-i18next"],
+    include: ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "@tanstack/react-query", "react-i18next"],
     exclude: ["@huggingface/transformers"],
   },
 }));
