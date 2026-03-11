@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
-import speedLogo from "@/assets/nexcharge-logo.png";
+import speedLogo from "@/assets/nexcharge-logo-new.png";
 import { StationsMap } from "@/components/map/StationsMap";
 import { useChargers } from "@/hooks/useChargers";
 import { MAPBOX_TOKEN } from "@/config/mapbox";
