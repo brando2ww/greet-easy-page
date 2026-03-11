@@ -1,29 +1,22 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Substituir Logo na Página de Login
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+### Mudança
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+**Arquivo: `src/pages/Login.tsx`**
 
-### Mudanca Tecnica
+Trocar o import do logo antigo (`speed_logo_04-2.png`) pelo novo (`logo-speed.png`), igual ao usado no AuthWelcome.
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
-
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
+**Antes (linha 11):**
+```tsx
+import speedLogo from "@/assets/speed_logo_04-2.png";
 ```
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+**Depois:**
+```tsx
+import speedLogo from "@/assets/logo-speed.png";
+```
+
+O container já tem `bg-white rounded-3xl p-3`, então o estilo app icon será mantido automaticamente.
 
