@@ -1,29 +1,31 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Substituir Texto "SpeedCharger —" por Imagem
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+### Mudança
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+1. Copiar `user-uploads://Design_sem_nome_9.png` para `src/assets/speed-text-logo.png`
 
-### Mudanca Tecnica
+2. **Arquivo: `src/pages/AuthWelcome.tsx` — Linha 38**
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+Substituir o `<h1>` com texto por uma imagem:
 
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
+**Antes:**
+```tsx
+<h1 className="text-white text-4xl font-bold leading-tight tracking-tight">
+  {t('auth.welcome.title')}
+</h1>
 ```
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+**Depois:**
+```tsx
+<img src={speedTextLogo} alt="SpeedCharger" className="h-10 object-contain" />
+```
+
+Adicionar import no topo:
+```tsx
+import speedTextLogo from "@/assets/speed-text-logo.png";
+```
+
+A imagem branca ficará visível sobre o fundo escuro, substituindo o texto.
 
