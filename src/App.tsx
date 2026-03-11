@@ -23,6 +23,8 @@ import AuthWelcome from "./pages/AuthWelcome";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/admin/Dashboard";
 import Clientes from "./pages/admin/Clientes";
 import Carregadores from "./pages/admin/Carregadores";
