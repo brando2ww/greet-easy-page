@@ -29,6 +29,7 @@ import Dashboard from "./pages/admin/Dashboard";
 
 import Carregadores from "./pages/admin/Carregadores";
 import Relatorios from "./pages/admin/Relatorios";
+import CarteiraAdmin from "./pages/admin/CarteiraAdmin";
 
 const queryClient = new QueryClient();
 
