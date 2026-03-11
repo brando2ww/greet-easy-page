@@ -463,9 +463,99 @@ async function handleStopTransaction(ws, messageId, payload, chargePointId) {
   console.log(`[StopTransaction] Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
 }
 
-async function handleMeterValues(ws, messageId, payload) {
-  console.log(`[MeterValues] Transaction: ${payload.transactionId}`, payload.meterValue);
+async function handleMeterValues(ws, messageId, payload, chargePointId) {
+  console.log(`[MeterValues] Transaction: ${payload.transactionId}`, JSON.stringify(payload.meterValue));
+  
+  // Respond immediately
   sendCallResult(ws, messageId, {});
+
+  // Parse and save meter values to database
+  try {
+    const transactionId = payload.transactionId;
+    const connectorId = payload.connectorId;
+
+    // Find session by transaction_id
+    let sessionId = null;
+    if (transactionId) {
+      const { data: session } = await supabase
+        .from('charging_sessions')
+        .select('id')
+        .eq('transaction_id', transactionId)
+        .maybeSingle();
+      sessionId = session?.id || null;
+    }
+
+    // OCPP 1.6: meterValue is an array of { timestamp, sampledValue: [{ value, measurand, unit, phase, context }] }
+    const meterValues = payload.meterValue || [];
+    const rows = [];
+    let latestEnergyWh = null;
+
+    for (const mv of meterValues) {
+      const ts = mv.timestamp || new Date().toISOString();
+      const sampledValues = mv.sampledValue || [];
+
+      for (const sv of sampledValues) {
+        const measurand = sv.measurand || 'Energy.Active.Import.Register';
+        const value = parseFloat(sv.value);
+        const unit = sv.unit || (measurand.includes('Energy') ? 'Wh' : measurand.includes('Power') ? 'W' : measurand.includes('Voltage') ? 'V' : measurand.includes('Current') ? 'A' : '');
+        const phase = sv.phase || null;
+        const context = sv.context || 'Sample.Periodic';
+
+        if (isNaN(value)) continue;
+
+        rows.push({
+          session_id: sessionId,
+          transaction_id: transactionId,
+          timestamp: ts,
+          connector_id: connectorId,
+          measurand,
+          value,
+          unit,
+          phase,
+          context,
+        });
+
+        // Track latest energy reading
+        if (measurand === 'Energy.Active.Import.Register') {
+          latestEnergyWh = value;
+        }
+      }
+    }
+
+    if (rows.length > 0) {
+      const { error } = await supabase.from('meter_values').insert(rows);
+      if (error) {
+        console.error('[MeterValues] DB insert error:', error);
+      } else {
+        console.log(`[MeterValues] Saved ${rows.length} readings for transaction ${transactionId}`);
+      }
+    }
+
+    // Update energy_consumed on the session for real-time display
+    if (latestEnergyWh !== null && sessionId) {
+      const energyKwh = latestEnergyWh / 1000;
+      const { data: session } = await supabase
+        .from('charging_sessions')
+        .select('meter_start, chargers(price_per_kwh)')
+        .eq('id', sessionId)
+        .single();
+
+      if (session) {
+        const meterStartWh = session.meter_start || 0;
+        const consumed = (latestEnergyWh - meterStartWh) / 1000;
+        const cost = consumed * (session.chargers?.price_per_kwh || 0.80);
+
+        await supabase
+          .from('charging_sessions')
+          .update({ energy_consumed: consumed, cost })
+          .eq('id', sessionId);
+
+        console.log(`[MeterValues] Updated session ${sessionId}: ${consumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
+      }
+    }
+  } catch (dbError) {
+    console.error('[MeterValues] DB exception:', dbError);
+  }
 }
 
 // Funções auxiliares
