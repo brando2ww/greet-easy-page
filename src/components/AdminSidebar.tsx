@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, Zap, BarChart3, UserCircle, LogOut } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -16,7 +16,6 @@ import speedLogo from "@/assets/speed_logo_04-2.png";
 
 const navItems = [
   { icon: LayoutDashboard, label: 'admin.dashboard', path: '/admin/dashboard' },
-  { icon: Users, label: 'admin.clients', path: '/admin/clientes' },
   { icon: Zap, label: 'admin.chargers', path: '/admin/carregadores' },
   { icon: BarChart3, label: 'admin.reports', path: '/admin/relatorios' },
   { icon: UserCircle, label: 'profile.title', path: '/perfil' },

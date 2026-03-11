@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Zap, BarChart3, UserCircle } from "lucide-react";
+import { LayoutDashboard, Zap, BarChart3, UserCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,6 @@ export const AdminHeader = () => {
 
   const navItems = [
     { icon: LayoutDashboard, label: t('admin.dashboard'), path: '/admin/dashboard' },
-    { icon: Users, label: t('admin.clients'), path: '/admin/clientes' },
     { icon: Zap, label: t('admin.chargers'), path: '/admin/carregadores', special: true },
     { icon: BarChart3, label: t('admin.reports'), path: '/admin/relatorios' },
     { icon: UserCircle, label: t('profile.title'), path: '/perfil' },

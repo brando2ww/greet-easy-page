@@ -26,7 +26,7 @@ import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/admin/Dashboard";
-import Clientes from "./pages/admin/Clientes";
+
 import Carregadores from "./pages/admin/Carregadores";
 import Relatorios from "./pages/admin/Relatorios";
 
@@ -52,7 +52,7 @@ const App = () => (
               <Route path="/perfil/informacoes-cobranca" element={<ProtectedRoute><InformacoesCobranca /></ProtectedRoute>} />
               <Route path="/perfil/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
               <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
-              <Route path="/admin/clientes" element={<AdminRoute><Clientes /></AdminRoute>} />
+              
               <Route path="/admin/carregadores" element={<AdminRoute><Carregadores /></AdminRoute>} />
               <Route path="/admin/relatorios" element={<AdminRoute><Relatorios /></AdminRoute>} />
               <Route path="/auth" element={<AuthWelcome />} />
