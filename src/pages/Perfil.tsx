@@ -58,17 +58,36 @@ export default function Perfil() {
   const handleSaveProfile = async () => {
     try {
       setIsSaving(true);
+      let finalAvatarUrl = avatarUrl;
+
+      // Upload avatar to Storage if a new file was selected
+      if (avatarFile && user) {
+        const filePath = `${user.id}/avatar.${avatarFile.name.split('.').pop()}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        finalAvatarUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase.auth.updateUser({
         data: { 
           full_name: fullName,
-          avatar_url: avatarUrl
+          avatar_url: finalAvatarUrl
         }
       });
 
       if (error) throw error;
 
-      // Forçar refresh do user no contexto
       await supabase.auth.getUser();
+      setAvatarFile(null);
       
       toast.success(t('profile.profileUpdatedSuccess'));
       setIsEditSheetOpen(false);
