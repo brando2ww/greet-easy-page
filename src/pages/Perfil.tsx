@@ -40,6 +40,7 @@ export default function Perfil() {
   const [isSaving, setIsSaving] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   // Sincronizar estado local com user metadata
   useEffect(() => {
