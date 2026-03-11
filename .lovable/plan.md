@@ -1,29 +1,16 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Remover opção e telas de Clientes
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+### Alterações
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+1. **`src/components/AdminNavigation.tsx`** — Remover item `{ icon: Users, label: t('admin.clients'), path: '/admin/clientes' }` do array `navItems`. Remover import `Users`.
 
-### Mudanca Tecnica
+2. **`src/components/AdminSidebar.tsx`** — Remover item `{ icon: Users, label: 'admin.clients', path: '/admin/clientes' }` do array `navItems`. Remover `Users` do import.
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
+3. **`src/components/AdminHeader.tsx`** — Remover item de clientes do array `navItems`. Remover `Users` do import.
 
-Adicionar um objeto de mapeamento antes do return:
+4. **`src/App.tsx`** — Remover rota `/admin/clientes` e import de `Clientes`.
 
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
-```
-
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+5. **`src/pages/admin/Clientes.tsx`** — Deletar arquivo (não será mais usado).
 
