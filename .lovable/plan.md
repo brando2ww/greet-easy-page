@@ -1,34 +1,29 @@
 
 
-## Substituir Logo na Página de Boas-vindas
+## Traduzir Status do Carregador no Drawer do Mapa
 
-### Contexto
-O usuário enviou uma nova imagem de logo e selecionou o elemento de imagem atual na tela AuthWelcome. O logo atual (`speed_logo_04-2.png`) está dentro de um container branco com bordas arredondadas.
+### Problema
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-### Mudanças Propostas
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-1. **Copiar nova imagem**: `user-uploads://Design_sem_nome_8.png` → `src/assets/logo-speed.png`
+### Mudanca Tecnica
 
-2. **Atualizar AuthWelcome.tsx**:
-   - Trocar import de `speedLogo` para o novo logo
-   - Remover o fundo branco do container do logo (já que o novo logo tem fundo transparente e cores próprias)
-   - Aumentar levemente o tamanho (16x16 ao invés de 12x12)
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
 
-**Antes:**
-```tsx
-import speedLogo from "@/assets/speed_logo_04-2.png";
-// ...
-<div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center p-1">
-  <img src={speedLogo} alt="Speed Logo" className="w-full h-full object-contain" />
-</div>
+Adicionar um objeto de mapeamento antes do return:
+
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
 ```
 
-**Depois:**
-```tsx
-import newLogo from "@/assets/logo-speed.png";
-// ...
-<div className="w-16 h-16 flex items-center justify-center">
-  <img src={newLogo} alt="Speed Logo" className="w-full h-full object-contain" />
-</div>
-```
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 
