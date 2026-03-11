@@ -13,6 +13,7 @@ import Estacoes from "./pages/Estacoes";
 import Carregamento from "./pages/Carregamento";
 import Dicas from "./pages/Dicas";
 import Carteira from "./pages/Carteira";
+import CarteiraSucesso from "./pages/CarteiraSucesso";
 import IniciarCarga from "./pages/IniciarCarga";
 import Veiculos from "./pages/Veiculos";
 import Perfil from "./pages/Perfil";
