@@ -35,9 +35,13 @@ const AuthWelcome = () => {
         </div>
 
         {/* Headline */}
-        <div className="space-y-4 mb-16">
-          <img src={speedTextLogo} alt="SpeedCharger" className="h-10 object-contain" />
-          <p className="text-white/90 text-xl leading-relaxed font-light">
+        <div className="relative space-y-4 mb-16">
+          <img 
+            src={speedTextLogo} 
+            alt="SpeedCharger" 
+            className="absolute -left-2 -top-4 h-40 object-contain opacity-20 pointer-events-none z-0" 
+          />
+          <p className="text-white/90 text-xl leading-relaxed font-light relative z-10">
             {t('auth.welcome.subtitle')}
           </p>
         </div>
