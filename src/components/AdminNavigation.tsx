@@ -12,10 +12,6 @@ export const AdminNavigation = () => {
     label: t('admin.dashboard'),
     path: '/admin/dashboard'
   }, {
-    icon: Users,
-    label: t('admin.clients'),
-    path: '/admin/clientes'
-  }, {
     icon: Zap,
     label: t('admin.chargers'),
     path: '/admin/carregadores'
