@@ -231,7 +231,7 @@ wss.on('connection', async (ws, req) => {
             await handleStopTransaction(ws, messageId, payload, chargePointId);
             break;
           case 'MeterValues':
-            await handleMeterValues(ws, messageId, payload);
+            await handleMeterValues(ws, messageId, payload, chargePointId);
             break;
           default:
             console.log(`[OCPP Server] Unknown action: ${action}`);
