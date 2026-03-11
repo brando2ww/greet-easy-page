@@ -188,7 +188,7 @@ const Carteira = () => {
                             key={v}
                             variant="outline"
                             onClick={() => setAmount(v.toString())}
-                            className={amount === v.toString() ? "border-primary bg-primary/10" : ""}
+                            className={amount === v.toString() ? "border-primary bg-primary/10 hover:bg-primary/10" : "hover:bg-muted"}
                           >
                             R$ {v}
                           </Button>
