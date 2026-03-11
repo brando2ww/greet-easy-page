@@ -168,6 +168,27 @@ export const transactionsApi = {
   },
 
   /**
+   * Get admin wallet data (revenue, payment config)
+   */
+  adminWallet: async (): Promise<ApiResponse<any>> => {
+    return invokeFunction('transactions-api', { action: 'adminWallet' });
+  },
+
+  /**
+   * Save payment config (admin)
+   */
+  savePaymentConfig: async (data: { provider: string; account_email: string }): Promise<ApiResponse<any>> => {
+    return invokeFunction('transactions-api', { action: 'savePaymentConfig', ...data });
+  },
+
+  /**
+   * Delete payment config (admin)
+   */
+  deletePaymentConfig: async (provider: string): Promise<ApiResponse<any>> => {
+    return invokeFunction('transactions-api', { action: 'deletePaymentConfig', provider });
+  },
+
+  /**
    * Get weekly energy stats for the current user
    */
   weeklyStats: async (): Promise<ApiResponse<{

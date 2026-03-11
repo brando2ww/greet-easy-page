@@ -18,6 +18,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'admin.dashboard', path: '/admin/dashboard' },
   { icon: Zap, label: 'admin.chargers', path: '/admin/carregadores' },
   { icon: BarChart3, label: 'admin.reports', path: '/admin/relatorios' },
+  { icon: Wallet, label: 'adminWallet.title', path: '/admin/carteira' },
   { icon: UserCircle, label: 'profile.title', path: '/perfil' },
 ];
 

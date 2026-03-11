@@ -56,6 +56,7 @@ const App = () => (
               
               <Route path="/admin/carregadores" element={<AdminRoute><Carregadores /></AdminRoute>} />
               <Route path="/admin/relatorios" element={<AdminRoute><Relatorios /></AdminRoute>} />
+              <Route path="/admin/carteira" element={<AdminRoute><CarteiraAdmin /></AdminRoute>} />
               <Route path="/auth" element={<AuthWelcome />} />
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/signup" element={<SignUp />} />

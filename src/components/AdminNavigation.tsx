@@ -20,6 +20,10 @@ export const AdminNavigation = () => {
     label: t('admin.reports'),
     path: '/admin/relatorios'
   }, {
+    icon: Wallet,
+    label: t('adminWallet.title'),
+    path: '/admin/carteira'
+  }, {
     icon: UserCircle,
     label: t('profile.title'),
     path: '/perfil'
