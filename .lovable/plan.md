@@ -1,26 +1,29 @@
 
 
-## Admin Dashboard = Tela de Estações (com mapa)
+## Traduzir Status do Carregador no Drawer do Mapa
 
 ### Problema
-O admin vê um dashboard com gráficos em `/admin/dashboard`, mas o desejado é que veja a mesma tela do usuário comum (logo, busca, filtros, mapa com carregadores), mantendo apenas o bottom menu de admin.
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-### Solução
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-A tela `Estacoes` já usa `ResponsiveLayout` com `showBottomNav`, e o `ResponsiveLayout` já detecta admin para mostrar `AdminNavigation`. Portanto, basta reutilizar `Estacoes` como dashboard admin.
+### Mudanca Tecnica
 
-### Alterações
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
 
-1. **`src/pages/admin/Dashboard.tsx`** — Substituir todo o conteúdo do componente por um re-export de `Estacoes`:
-   ```tsx
-   import Estacoes from "@/pages/Estacoes";
-   const Dashboard = () => <Estacoes />;
-   export default Dashboard;
-   ```
+Adicionar um objeto de mapeamento antes do return:
 
-2. **`src/components/RoleBasedRedirect.tsx`** — Manter o redirect para `/admin/dashboard` (sem mudança, pois o admin dashboard agora mostrará o mapa).
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
+```
 
-3. **`src/components/AdminNavigation.tsx`** — Atualizar o path do primeiro item (Dashboard) para apontar para `/admin/dashboard` e garantir que o ícone ativo funcione corretamente (já está correto).
-
-Resultado: Admin logado vê logo Nexcharge, barra de busca, filtros, mapa com carregadores + bottom nav de admin. As outras páginas admin (clientes, carregadores, relatórios) continuam iguais.
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 
