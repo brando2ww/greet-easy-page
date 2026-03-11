@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import evChargingBg from "@/assets/ev-charging-bg.png";
 import newLogo from "@/assets/logo-speed.png";
 import { useTranslation } from "react-i18next";
+import speedTextLogo from "@/assets/speed-text-logo.png";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 const AuthWelcome = () => {
@@ -35,9 +36,7 @@ const AuthWelcome = () => {
 
         {/* Headline */}
         <div className="space-y-4 mb-16">
-          <h1 className="text-white text-4xl font-bold leading-tight tracking-tight">
-            {t('auth.welcome.title')}
-          </h1>
+          <img src={speedTextLogo} alt="SpeedCharger" className="h-10 object-contain" />
           <p className="text-white/90 text-xl leading-relaxed font-light">
             {t('auth.welcome.subtitle')}
           </p>
