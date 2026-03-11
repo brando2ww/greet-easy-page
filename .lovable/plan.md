@@ -1,29 +1,26 @@
 
 
-## Traduzir Status do Carregador no Drawer do Mapa
+## Restaurar Fundo Branco no Logo (Estilo App Icon)
 
-### Problema
-Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
+### Mudança
 
-### Solucao
-Criar um mapeamento de status para portugues e usar no lugar do valor cru.
+**Arquivo: `src/pages/AuthWelcome.tsx` — Linha 31-33**
 
-### Mudanca Tecnica
+Restaurar o container branco com bordas arredondadas ao redor do logo:
 
-**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
-
-Adicionar um objeto de mapeamento antes do return:
-
-```typescript
-const statusLabels: Record<string, string> = {
-  available: 'Disponível',
-  in_use: 'Em Uso',
-  maintenance: 'Manutenção',
-  offline: 'Offline',
-};
+**Antes:**
+```tsx
+<div className="w-16 h-16 flex items-center justify-center">
+  <img src={newLogo} alt="Speed Logo" className="w-full h-full object-contain" />
+</div>
 ```
 
-Substituir a linha 175:
-- **Antes:** `{charger.status.replace('_', ' ')}`
-- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
+**Depois:**
+```tsx
+<div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-2 shadow-lg">
+  <img src={newLogo} alt="Speed Logo" className="w-full h-full object-contain" />
+</div>
+```
+
+Adiciona `bg-white`, `rounded-2xl`, `p-2` e `shadow-lg` para o efeito de ícone de app.
 
