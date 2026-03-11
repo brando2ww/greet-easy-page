@@ -391,13 +391,18 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     return;
   }
 
+  // Resolve real user_id from idTag
+  const resolvedUserId = await resolveUserId(payload.idTag);
+  const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
+  console.log(`[StartTransaction] Resolved user_id: ${userId} (from idTag: ${payload.idTag})`);
+
   const transactionId = transactionIdCounter++;
 
   const { error } = await supabase
     .from('charging_sessions')
     .insert({
       charger_id: charger.id,
-      user_id: '00000000-0000-0000-0000-000000000000',
+      user_id: userId,
       transaction_id: transactionId,
       meter_start: payload.meterStart,
       id_tag: payload.idTag,
@@ -420,7 +425,7 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     },
   });
 
-  console.log(`[StartTransaction] Created transaction ${transactionId} for ${chargePointId}`);
+  console.log(`[StartTransaction] Created transaction ${transactionId} for ${chargePointId} (user: ${userId})`);
 }
 
 async function handleStopTransaction(ws, messageId, payload, chargePointId) {
