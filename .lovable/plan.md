@@ -1,32 +1,29 @@
 
 
-## Implementar Recuperação de Senha
+## Traduzir Status do Carregador no Drawer do Mapa
 
-### O que será feito
+### Problema
+Na linha 175, o status do carregador e exibido diretamente em ingles (`available`, `in_use`, `maintenance`, `offline`) usando `charger.status.replace('_', ' ')`.
 
-1. **Página "Esqueceu a senha"** (`/auth/forgot-password`) — formulário com campo de email que chama `supabase.auth.resetPasswordForEmail()` com redirect para `/auth/reset-password`
+### Solucao
+Criar um mapeamento de status para portugues e usar no lugar do valor cru.
 
-2. **Página "Redefinir senha"** (`/auth/reset-password`) — formulário com nova senha + confirmação, detecta `type=recovery` na URL e chama `supabase.auth.updateUser({ password })`
+### Mudanca Tecnica
 
-3. **Atualizar link "Esqueceu a senha?"** no Login — apontar para `/auth/forgot-password` em vez de `href="#"`
+**Arquivo: `src/components/map/ChargerDetailsDrawer.tsx`**
 
-4. **Rotas no App.tsx** — adicionar as duas rotas públicas
+Adicionar um objeto de mapeamento antes do return:
 
-5. **Traduções** — adicionar chaves nos 4 arquivos de locale (pt, en, es, zh)
+```typescript
+const statusLabels: Record<string, string> = {
+  available: 'Disponível',
+  in_use: 'Em Uso',
+  maintenance: 'Manutenção',
+  offline: 'Offline',
+};
+```
 
-### Detalhes técnicos
-
-- Ambas as páginas seguem o mesmo visual do Login (fundo escuro com imagem, logo, campos com ícones)
-- A página de reset precisa verificar o hash da URL para `type=recovery` no `onAuthStateChange`
-- `redirectTo` será `${window.location.origin}/auth/reset-password`
-
-### Arquivos
-
-| Ação | Arquivo |
-|------|---------|
-| Criar | `src/pages/ForgotPassword.tsx` |
-| Criar | `src/pages/ResetPassword.tsx` |
-| Editar | `src/pages/Login.tsx` (link esqueceu senha) |
-| Editar | `src/App.tsx` (2 rotas) |
-| Editar | `src/locales/pt.json`, `en.json`, `es.json`, `zh.json` |
+Substituir a linha 175:
+- **Antes:** `{charger.status.replace('_', ' ')}`
+- **Depois:** `{statusLabels[charger.status] || charger.status.replace('_', ' ')}`
 

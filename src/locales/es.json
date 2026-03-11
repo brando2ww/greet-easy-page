@@ -17,6 +17,23 @@
       "noAccount": "¿No tienes una cuenta?",
       "signupLink": "Registrarse"
     },
+    "forgotPassword": {
+      "title": "Recuperar Contraseña",
+      "subtitle": "Ingresa tu correo para recibir el enlace de restablecimiento",
+      "submit": "Enviar Enlace",
+      "sentTitle": "¡Correo Enviado!",
+      "sentDescription": "Revisa tu bandeja de entrada y haz clic en el enlace para restablecer tu contraseña.",
+      "backToLogin": "Volver al Inicio de Sesión"
+    },
+    "resetPassword": {
+      "title": "Restablecer Contraseña",
+      "subtitle": "Elige una nueva contraseña para tu cuenta",
+      "newPassword": "Nueva Contraseña",
+      "confirmPassword": "Confirmar Nueva Contraseña",
+      "submit": "Restablecer Contraseña",
+      "successTitle": "¡Contraseña Restablecida!",
+      "successDescription": "Tu contraseña ha sido cambiada exitosamente. Ya puedes iniciar sesión."
+    },
     "signup": {
       "title": "Crear Cuenta",
       "subtitle": "Comienza tu viaje con vehículos eléctricos",

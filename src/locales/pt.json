@@ -17,6 +17,23 @@
       "noAccount": "Não tem uma conta?",
       "signupLink": "Criar conta"
     },
+    "forgotPassword": {
+      "title": "Recuperar Senha",
+      "subtitle": "Informe seu e-mail para receber o link de redefinição",
+      "submit": "Enviar Link",
+      "sentTitle": "E-mail Enviado!",
+      "sentDescription": "Verifique sua caixa de entrada e clique no link para redefinir sua senha.",
+      "backToLogin": "Voltar ao Login"
+    },
+    "resetPassword": {
+      "title": "Redefinir Senha",
+      "subtitle": "Escolha uma nova senha para sua conta",
+      "newPassword": "Nova Senha",
+      "confirmPassword": "Confirmar Nova Senha",
+      "submit": "Redefinir Senha",
+      "successTitle": "Senha Redefinida!",
+      "successDescription": "Sua senha foi alterada com sucesso. Você já pode fazer login."
+    },
     "signup": {
       "title": "Criar Conta",
       "subtitle": "Comece sua jornada com veículos elétricos",

@@ -23,6 +23,8 @@ import AuthWelcome from "./pages/AuthWelcome";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/admin/Dashboard";
 import Clientes from "./pages/admin/Clientes";
 import Carregadores from "./pages/admin/Carregadores";
@@ -56,6 +58,8 @@ const App = () => (
               <Route path="/auth" element={<AuthWelcome />} />
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/signup" element={<SignUp />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>

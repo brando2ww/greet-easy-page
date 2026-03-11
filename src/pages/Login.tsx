@@ -140,9 +140,9 @@ const Login = () => {
 
           {/* Forgot password link */}
           <div className="text-right">
-            <a href="#" className="text-sm text-white/50 hover:text-white/80 transition-colors duration-200">
+            <Link to="/auth/forgot-password" className="text-sm text-white/50 hover:text-white/80 transition-colors duration-200">
               {t('auth.login.forgotPassword')}
-            </a>
+            </Link>
           </div>
 
           {/* Submit button */}
