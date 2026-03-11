@@ -20,7 +20,7 @@ export const Header = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <Zap className="w-8 h-8 text-primary" />
-          <span className="text-xl font-bold text-foreground">SpeedCharger</span>
+          <span className="text-xl font-bold text-foreground"><span className="text-xl font-bold text-foreground">Nexcharge</span></span>
         </Link>
         
         <nav className="flex items-center gap-1">
