@@ -308,5 +308,21 @@
     "noClientSelected": "Nenhum cliente selecionado",
     "chargersInstalled": "Carregadores Instalados",
     "selectState": "Selecione um estado"
+  },
+  "adminWallet": {
+    "title": "Carteira",
+    "subtitle": "Gerencie seus recebimentos e métodos de pagamento",
+    "totalRevenue": "Receita Total",
+    "monthRevenue": "Receita do Mês",
+    "billedSessions": "Sessões Faturadas",
+    "paymentMethods": "Métodos de Recebimento",
+    "linked": "Vinculado",
+    "notLinked": "Não vinculado",
+    "link": "Vincular",
+    "emailPlaceholder": "Email da conta",
+    "configSaved": "Configuração salva com sucesso",
+    "configRemoved": "Configuração removida",
+    "billingHistory": "Histórico de Faturamento",
+    "noSessions": "Nenhuma sessão faturada encontrada"
   }
 }

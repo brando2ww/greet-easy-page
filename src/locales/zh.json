@@ -304,5 +304,21 @@
     "noClientSelected": "未选择客户",
     "chargersInstalled": "已安装充电器",
     "selectState": "选择州/省"
+  },
+  "adminWallet": {
+    "title": "钱包",
+    "subtitle": "管理您的收入和支付方式",
+    "totalRevenue": "总收入",
+    "monthRevenue": "本月收入",
+    "billedSessions": "已计费会话",
+    "paymentMethods": "支付方式",
+    "linked": "已关联",
+    "notLinked": "未关联",
+    "link": "关联",
+    "emailPlaceholder": "账户邮箱",
+    "configSaved": "配置保存成功",
+    "configRemoved": "配置已删除",
+    "billingHistory": "计费历史",
+    "noSessions": "未找到已计费会话"
   }
 }
