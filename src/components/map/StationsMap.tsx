@@ -115,9 +115,9 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
     // Add user location marker
     const el = document.createElement('div');
     el.innerHTML = `
-      <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
-        <div style="position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.2);animation:pulse-ring 1.5s ease-out infinite;"></div>
-        <div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>
+      <div style="position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;width:52px;height:52px;border-radius:50%;background:rgba(59,130,246,0.2);animation:pulse-ring 1.5s ease-out infinite;"></div>
+        <div style="width:22px;height:22px;border-radius:50%;background:#3b82f6;border:4px solid white;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>
       </div>
     `;
 
