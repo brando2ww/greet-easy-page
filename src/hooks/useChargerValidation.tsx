@@ -55,6 +55,20 @@ export const useChargerValidation = () => {
         return;
       }
 
+      // Check heartbeat freshness (must be within last 2 minutes)
+      const lastHeartbeat = charger.lastHeartbeat ? new Date(charger.lastHeartbeat) : null;
+      const isConnected = lastHeartbeat ? (Date.now() - lastHeartbeat.getTime()) < 120000 : false;
+
+      if (!isConnected) {
+        toast({
+          title: "Carregador offline",
+          description: "O carregador não está respondendo. Verifique a conexão e tente novamente.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Start charging session via API
       const startResult = await commandsApi.startCharge(charger.id);
 
