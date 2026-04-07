@@ -11,8 +11,6 @@ import { format } from "date-fns";
 const actionCards = [
   { key: "stations", icon: MapPin, path: "/estacoes", color: "bg-blue-500/10 text-blue-500" },
   { key: "startCharging", icon: Zap, path: "/iniciar-carga", color: "bg-green-500/10 text-green-500" },
-  { key: "wallet", icon: Wallet, path: "/carteira", color: "bg-amber-500/10 text-amber-500" },
-  { key: "vehicles", icon: Car, path: "/veiculos", color: "bg-purple-500/10 text-purple-500" },
 ];
 
 export default function Home() {
