@@ -1,41 +1,46 @@
 
 
-## Corrigir erro: constraint do banco não aceita `awaiting_plug`
+## Corrigir erro: carregador aparece "Available" mas está desconectado
 
 ### Problema
 
-O erro nos logs é claro:
-```
-new row for relation "charging_sessions" violates check constraint "charging_sessions_status_check"
-```
-
-A constraint atual permite apenas: `in_progress`, `completed`, `cancelled`. O status `awaiting_plug` não existe no banco.
-
-Além disso, a coluna `started_at` é `NOT NULL` com default `now()`, então inserir com `started_at: null` também falha.
+O carregador `ZETA UNO VILLAGIO` tem `ocpp_protocol_status: Available` mas o `last_heartbeat` é de mais de 35 minutos atrás. O carregador não está de fato conectado via WebSocket. A Edge Function verifica apenas o `ocpp_protocol_status` na ação `start`, mas não verifica se o heartbeat é recente. Resultado: a sessão é criada, o `RemoteStartTransaction` falha porque o carregador não está online, a sessão é apagada, e o usuário vê "erro de função".
 
 ### Solução
 
-Criar uma migration que:
-1. Atualiza o check constraint para incluir `awaiting_plug`
-2. Torna `started_at` nullable
+Duas correções complementares:
+
+**1. Edge Function (`charger-commands/index.ts`) -- verificar heartbeat na ação `start`**
+
+Antes de aceitar o carregador como "disponível", verificar se o heartbeat foi recebido nos últimos 2 minutos (mesma lógica já usada na ação `status`):
+
+```js
+// Após a validação do ocpp_protocol_status (linha ~117)
+const lastHeartbeat = charger.last_heartbeat ? new Date(charger.last_heartbeat) : null;
+const isConnected = lastHeartbeat ? (Date.now() - lastHeartbeat.getTime()) < 120000 : false;
+
+if (!isConnected) {
+  return new Response(JSON.stringify({ 
+    error: 'Charger offline',
+    message: 'O carregador não está respondendo. Verifique a conexão e tente novamente.'
+  }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
+```
+
+**2. Hook `useChargerValidation.tsx` -- mensagens amigáveis para erros de conexão**
+
+Adicionar tratamento para "Charger offline", "Remote start failed" e "not connected":
+
+```js
+if (errorMessage.includes('não está respondendo') || errorMessage.includes('offline') || errorMessage.includes('not connected')) {
+  toast({ title: "Carregador offline", description: "O carregador não está respondendo. Tente novamente." });
+}
+```
 
 ### Mudanças
 
 | Arquivo | O que muda |
 |---------|-----------|
-| `supabase/migrations/XXXX_add_awaiting_plug_status.sql` | Nova migration: drop + recreate check constraint com `awaiting_plug`; alter `started_at` para nullable |
-
-### SQL da migration
-
-```sql
--- Add awaiting_plug to allowed statuses
-ALTER TABLE charging_sessions DROP CONSTRAINT charging_sessions_status_check;
-ALTER TABLE charging_sessions ADD CONSTRAINT charging_sessions_status_check
-  CHECK (status = ANY (ARRAY['in_progress', 'completed', 'cancelled', 'awaiting_plug']));
-
--- Allow started_at to be null (for awaiting_plug sessions)
-ALTER TABLE charging_sessions ALTER COLUMN started_at DROP NOT NULL;
-```
-
-Nenhuma mudança no código da Edge Function ou frontend -- o problema é exclusivamente no esquema do banco de dados.
+| `supabase/functions/charger-commands/index.ts` | Adicionar verificação de heartbeat recente na ação `start`, antes de criar sessão |
+| `src/hooks/useChargerValidation.tsx` | Melhorar mensagens de erro para cenários de carregador offline/desconectado |
 
