@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useTranslation } from 'react-i18next';
-import { Navigation } from 'lucide-react';
+import { LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ChargerDetailsModal } from './ChargerDetailsDrawer';
