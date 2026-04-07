@@ -83,7 +83,7 @@ export default function Carregamento() {
   const chargerName = chargerFromState?.name ?? session?.charger?.name ?? "Carregador";
   const pricePerKwh = chargerFromState?.pricePerKwh ?? 0;
   const isCompleted = session?.status === "completed" || session?.status === "cancelled";
-  const isAwaitingPlug = session?.status === "awaiting_plug";
+  const isAwaitingPlug = (session?.status as string) === "awaiting_plug";
   const estimatedCost = isAwaitingPlug ? 0 : (cost > 0 ? cost : energyConsumed * pricePerKwh);
 
   const chargerId = chargerFromState?.id ?? session?.chargerId;
