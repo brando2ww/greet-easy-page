@@ -33,8 +33,8 @@ export default function Home() {
             const Icon = card.icon;
             return (
               <Link key={card.key} to={card.path}>
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50">
-                  <div className="flex flex-col gap-3">
+                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[140px]">
+                  <div className="flex flex-col gap-3 h-full justify-between">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${card.color}`}>
                       <Icon className="w-5 h-5" />
                     </div>
