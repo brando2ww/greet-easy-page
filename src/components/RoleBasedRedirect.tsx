@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Estacoes from '@/pages/Estacoes';
+import Home from '@/pages/Home';
 
 export const RoleBasedRedirect = () => {
   const { userRole, loading } = useAuth();
@@ -18,6 +18,6 @@ export const RoleBasedRedirect = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  // Usuários regulares veem a página de Estações
-  return <Estacoes />;
+  // Usuários regulares veem a Home
+  return <Home />;
 };

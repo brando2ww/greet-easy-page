@@ -50,6 +50,7 @@
     }
   },
   "navigation": {
+    "home": "Início",
     "stations": "Estações",
     "tips": "Dicas",
     "wallet": "Carteira",
@@ -57,6 +58,17 @@
     "chargingShort": "Iniciar",
     "vehicles": "Veículos",
     "profile": "Perfil"
+  },
+  "home": {
+    "greeting": "Olá, {{name}} 👋",
+    "subtitle": "O que deseja fazer hoje?",
+    "stations": "Estações",
+    "startCharging": "Iniciar Carga",
+    "wallet": "Carteira",
+    "vehicles": "Veículos",
+    "recent": "Recentes",
+    "chargingSession": "Sessão de carregamento",
+    "inProgress": "Em andamento"
   },
   "stations": {
     "title": "Estações",

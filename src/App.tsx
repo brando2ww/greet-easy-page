@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { RoleBasedRedirect } from "./components/RoleBasedRedirect";
 import Estacoes from "./pages/Estacoes";
+import Home from "./pages/Home";
 import Carregamento from "./pages/Carregamento";
 import Dicas from "./pages/Dicas";
 import Carteira from "./pages/Carteira";
@@ -43,6 +44,7 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
+              <Route path="/estacoes" element={<ProtectedRoute><Estacoes /></ProtectedRoute>} />
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
               <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
               <Route path="/carteira/sucesso" element={<ProtectedRoute><CarteiraSucesso /></ProtectedRoute>} />
