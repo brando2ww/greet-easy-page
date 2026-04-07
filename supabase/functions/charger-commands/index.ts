@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
             .from('charging_sessions')
             .select('id')
             .eq('charger_id', chargerId)
-            .eq('status', 'in_progress')
+            .in('status', ['in_progress', 'awaiting_plug'])
             .limit(1);
 
           if (!activeSessions || activeSessions.length === 0) {

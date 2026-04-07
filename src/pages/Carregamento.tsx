@@ -103,6 +103,8 @@ export default function Carregamento() {
   const ocppStatus = chargerStatusRes?.ocppStatus;
   const statusInfo = isCompleted
     ? { label: "Finalizado", color: "bg-muted-foreground", pulse: false }
+    : isAwaitingPlug
+    ? { label: "Aguardando conexão do plugue", color: "bg-yellow-500", pulse: true }
     : getOcppStatusInfo(ocppStatus);
 
   // Timer only runs while actively charging (not while waiting for plug)
