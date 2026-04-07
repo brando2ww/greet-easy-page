@@ -24,7 +24,7 @@ export default function Home() {
   const recentSessions = sessions?.slice(0, 3) || [];
 
   return (
-    <ResponsiveLayout showBottomNav>
+    <ResponsiveLayout>
       <div className="px-4 pt-24 space-y-6 pb-32">
         {/* Logo */}
         <img src={speedLogo} alt="Nexcharge" className="h-10" />
