@@ -1,25 +1,39 @@
 
 
-## Pausar timer de duração enquanto aguarda plugue
+## Suspender carregamento: emergência, saldo e internet
 
-### Problema
-O contador de duração inicia imediatamente ao entrar na tela, mesmo quando o status OCPP é "Available" ou "Preparing" (aguardando plugue). O timer só deveria começar quando o plugue for conectado (status "Charging").
+### Esclarecimento sobre o botão de emergência
 
-### Solução
+O botão de emergência é **físico no carregador** -- quando pressionado, o carregador envia um `StatusNotification` com status `Faulted` (e possivelmente `errorCode: EmergencyStop`). O servidor OCPP precisa reagir a isso encerrando a sessão automaticamente.
 
-**Arquivo**: `src/pages/Carregamento.tsx`
+### Mudanças
 
-1. **Condicionar o timer ao status OCPP**: Modificar o `useEffect` do timer (linhas 68-75) para só contar quando `ocppStatus === "Charging"` (ou outros status ativos como `SuspendedEV`, `SuspendedEVSE`).
+| Arquivo | O que muda |
+|---------|-----------|
+| `ocpp-standalone-server/server.js` | No handler `handleStatusNotification`, detectar status `Faulted` e encerrar sessão ativa automaticamente (enviar `RemoteStopTransaction` e marcar sessão como `completed` com `stop_reason: EmergencyStop`) |
+| `src/pages/Carregamento.tsx` | Adicionar detecção de falta de internet (`navigator.onLine` + eventos `offline`/`online`) com parada automática após 15s offline; adicionar verificação de saldo insuficiente a cada poll |
+| `src/hooks/useWalletBalance.tsx` | Adicionar `refetchInterval: 10000` para manter saldo atualizado durante carregamento |
 
-2. **Lógica**:
-   - Criar uma flag `isActivelyCharging` baseada no `ocppStatus` — `true` para `Charging`, `SuspendedEV`, `SuspendedEVSE`, `Finishing`
-   - Quando `isActivelyCharging` é `false`, o timer fica parado em `00:00:00`
-   - Quando muda para `true`, registrar o momento de início real da contagem
-   - Usar um `useRef` para acumular o tempo já decorrido quando houver pausas/retomadas
+### Detalhes
 
-3. **Exibição**: Enquanto aguarda plugue, mostrar `00:00:00` fixo na duração.
+**1. Emergência (servidor OCPP)**
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Carregamento.tsx` | Adicionar `useRef` para tempo acumulado; condicionar timer ao `ocppStatus` ativo; parar contagem em status de espera |
+No `handleStatusNotification` (linha 323), quando `payload.status === 'Faulted'`:
+- Buscar sessão ativa (`status: 'in_progress'`) para esse carregador
+- Se existir, atualizar para `completed` com `stop_reason: 'EmergencyStop'`
+- Logar o evento com o `errorCode` recebido
+
+**2. Saldo insuficiente (frontend)**
+
+- Importar `useWalletBalance` no `Carregamento.tsx`
+- Adicionar `useEffect` que verifica: se `balance - estimatedCost < 1.00` e `isActivelyCharging`, chamar `handleStop()` e exibir toast "Saldo insuficiente"
+- `useWalletBalance` passa a fazer refetch a cada 10s
+
+**3. Falta de internet (frontend)**
+
+- Adicionar `useEffect` com listeners `window.addEventListener('offline'/'online')`
+- Ao ficar offline, iniciar timer de 15s
+- Se não reconectar em 15s e `isActivelyCharging`, chamar `handleStop()`
+- Exibir banner "Sem conexão" no topo quando offline
+- Ao reconectar, cancelar timer
 
