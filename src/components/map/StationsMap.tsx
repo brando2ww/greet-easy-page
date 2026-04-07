@@ -113,7 +113,22 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
     }
 
     // Add user location marker
-    userMarkerRef.current = new mapboxgl.Marker({ color: '#3b82f6' })
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.2);animation:pulse-ring 1.5s ease-out infinite;"></div>
+        <div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>
+      </div>
+    `;
+
+    if (!document.getElementById('pulse-ring-style')) {
+      const style = document.createElement('style');
+      style.id = 'pulse-ring-style';
+      style.textContent = `@keyframes pulse-ring { 0% { transform:scale(0.5);opacity:1; } 100% { transform:scale(1.2);opacity:0; } }`;
+      document.head.appendChild(style);
+    }
+
+    userMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
       .setLngLat(userLocation)
       .setPopup(
         new mapboxgl.Popup().setHTML(`
