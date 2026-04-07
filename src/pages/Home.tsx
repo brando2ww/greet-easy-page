@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useChargingHistory } from "@/hooks/useChargingHistory";
 import { Card } from "@/components/ui/card";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
+import evChargerBg from "@/assets/ev-charger-bg.png";
 import { format } from "date-fns";
 
 const actionCards = [
