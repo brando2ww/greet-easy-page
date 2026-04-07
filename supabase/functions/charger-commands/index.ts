@@ -134,15 +134,14 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Create charging session
+        // Create charging session in awaiting_plug state (timer/billing starts only when plug connects)
         const { data: session, error: sessionError } = await supabaseAdmin
           .from('charging_sessions')
           .insert({
             charger_id: chargerId,
             user_id: userId,
             id_tag: idTag || userId,
-            status: 'in_progress',
-            started_at: new Date().toISOString(),
+            status: 'awaiting_plug',
           })
           .select()
           .single();

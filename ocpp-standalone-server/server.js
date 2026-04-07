@@ -350,6 +350,35 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
 
+  // Activate awaiting_plug sessions when charger starts charging
+  if (payload.status === 'Charging') {
+    try {
+      const { data: charger } = await supabase
+        .from('chargers')
+        .select('id')
+        .eq('ocpp_charge_point_id', chargePointId)
+        .maybeSingle();
+
+      if (charger) {
+        const { data: activated, error: activateErr } = await supabase
+          .from('charging_sessions')
+          .update({ status: 'in_progress', started_at: new Date().toISOString() })
+          .eq('charger_id', charger.id)
+          .eq('status', 'awaiting_plug')
+          .is('started_at', null)
+          .select('id');
+
+        if (activateErr) {
+          console.error('[StatusNotification] Error activating awaiting_plug session:', activateErr);
+        } else if (activated && activated.length > 0) {
+          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on Charging status`);
+        }
+      }
+    } catch (err) {
+      console.error('[StatusNotification] Error in awaiting_plug activation:', err);
+    }
+  }
+
   // Emergency stop: if status is Faulted, auto-close any active session
   if (payload.status === 'Faulted') {
     console.log(`[EmergencyStop] Detected Faulted status for ${chargePointId}, errorCode: ${payload.errorCode}`);
