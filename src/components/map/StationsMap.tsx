@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useTranslation } from 'react-i18next';
-import { Navigation } from 'lucide-react';
+import { LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ChargerDetailsModal } from './ChargerDetailsDrawer';
@@ -212,7 +212,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
           className="absolute bottom-24 right-4 bg-white hover:bg-gray-100 text-gray-900 shadow-lg z-10"
           title={t('stations.centerOnMyLocation')}
         >
-          <Navigation className="h-5 w-5" />
+          <LocateFixed className="h-5 w-5" />
         </Button>
       )}
 
