@@ -40,7 +40,7 @@ export default function Home() {
                       className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
                     />
                   )}
-                  <div className="flex flex-col h-full justify-between relative z-10">
+                  <div className="flex flex-col h-full justify-end gap-2 relative z-10">
                     <span className="font-semibold text-base text-foreground">
                       {t(`home.${card.key}`)}
                     </span>
