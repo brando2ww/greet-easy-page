@@ -1,11 +1,15 @@
 
 
-## Remover seção de saudação da Home
+## Adicionar espaço grande no topo da Home
 
 ### Mudança
 
-**`src/pages/Home.tsx`** (linhas 33-40):
-- Remover o `<div>` que contém o `<h1>` de saudação e o `<p>` de subtítulo.
+**`src/pages/Home.tsx`** (linha 28):
+- Alterar `py-4` para `pt-24 pb-32` no container principal, adicionando ~6rem (96px) de padding no topo antes do logo.
 
-O logo permanece, seguido diretamente pelos cards de ação.
+```
+<div className="px-4 pt-24 space-y-6 pb-32">
+```
+
+Um valor alterado, um arquivo.
 
