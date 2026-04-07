@@ -63,16 +63,31 @@ export default function Carregamento() {
     enabled: !!sessionId,
   });
 
-  // Live elapsed timer
-  const startedAt = session?.startedAt;
+  // Timer only runs while actively charging
+  const activeStatuses = ["Charging", "SuspendedEV", "SuspendedEVSE", "Finishing"];
+  const isActivelyCharging = activeStatuses.includes(ocppStatus ?? "");
+  const accumulatedRef = useRef(0);
+  const chargingStartRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!startedAt) return;
-    const start = new Date(startedAt).getTime();
-    const tick = () => setElapsed(Math.floor((Date.now() - start) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [startedAt]);
+    if (isActivelyCharging) {
+      if (!chargingStartRef.current) {
+        chargingStartRef.current = Date.now();
+      }
+      const tick = () => {
+        const sinceStart = Math.floor((Date.now() - chargingStartRef.current!) / 1000);
+        setElapsed(accumulatedRef.current + sinceStart);
+      };
+      tick();
+      const id = setInterval(tick, 1000);
+      return () => clearInterval(id);
+    } else {
+      if (chargingStartRef.current) {
+        accumulatedRef.current += Math.floor((Date.now() - chargingStartRef.current) / 1000);
+        chargingStartRef.current = null;
+      }
+    }
+  }, [isActivelyCharging]);
 
   const formatElapsed = (s: number) => {
     const h = Math.floor(s / 3600);
