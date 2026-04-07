@@ -9,10 +9,10 @@ export const BottomNavigation = () => {
   const { t } = useTranslation();
 
   const navItems = [
-    { icon: MapPin, label: t('navigation.stations'), path: "/" },
-    { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
+    { icon: House, label: t('navigation.home'), path: "/" },
+    { icon: MapPin, label: t('navigation.stations'), path: "/estacoes" },
     { icon: null, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
-    { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },
+    { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
     { icon: User, label: t('navigation.profile'), path: "/perfil" },
   ];
 

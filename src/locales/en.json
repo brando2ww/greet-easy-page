@@ -50,6 +50,7 @@
     }
   },
   "navigation": {
+    "home": "Home",
     "stations": "Stations",
     "tips": "Tips",
     "wallet": "Wallet",
@@ -57,6 +58,17 @@
     "chargingShort": "Charge",
     "vehicles": "Vehicles",
     "profile": "Profile"
+  },
+  "home": {
+    "greeting": "Hi, {{name}} 👋",
+    "subtitle": "What would you like to do today?",
+    "stations": "Stations",
+    "startCharging": "Start Charging",
+    "wallet": "Wallet",
+    "vehicles": "Vehicles",
+    "recent": "Recent",
+    "chargingSession": "Charging session",
+    "inProgress": "In progress"
   },
   "stations": {
     "title": "Stations",

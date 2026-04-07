@@ -43,6 +43,7 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
+              <Route path="/estacoes" element={<ProtectedRoute><Estacoes /></ProtectedRoute>} />
               <Route path="/dicas" element={<ProtectedRoute><Dicas /></ProtectedRoute>} />
               <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
               <Route path="/carteira/sucesso" element={<ProtectedRoute><CarteiraSucesso /></ProtectedRoute>} />

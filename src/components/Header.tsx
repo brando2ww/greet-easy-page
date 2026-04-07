@@ -8,7 +8,8 @@ export const Header = () => {
   const { t } = useTranslation();
 
   const navItems = [
-    { icon: MapPin, label: t('navigation.stations'), path: "/" },
+    { icon: House, label: t('navigation.home'), path: "/" },
+    { icon: MapPin, label: t('navigation.stations'), path: "/estacoes" },
     { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
     { icon: Zap, label: t('navigation.charging'), path: "/iniciar-carga" },
     { icon: Car, label: t('navigation.vehicles'), path: "/veiculos" },

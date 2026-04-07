@@ -50,6 +50,7 @@
     }
   },
   "navigation": {
+    "home": "首页",
     "stations": "充电站",
     "tips": "提示",
     "wallet": "钱包",
@@ -57,6 +58,17 @@
     "chargingShort": "充电",
     "vehicles": "车辆",
     "profile": "个人资料"
+  },
+  "home": {
+    "greeting": "你好, {{name}} 👋",
+    "subtitle": "今天想做什么？",
+    "stations": "充电站",
+    "startCharging": "开始充电",
+    "wallet": "钱包",
+    "vehicles": "车辆",
+    "recent": "最近",
+    "chargingSession": "充电会话",
+    "inProgress": "进行中"
   },
   "stations": {
     "title": "充电站",
