@@ -30,9 +30,7 @@ export default function Home() {
 
         {/* Action Cards Grid */}
         <div className="grid grid-cols-2 gap-3">
-          {actionCards.map((card) => {
-            const Icon = card.icon;
-            return (
+          {actionCards.map((card) => (
               <Link key={card.key} to={card.path}>
                 <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden">
                   {card.key === "stations" && (
@@ -42,21 +40,17 @@ export default function Home() {
                       className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
                     />
                   )}
-                  <div className="flex flex-col gap-3 h-full justify-between relative z-10">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${card.color}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm text-foreground">
-                        {t(`home.${card.key}`)}
-                      </span>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  <div className="flex flex-col h-full justify-between relative z-10">
+                    <span className="font-semibold text-base text-foreground">
+                      {t(`home.${card.key}`)}
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+                      <ArrowRight className="w-4 h-4 text-background" />
                     </div>
                   </div>
                 </Card>
               </Link>
-            );
-          })}
+            ))}
         </div>
 
         {/* Recent Sessions */}
