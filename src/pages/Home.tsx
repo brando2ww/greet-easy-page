@@ -23,15 +23,12 @@ export default function Home() {
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || t("profile.user");
   const recentSessions = sessions?.slice(0, 3) || [];
 
-  const header = (
-    <div className="p-4 pb-2">
-      <img src={speedLogo} alt="Nexcharge" className="h-10" />
-    </div>
-  );
-
   return (
-    <ResponsiveLayout mobileHeader={header} showBottomNav>
+    <ResponsiveLayout showBottomNav>
       <div className="px-4 py-4 space-y-6 pb-32">
+        {/* Logo */}
+        <img src={speedLogo} alt="Nexcharge" className="h-10" />
+
         {/* Greeting */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">
