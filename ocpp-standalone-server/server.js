@@ -396,7 +396,7 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
           .from('charging_sessions')
           .select('id, transaction_id, meter_start')
           .eq('charger_id', charger.id)
-          .eq('status', 'in_progress')
+          .in('status', ['in_progress', 'awaiting_plug'])
           .maybeSingle();
 
         if (activeSession) {
