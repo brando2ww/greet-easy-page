@@ -99,7 +99,30 @@ export default function Carregamento() {
     ? { label: "Finalizado", color: "bg-muted-foreground", pulse: false }
     : getOcppStatusInfo(ocppStatus);
 
-  // Fetch real weekly stats
+  // Timer only runs while actively charging (not while waiting for plug)
+  const activeStatuses = ["Charging", "SuspendedEV", "SuspendedEVSE", "Finishing"];
+  const isActivelyCharging = !isCompleted && activeStatuses.includes(ocppStatus ?? "");
+
+  useEffect(() => {
+    if (isActivelyCharging) {
+      if (!chargingStartRef.current) {
+        chargingStartRef.current = Date.now();
+      }
+      const tick = () => {
+        const sinceStart = Math.floor((Date.now() - chargingStartRef.current!) / 1000);
+        setElapsed(accumulatedRef.current + sinceStart);
+      };
+      tick();
+      const id = setInterval(tick, 1000);
+      return () => clearInterval(id);
+    } else {
+      if (chargingStartRef.current) {
+        accumulatedRef.current += Math.floor((Date.now() - chargingStartRef.current) / 1000);
+        chargingStartRef.current = null;
+      }
+    }
+  }, [isActivelyCharging]);
+
   const { data: weeklyStats } = useQuery({
     queryKey: ["weekly-stats"],
     queryFn: async () => {
