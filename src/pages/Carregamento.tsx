@@ -173,7 +173,7 @@ export default function Carregamento() {
     };
   }, [isActivelyCharging]);
 
-
+  const { data: weeklyStats } = useQuery({
     queryKey: ["weekly-stats"],
     queryFn: async () => {
       const res = await transactionsApi.weeklyStats();
