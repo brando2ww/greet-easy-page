@@ -75,6 +75,18 @@ export const useChargerValidation = () => {
             variant: "destructive",
           });
           navigate('/auth');
+        } else if (errorMessage.includes('não está respondendo') || errorMessage.includes('offline') || errorMessage.includes('not connected') || errorMessage.includes('não está conectado')) {
+          toast({
+            title: "Carregador offline",
+            description: "O carregador não está respondendo. Verifique a conexão e tente novamente.",
+            variant: "destructive",
+          });
+        } else if (errorMessage.includes('Remote start failed')) {
+          toast({
+            title: "Falha ao iniciar",
+            description: "Não foi possível iniciar o carregamento remotamente. Tente novamente.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Erro ao iniciar sessão",

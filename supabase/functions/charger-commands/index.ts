@@ -109,7 +109,21 @@ Deno.serve(async (req) => {
         if (!validOcppStatuses.includes(charger.ocpp_protocol_status || '')) {
           return new Response(JSON.stringify({ 
             error: 'Charger offline',
-            message: 'The charger is not connected via OCPP' 
+            message: 'O carregador não está conectado via OCPP' 
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Check heartbeat freshness (must be within last 2 minutes)
+        const lastHeartbeat = charger.last_heartbeat ? new Date(charger.last_heartbeat) : null;
+        const isConnected = lastHeartbeat ? (Date.now() - lastHeartbeat.getTime()) < 120000 : false;
+
+        if (!isConnected) {
+          return new Response(JSON.stringify({ 
+            error: 'Charger offline',
+            message: 'O carregador não está respondendo. Verifique a conexão e tente novamente.'
           }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
