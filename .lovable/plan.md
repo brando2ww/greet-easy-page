@@ -1,46 +1,52 @@
 
 
-## Trocar marcador de "Minha Localização" para ponto pulsante estilo Google Maps
+## Corrigir tela travada — alias do Vite quebrando resolução do React
 
-### Problema
-O marcador azul padrão do Mapbox (pin) é igual aos dos carregadores — só muda a cor. O usuário quer algo visualmente diferente.
+### Problema raiz
+
+Os logs mostram:
+```
+Could not read from file: /dev-server/node_modules/react/index.js/jsx-runtime
+```
+
+O esbuild (usado pelo `optimizeDeps`) está aplicando o alias `react → react/index.js` e depois tentando resolver sub-paths como `react/jsx-runtime` → `react/index.js/jsx-runtime`, que não existe. Isso crashou o dev server.
 
 ### Solução
-Substituir o `new mapboxgl.Marker({ color: '#3b82f6' })` por um marcador customizado com HTML: um ponto azul com anel pulsante ao redor (estilo Google Maps / Apple Maps).
+
+Simplificar `vite.config.ts` removendo **todos** os aliases de `react` e `react-dom`. Manter apenas:
+- Alias `@` → `./src`
+- `resolve.dedupe: ["react", "react-dom"]` (suficiente para garantir instância única)
+- `optimizeDeps.include` com os pacotes core (sem sub-paths explícitos)
+
+Depois, limpar o cache do Vite (`node_modules/.vite`).
 
 ### Mudança
 
-**`src/components/map/StationsMap.tsx`** (linhas 115-125):
-
-Criar um elemento HTML customizado para o marcador do usuário:
-- Círculo azul sólido de 14px no centro
-- Borda branca de 3px
-- Anel azul translúcido pulsante ao redor (animação CSS)
-- Box-shadow suave
-
-Substituir:
+**`vite.config.ts`**:
 ```ts
-userMarkerRef.current = new mapboxgl.Marker({ color: '#3b82f6' })
+export default defineConfig(({ mode }) => ({
+  server: { host: "::", port: 8080 },
+  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  resolve: {
+    alias: { "@": path.resolve(__dirname, "./src") },
+    dedupe: ["react", "react-dom"],
+  },
+  optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "@tanstack/react-query",
+      "react-i18next",
+      "i18next",
+      "react-router-dom",
+    ],
+    exclude: ["@huggingface/transformers"],
+  },
+}));
 ```
 
-Por:
-```ts
-const el = document.createElement('div');
-el.innerHTML = `
-  <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
-    <div style="position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.2);animation:pulse-ring 1.5s ease-out infinite;"></div>
-    <div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.3);"></div>
-  </div>
-`;
+Limpar cache: `rm -rf node_modules/.vite`
 
-// Add pulse animation
-const style = document.createElement('style');
-style.textContent = `@keyframes pulse-ring { 0% { transform:scale(0.5);opacity:1; } 100% { transform:scale(1.2);opacity:0; } }`;
-document.head.appendChild(style);
-
-userMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
-```
-
-### Resultado
-Ponto azul com anel pulsante — visualmente distinto dos pins de carregadores.
+### Resultado esperado
+Dev server inicia sem erros, app renderiza, mapa com ícone LocateFixed visível.
 
