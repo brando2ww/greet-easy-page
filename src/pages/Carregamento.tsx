@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { transactionsApi, commandsApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { formatCurrency } from "@/utils/formatters";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Zap, Clock, Battery, TrendingDown, PlugZap } from "lucide-react";
+import { ArrowLeft, Zap, Clock, Battery, TrendingDown, PlugZap, WifiOff } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -45,9 +46,13 @@ export default function Carregamento() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { balance } = useWalletBalance();
   const [isStopping, setIsStopping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const balanceStopTriggeredRef = useRef(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
 
@@ -123,6 +128,51 @@ export default function Carregamento() {
     }
   }, [isActivelyCharging]);
 
+  // Auto-stop: insufficient balance
+  useEffect(() => {
+    if (balanceStopTriggeredRef.current || !isActivelyCharging) return;
+    const margin = balance - estimatedCost;
+    if (margin < 1.0) {
+      balanceStopTriggeredRef.current = true;
+      toast({ title: "Saldo insuficiente", description: "Carregamento suspenso automaticamente.", variant: "destructive" });
+      handleStop();
+    }
+  }, [balance, estimatedCost, isActivelyCharging]);
+
+  // Auto-stop: offline detection (15s timeout)
+  useEffect(() => {
+    const handleOffline = () => {
+      setIsOffline(true);
+      if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
+      offlineTimerRef.current = setTimeout(() => {
+        if (isActivelyCharging) {
+          toast({ title: "Sem conexão", description: "Carregamento suspenso por falta de internet.", variant: "destructive" });
+          handleStop();
+        }
+      }, 15000);
+    };
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      if (offlineTimerRef.current) {
+        clearTimeout(offlineTimerRef.current);
+        offlineTimerRef.current = null;
+      }
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    // Check initial state
+    if (!navigator.onLine) handleOffline();
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+      if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
+    };
+  }, [isActivelyCharging]);
+
   const { data: weeklyStats } = useQuery({
     queryKey: ["weekly-stats"],
     queryFn: async () => {
@@ -173,6 +223,14 @@ export default function Carregamento() {
         </button>
         <h1 className="text-lg font-semibold text-foreground">Modo de Carregamento</h1>
       </div>
+
+      {/* Offline banner */}
+      {isOffline && (
+        <div className="mx-4 mb-2 px-4 py-2 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+          <WifiOff className="h-4 w-4 text-destructive" />
+          <span className="text-sm font-medium text-destructive">Sem conexão com a internet</span>
+        </div>
+      )}
 
       <div className="flex-1 px-4 space-y-4 pb-28 overflow-y-auto">
         {/* Card 1 - Status */}

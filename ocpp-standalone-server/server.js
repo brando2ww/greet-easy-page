@@ -349,6 +349,54 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
   } catch (dbError) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
+
+  // Emergency stop: if status is Faulted, auto-close any active session
+  if (payload.status === 'Faulted') {
+    console.log(`[EmergencyStop] Detected Faulted status for ${chargePointId}, errorCode: ${payload.errorCode}`);
+    try {
+      // Find charger ID
+      const { data: charger } = await supabase
+        .from('chargers')
+        .select('id')
+        .eq('ocpp_charge_point_id', chargePointId)
+        .maybeSingle();
+
+      if (charger) {
+        // Find active session
+        const { data: activeSession } = await supabase
+          .from('charging_sessions')
+          .select('id, transaction_id, meter_start')
+          .eq('charger_id', charger.id)
+          .eq('status', 'in_progress')
+          .maybeSingle();
+
+        if (activeSession) {
+          console.log(`[EmergencyStop] Closing session ${activeSession.id} (transaction: ${activeSession.transaction_id})`);
+
+          // Send RemoteStopTransaction to the charger
+          if (activeSession.transaction_id) {
+            const msgId = `emergency-stop-${Date.now()}`;
+            const stopMsg = [2, msgId, 'RemoteStopTransaction', { transactionId: activeSession.transaction_id }];
+            ws.send(JSON.stringify(stopMsg));
+          }
+
+          // Mark session as completed with EmergencyStop reason
+          await supabase
+            .from('charging_sessions')
+            .update({
+              status: 'completed',
+              stop_reason: 'EmergencyStop',
+              ended_at: new Date().toISOString(),
+            })
+            .eq('id', activeSession.id);
+
+          console.log(`[EmergencyStop] Session ${activeSession.id} closed due to emergency stop`);
+        }
+      }
+    } catch (emergencyErr) {
+      console.error('[EmergencyStop] Error handling emergency stop:', emergencyErr);
+    }
+  }
 }
 
 async function handleAuthorize(ws, messageId, payload) {

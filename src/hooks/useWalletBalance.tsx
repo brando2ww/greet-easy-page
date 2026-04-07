@@ -38,6 +38,7 @@ export const useWalletBalance = () => {
 
       return data;
     },
+    refetchInterval: 10000,
   });
 
   const addBalanceMutation = useMutation({
