@@ -193,7 +193,7 @@ export type Database = {
           id_tag: string | null
           meter_start: number | null
           meter_stop: number | null
-          started_at: string
+          started_at: string | null
           status: string
           stop_reason: string | null
           transaction_id: number | null
@@ -211,7 +211,7 @@ export type Database = {
           id_tag?: string | null
           meter_start?: number | null
           meter_stop?: number | null
-          started_at?: string
+          started_at?: string | null
           status?: string
           stop_reason?: string | null
           transaction_id?: number | null
@@ -229,7 +229,7 @@ export type Database = {
           id_tag?: string | null
           meter_start?: number | null
           meter_stop?: number | null
-          started_at?: string
+          started_at?: string | null
           status?: string
           stop_reason?: string | null
           transaction_id?: number | null
