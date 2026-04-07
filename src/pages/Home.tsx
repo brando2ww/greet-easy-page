@@ -25,7 +25,7 @@ export default function Home() {
 
   return (
     <ResponsiveLayout showBottomNav>
-      <div className="px-4 py-4 space-y-6 pb-32">
+      <div className="px-4 pt-24 space-y-6 pb-32">
         {/* Logo */}
         <img src={speedLogo} alt="Nexcharge" className="h-10" />
 
