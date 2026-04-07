@@ -1,26 +1,17 @@
 
 
-## Aumentar o marcador de "Minha Localização" no mapa
+## Aumentar ainda mais o marcador de localização
 
 ### Mudança
 
-**`src/components/map/StationsMap.tsx`** (linhas 117-121):
-
-Aumentar as dimensões do container, do anel pulsante e do ponto central:
+**`src/components/map/StationsMap.tsx`** (linhas 118-121):
 
 | Elemento | Atual | Novo |
 |----------|-------|------|
-| Container | 40x40px | 60x60px |
-| Anel pulsante | 36x36px | 52x52px |
-| Ponto central | 14x14px | 22x22px |
-| Borda branca | 3px | 4px |
+| Container | 60x60px | 80x80px |
+| Anel pulsante | 52x52px | 70x70px |
+| Ponto central | 22x22px | 30x30px |
+| Borda branca | 4px | 5px |
 
-```html
-<div style="position:relative;width:60px;height:60px;...">
-  <div style="...width:52px;height:52px;..."></div>
-  <div style="width:22px;height:22px;...border:4px solid white;..."></div>
-</div>
-```
-
-Um único arquivo, 3 valores numéricos alterados.
+Um único arquivo, 4 valores alterados.
 
