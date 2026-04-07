@@ -10,8 +10,8 @@ import evChargerBg from "@/assets/ev-charger-bg.png";
 import { format } from "date-fns";
 
 const actionCards = [
-  { key: "stations", icon: MapPin, path: "/estacoes", color: "bg-blue-500/10 text-blue-500" },
-  { key: "startCharging", icon: Zap, path: "/iniciar-carga", color: "bg-green-500/10 text-green-500" },
+  { key: "stations", path: "/estacoes" },
+  { key: "startCharging", path: "/iniciar-carga" },
 ];
 
 export default function Home() {
