@@ -392,6 +392,10 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
 
           console.log(`[EmergencyStop] Session ${activeSession.id} closed due to emergency stop`);
         }
+
+        // Always reset charger to available after emergency stop
+        await updateChargerStatus(chargePointId, 'available', 'Available');
+        console.log(`[EmergencyStop] Charger ${chargePointId} reset to available`);
       }
     } catch (emergencyErr) {
       console.error('[EmergencyStop] Error handling emergency stop:', emergencyErr);

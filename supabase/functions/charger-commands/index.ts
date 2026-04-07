@@ -259,13 +259,8 @@ Deno.serve(async (req) => {
             console.log('[charger-commands] Remote stop result:', remoteResult);
 
             if (!remoteResult.success) {
-              return new Response(JSON.stringify({ 
-                error: 'Remote stop failed',
-                message: remoteResult.message || 'Could not stop charging remotely'
-              }), {
-                status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              });
+              console.warn('[charger-commands] Remote stop failed, but still resetting charger and session to avoid stuck state');
+              // Don't return error — fall through to reset charger and session
             }
           } catch (fetchError) {
             console.error('[charger-commands] OCPP API error:', fetchError);

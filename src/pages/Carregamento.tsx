@@ -193,12 +193,20 @@ export default function Carregamento() {
       const res = await commandsApi.stopCharge(session.chargerId, session.transactionId ?? 0, sessionId);
       if (res.error || !res.data?.success) {
         toast({ title: "Erro ao parar", description: res.data?.message || res.error, variant: "destructive" });
+        // Fallback: trigger status check which auto-fixes stale in_use status
+        if (chargerId) {
+          try { await commandsApi.getStatus(chargerId); } catch {}
+        }
       } else {
         toast({ title: "Carregamento finalizado!", description: "Sessão encerrada com sucesso." });
         navigate("/");
       }
     } catch {
       toast({ title: "Erro inesperado", variant: "destructive" });
+      // Fallback: trigger status check which auto-fixes stale in_use status
+      if (chargerId) {
+        try { await commandsApi.getStatus(chargerId); } catch {}
+      }
     } finally {
       setIsStopping(false);
     }
