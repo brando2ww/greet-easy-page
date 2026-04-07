@@ -46,9 +46,13 @@ export default function Carregamento() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { balance } = useWalletBalance();
   const [isStopping, setIsStopping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const balanceStopTriggeredRef = useRef(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
 
