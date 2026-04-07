@@ -1,4 +1,4 @@
-import { MapPin, Wallet, Car, User } from "lucide-react";
+import { House, MapPin, Wallet, Car, User } from "lucide-react";
 import chargingIcon from "@/assets/charging-icon.png";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
