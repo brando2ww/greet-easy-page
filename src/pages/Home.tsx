@@ -34,8 +34,13 @@ export default function Home() {
             const Icon = card.icon;
             return (
               <Link key={card.key} to={card.path}>
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[140px]">
-                  <div className="flex flex-col gap-3 h-full justify-between">
+                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[140px] relative overflow-hidden">
+                  <img
+                    src={evChargerBg}
+                    alt=""
+                    className="absolute right-0 bottom-0 w-24 h-full object-cover object-center opacity-20 pointer-events-none"
+                  />
+                  <div className="flex flex-col gap-3 h-full justify-between relative z-10">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${card.color}`}>
                       <Icon className="w-5 h-5" />
                     </div>
