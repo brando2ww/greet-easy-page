@@ -81,17 +81,17 @@ export default function Home() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {session.charger_name || t("home.chargingSession")}
+                        {session.charger?.name || t("home.chargingSession")}
                       </p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />
                         <span>
-                          {session.started_at
-                            ? format(new Date(session.started_at), "dd/MM · HH:mm")
+                          {session.startedAt
+                            ? format(new Date(session.startedAt), "dd/MM · HH:mm")
                             : "—"}
                         </span>
-                        {session.energy_consumed != null && (
-                          <span className="ml-1">· {session.energy_consumed.toFixed(1)} kWh</span>
+                        {session.energyConsumed != null && (
+                          <span className="ml-1">· {session.energyConsumed.toFixed(1)} kWh</span>
                         )}
                       </div>
                     </div>

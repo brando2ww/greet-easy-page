@@ -10,6 +10,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { RoleBasedRedirect } from "./components/RoleBasedRedirect";
 import Estacoes from "./pages/Estacoes";
+import Home from "./pages/Home";
 import Carregamento from "./pages/Carregamento";
 import Dicas from "./pages/Dicas";
 import Carteira from "./pages/Carteira";
