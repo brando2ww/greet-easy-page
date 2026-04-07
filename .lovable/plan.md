@@ -1,15 +1,10 @@
 
 
-## Remover bottom navigation da Home
+## Manter apenas 2 cards na Home
 
 ### Mudança
 
 **`src/pages/Home.tsx`**:
-- Alterar `showBottomNav` de `true` para `false` (ou remover o prop) no `ResponsiveLayout`.
-
-```tsx
-<ResponsiveLayout>
-```
-
-Um valor removido, um arquivo.
+- Reduzir o array `actionCards` para apenas os dois primeiros itens: `stations` (MapPin, /estacoes) e `startCharging` (Zap, /iniciar-carga).
+- Remover imports não utilizados: `Wallet`, `Car`.
 
