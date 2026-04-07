@@ -29,16 +29,6 @@ export default function Home() {
         {/* Logo */}
         <img src={speedLogo} alt="Nexcharge" className="h-10" />
 
-        {/* Greeting */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {t("home.greeting", { name: firstName })}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {t("home.subtitle")}
-          </p>
-        </div>
-
         {/* Action Cards Grid */}
         <div className="grid grid-cols-2 gap-3">
           {actionCards.map((card) => {
