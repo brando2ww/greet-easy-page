@@ -1,39 +1,29 @@
 
 
-## Suspender carregamento: emergência, saldo e internet
+## Garantir que carregador volte a "available" em todas as situações de parada
 
-### Esclarecimento sobre o botão de emergência
-
-O botão de emergência é **físico no carregador** -- quando pressionado, o carregador envia um `StatusNotification` com status `Faulted` (e possivelmente `errorCode: EmergencyStop`). O servidor OCPP precisa reagir a isso encerrando a sessão automaticamente.
+### Problema
+Quando o carregamento para por emergência (status `Faulted`), o `statusMap` no servidor OCPP define o carregador como `unavailable`. Após encerrar a sessão, o status não é resetado para `available`. Nos outros cenários (parada pelo app, saldo, internet), a Edge Function já reseta para `available`, mas há um risco de falha silenciosa.
 
 ### Mudanças
 
 | Arquivo | O que muda |
 |---------|-----------|
-| `ocpp-standalone-server/server.js` | No handler `handleStatusNotification`, detectar status `Faulted` e encerrar sessão ativa automaticamente (enviar `RemoteStopTransaction` e marcar sessão como `completed` com `stop_reason: EmergencyStop`) |
-| `src/pages/Carregamento.tsx` | Adicionar detecção de falta de internet (`navigator.onLine` + eventos `offline`/`online`) com parada automática após 15s offline; adicionar verificação de saldo insuficiente a cada poll |
-| `src/hooks/useWalletBalance.tsx` | Adicionar `refetchInterval: 10000` para manter saldo atualizado durante carregamento |
+| `ocpp-standalone-server/server.js` | No bloco de emergência (linha ~393), após fechar a sessão, chamar `updateChargerStatus(chargePointId, 'available', 'Available')` para resetar o carregador |
+| `supabase/functions/charger-commands/index.ts` | No caso `stop`, adicionar tratamento de erro mais robusto -- se o `RemoteStopTransaction` falhar, ainda assim marcar o charger como `available` (atualmente, se o remote stop falha, retorna erro sem resetar o status) |
+| `src/pages/Carregamento.tsx` | Nos auto-stops (saldo e internet), se `handleStop()` falhar, forçar uma chamada direta para resetar o status do carregador via API |
 
 ### Detalhes
 
-**1. Emergência (servidor OCPP)**
+**1. Servidor OCPP -- emergência**
+Após o bloco que fecha a sessão (`EmergencyStop`, linha 393), adicionar:
+```
+await updateChargerStatus(chargePointId, 'available', 'Available');
+```
 
-No `handleStatusNotification` (linha 323), quando `payload.status === 'Faulted'`:
-- Buscar sessão ativa (`status: 'in_progress'`) para esse carregador
-- Se existir, atualizar para `completed` com `stop_reason: 'EmergencyStop'`
-- Logar o evento com o `errorCode` recebido
+**2. Edge Function -- falha no remote stop**
+Na ação `stop` (linha ~210 do charger-commands), quando `remoteResult.success === false`, em vez de retornar erro imediatamente, ainda atualizar o charger para `available` e a sessão para `completed`, pois o objetivo é garantir que nunca fique travado em `in_use`.
 
-**2. Saldo insuficiente (frontend)**
-
-- Importar `useWalletBalance` no `Carregamento.tsx`
-- Adicionar `useEffect` que verifica: se `balance - estimatedCost < 1.00` e `isActivelyCharging`, chamar `handleStop()` e exibir toast "Saldo insuficiente"
-- `useWalletBalance` passa a fazer refetch a cada 10s
-
-**3. Falta de internet (frontend)**
-
-- Adicionar `useEffect` com listeners `window.addEventListener('offline'/'online')`
-- Ao ficar offline, iniciar timer de 15s
-- Se não reconectar em 15s e `isActivelyCharging`, chamar `handleStop()`
-- Exibir banner "Sem conexão" no topo quando offline
-- Ao reconectar, cancelar timer
+**3. Frontend -- fallback**
+No `handleStop` do `Carregamento.tsx`, no bloco `catch` e quando `res.error`, adicionar uma tentativa extra de resetar o status via `commandsApi.getStatus(chargerId)` que já faz auto-fix de status stale (existente na edge function `status` action).
 
