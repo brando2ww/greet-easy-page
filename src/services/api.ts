@@ -29,13 +29,35 @@ async function invokeFunction<T>(
 
     if (error) {
       console.error(`[API] Error calling ${functionName}:`, error);
-      return { error: error.message };
+      
+      // Try to extract the real error message from Edge Function responses
+      // The Supabase SDK wraps non-2xx responses as FunctionsHttpError
+      // with the response body available in error.context
+      let errorMessage = error.message;
+      
+      try {
+        if ((error as any).context) {
+          const context = (error as any).context;
+          if (typeof context.json === 'function') {
+            const jsonBody = await context.json();
+            errorMessage = jsonBody.message || jsonBody.error || errorMessage;
+          } else if (typeof context.text === 'function') {
+            const textBody = await context.text();
+            if (textBody) errorMessage = textBody;
+          }
+        }
+      } catch (parseErr) {
+        // If parsing fails, keep the original error message
+        console.warn(`[API] Could not parse error body from ${functionName}:`, parseErr);
+      }
+      
+      return { error: errorMessage };
     }
 
     return { data: data as T };
   } catch (err) {
     console.error(`[API] Unexpected error calling ${functionName}:`, err);
-    return { error: 'Unexpected error occurred' };
+    return { error: err instanceof Error ? err.message : 'Unexpected error occurred' };
   }
 }
 
