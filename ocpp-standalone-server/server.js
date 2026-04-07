@@ -350,6 +350,35 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
 
+  // Activate awaiting_plug sessions when charger starts charging
+  if (payload.status === 'Charging') {
+    try {
+      const { data: charger } = await supabase
+        .from('chargers')
+        .select('id')
+        .eq('ocpp_charge_point_id', chargePointId)
+        .maybeSingle();
+
+      if (charger) {
+        const { data: activated, error: activateErr } = await supabase
+          .from('charging_sessions')
+          .update({ status: 'in_progress', started_at: new Date().toISOString() })
+          .eq('charger_id', charger.id)
+          .eq('status', 'awaiting_plug')
+          .is('started_at', null)
+          .select('id');
+
+        if (activateErr) {
+          console.error('[StatusNotification] Error activating awaiting_plug session:', activateErr);
+        } else if (activated && activated.length > 0) {
+          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on Charging status`);
+        }
+      }
+    } catch (err) {
+      console.error('[StatusNotification] Error in awaiting_plug activation:', err);
+    }
+  }
+
   // Emergency stop: if status is Faulted, auto-close any active session
   if (payload.status === 'Faulted') {
     console.log(`[EmergencyStop] Detected Faulted status for ${chargePointId}, errorCode: ${payload.errorCode}`);
@@ -367,7 +396,7 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
           .from('charging_sessions')
           .select('id, transaction_id, meter_start')
           .eq('charger_id', charger.id)
-          .eq('status', 'in_progress')
+          .in('status', ['in_progress', 'awaiting_plug'])
           .maybeSingle();
 
         if (activeSession) {
@@ -443,29 +472,60 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     return;
   }
 
-  // Resolve real user_id from idTag
-  const resolvedUserId = await resolveUserId(payload.idTag);
-  const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
-  console.log(`[StartTransaction] Resolved user_id: ${userId} (from idTag: ${payload.idTag})`);
-
   const transactionId = transactionIdCounter++;
 
-  const { error } = await supabase
+  // Try to find an existing awaiting_plug session for this charger
+  const { data: awaitingSession } = await supabase
     .from('charging_sessions')
-    .insert({
-      charger_id: charger.id,
-      user_id: userId,
-      transaction_id: transactionId,
-      meter_start: payload.meterStart,
-      id_tag: payload.idTag,
-      started_at: new Date(payload.timestamp).toISOString(),
-      status: 'in_progress',
-    });
+    .select('id')
+    .eq('charger_id', charger.id)
+    .eq('status', 'awaiting_plug')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  if (error) {
-    console.error('[StartTransaction] Database error:', error);
-    sendCallError(ws, messageId, 'InternalError', 'Failed to create session');
-    return;
+  if (awaitingSession) {
+    // Activate the existing session
+    const { error } = await supabase
+      .from('charging_sessions')
+      .update({
+        status: 'in_progress',
+        started_at: new Date(payload.timestamp).toISOString(),
+        transaction_id: transactionId,
+        meter_start: payload.meterStart,
+      })
+      .eq('id', awaitingSession.id);
+
+    if (error) {
+      console.error('[StartTransaction] DB update error:', error);
+      sendCallError(ws, messageId, 'InternalError', 'Failed to activate session');
+      return;
+    }
+
+    console.log(`[StartTransaction] Activated awaiting_plug session ${awaitingSession.id} as transaction ${transactionId}`);
+  } else {
+    // Fallback: create a new session (e.g. local start without app)
+    const resolvedUserId = await resolveUserId(payload.idTag);
+    const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
+    console.log(`[StartTransaction] No awaiting_plug session found, creating new. Resolved user_id: ${userId} (from idTag: ${payload.idTag})`);
+
+    const { error } = await supabase
+      .from('charging_sessions')
+      .insert({
+        charger_id: charger.id,
+        user_id: userId,
+        transaction_id: transactionId,
+        meter_start: payload.meterStart,
+        id_tag: payload.idTag,
+        started_at: new Date(payload.timestamp).toISOString(),
+        status: 'in_progress',
+      });
+
+    if (error) {
+      console.error('[StartTransaction] Database error:', error);
+      sendCallError(ws, messageId, 'InternalError', 'Failed to create session');
+      return;
+    }
   }
 
   await updateChargerStatus(chargePointId, 'in_use', 'Charging');
@@ -477,7 +537,7 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     },
   });
 
-  console.log(`[StartTransaction] Created transaction ${transactionId} for ${chargePointId} (user: ${userId})`);
+  console.log(`[StartTransaction] Transaction ${transactionId} ready for ${chargePointId}`);
 }
 
 async function handleStopTransaction(ws, messageId, payload, chargePointId) {
