@@ -128,7 +128,52 @@ export default function Carregamento() {
     }
   }, [isActivelyCharging]);
 
-  const { data: weeklyStats } = useQuery({
+  // Auto-stop: insufficient balance
+  useEffect(() => {
+    if (balanceStopTriggeredRef.current || !isActivelyCharging) return;
+    const margin = balance - estimatedCost;
+    if (margin < 1.0) {
+      balanceStopTriggeredRef.current = true;
+      toast({ title: "Saldo insuficiente", description: "Carregamento suspenso automaticamente.", variant: "destructive" });
+      handleStop();
+    }
+  }, [balance, estimatedCost, isActivelyCharging]);
+
+  // Auto-stop: offline detection (15s timeout)
+  useEffect(() => {
+    const handleOffline = () => {
+      setIsOffline(true);
+      if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
+      offlineTimerRef.current = setTimeout(() => {
+        if (isActivelyCharging) {
+          toast({ title: "Sem conexão", description: "Carregamento suspenso por falta de internet.", variant: "destructive" });
+          handleStop();
+        }
+      }, 15000);
+    };
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      if (offlineTimerRef.current) {
+        clearTimeout(offlineTimerRef.current);
+        offlineTimerRef.current = null;
+      }
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    // Check initial state
+    if (!navigator.onLine) handleOffline();
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+      if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
+    };
+  }, [isActivelyCharging]);
+
+
     queryKey: ["weekly-stats"],
     queryFn: async () => {
       const res = await transactionsApi.weeklyStats();
