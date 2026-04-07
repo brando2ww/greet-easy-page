@@ -1,4 +1,4 @@
-import { MapPin, Wallet, Zap, Car, ArrowRight, Clock, Battery } from "lucide-react";
+import { MapPin, Zap, ArrowRight, Clock, Battery } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
