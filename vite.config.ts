@@ -10,17 +10,23 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "react": path.resolve(__dirname, "./node_modules/react"),
-      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      { find: "react/jsx-runtime", replacement: path.resolve(__dirname, "./node_modules/react/jsx-runtime.js") },
+      { find: "react/jsx-dev-runtime", replacement: path.resolve(__dirname, "./node_modules/react/jsx-dev-runtime.js") },
+      { find: "react-dom/client", replacement: path.resolve(__dirname, "./node_modules/react-dom/client.js") },
+      { find: /^react-dom$/, replacement: path.resolve(__dirname, "./node_modules/react-dom/index.js") },
+      { find: /^react$/, replacement: path.resolve(__dirname, "./node_modules/react/index.js") },
+    ],
     dedupe: ["react", "react-dom"],
   },
   optimizeDeps: {
     include: [
       "react",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
       "react-dom",
+      "react-dom/client",
       "@tanstack/react-query",
       "react-i18next",
       "i18next",
@@ -29,3 +35,4 @@ export default defineConfig(({ mode }) => ({
     exclude: ["@huggingface/transformers"],
   },
 }));
+
