@@ -1,29 +1,75 @@
 
 
-## Garantir que carregador volte a "available" em todas as situações de parada
+## Sessão criada sem cobrar até plugue conectar
 
-### Problema
-Quando o carregamento para por emergência (status `Faulted`), o `statusMap` no servidor OCPP define o carregador como `unavailable`. Após encerrar a sessão, o status não é resetado para `available`. Nos outros cenários (parada pelo app, saldo, internet), a Edge Function já reseta para `available`, mas há um risco de falha silenciosa.
+### Problema atual
+Quando o usuário inicia o carregamento pelo app, a Edge Function cria a sessão com `started_at: now()` imediatamente. Se o plugue ainda não estiver conectado (OCPP "Available"/"Preparing"), o tempo e custo já começam a acumular. O correto é: criar a sessão para reservar o carregador, mas só iniciar a contagem de tempo e cobrança quando o plugue for de fato conectado (OCPP "Charging").
+
+### Solução
+
+Introduzir um status intermediário `awaiting_plug` na sessão. A sessão é criada com esse status e `started_at` nulo. Quando o OCPP reporta "Charging" (via `StatusNotification` ou `StartTransaction`), o servidor atualiza para `in_progress` e define o `started_at` real.
 
 ### Mudanças
 
 | Arquivo | O que muda |
 |---------|-----------|
-| `ocpp-standalone-server/server.js` | No bloco de emergência (linha ~393), após fechar a sessão, chamar `updateChargerStatus(chargePointId, 'available', 'Available')` para resetar o carregador |
-| `supabase/functions/charger-commands/index.ts` | No caso `stop`, adicionar tratamento de erro mais robusto -- se o `RemoteStopTransaction` falhar, ainda assim marcar o charger como `available` (atualmente, se o remote stop falha, retorna erro sem resetar o status) |
-| `src/pages/Carregamento.tsx` | Nos auto-stops (saldo e internet), se `handleStop()` falhar, forçar uma chamada direta para resetar o status do carregador via API |
+| `supabase/functions/charger-commands/index.ts` | Na ação `start`, criar sessão com `status: 'awaiting_plug'` e `started_at: null` em vez de `in_progress` e `now()` |
+| `ocpp-standalone-server/server.js` | No `handleStatusNotification`, quando status muda para `Charging`: buscar sessão `awaiting_plug` do charger e atualizar para `in_progress` com `started_at: now()`. No `handleStartTransaction`, em vez de criar sessão nova, buscar a existente com `awaiting_plug` e atualizar com `transaction_id`, `meter_start`, `started_at` e `status: 'in_progress'` |
+| `src/pages/Carregamento.tsx` | Tratar `awaiting_plug` como sessão ativa (não completada) mas sem contar tempo/custo. Mostrar status "Aguardando plugue" quando session.status === 'awaiting_plug' |
 
 ### Detalhes
 
-**1. Servidor OCPP -- emergência**
-Após o bloco que fecha a sessão (`EmergencyStop`, linha 393), adicionar:
-```
-await updateChargerStatus(chargePointId, 'available', 'Available');
+**1. Edge Function -- criar sessão em espera**
+
+```js
+// Mudar de:
+status: 'in_progress',
+started_at: new Date().toISOString(),
+// Para:
+status: 'awaiting_plug',
+started_at: null,
 ```
 
-**2. Edge Function -- falha no remote stop**
-Na ação `stop` (linha ~210 do charger-commands), quando `remoteResult.success === false`, em vez de retornar erro imediatamente, ainda atualizar o charger para `available` e a sessão para `completed`, pois o objetivo é garantir que nunca fique travado em `in_use`.
+**2. Servidor OCPP -- ativar sessão no StartTransaction**
 
-**3. Frontend -- fallback**
-No `handleStop` do `Carregamento.tsx`, no bloco `catch` e quando `res.error`, adicionar uma tentativa extra de resetar o status via `commandsApi.getStatus(chargerId)` que já faz auto-fix de status stale (existente na edge function `status` action).
+No `handleStartTransaction`, em vez de `INSERT` nova sessão, fazer `UPDATE` na sessão existente com `awaiting_plug`:
+```js
+await supabase
+  .from('charging_sessions')
+  .update({
+    status: 'in_progress',
+    started_at: new Date(payload.timestamp).toISOString(),
+    transaction_id: transactionId,
+    meter_start: payload.meterStart,
+  })
+  .eq('charger_id', charger.id)
+  .eq('status', 'awaiting_plug');
+```
+Se não encontrar sessão `awaiting_plug` (ex: início local), manter o INSERT atual como fallback.
+
+**3. Servidor OCPP -- fallback no StatusNotification**
+
+Quando `payload.status === 'Charging'`, verificar se há sessão `awaiting_plug` sem `started_at` e ativá-la (caso o `StartTransaction` não tenha chegado ainda):
+```js
+if (payload.status === 'Charging') {
+  // Ativar sessão aguardando plugue
+  await supabase
+    .from('charging_sessions')
+    .update({ status: 'in_progress', started_at: new Date().toISOString() })
+    .eq('charger_id', charger.id)
+    .eq('status', 'awaiting_plug')
+    .is('started_at', null);
+}
+```
+
+**4. Frontend -- exibir estado de espera**
+
+No `Carregamento.tsx`, considerar `awaiting_plug` como sessão não-completada:
+```js
+const isCompleted = session?.status === "completed" || session?.status === "cancelled";
+const isAwaitingPlug = session?.status === "awaiting_plug";
+```
+- Timer mostra `00:00:00` fixo quando `isAwaitingPlug` (já funciona porque `isActivelyCharging` é false)
+- Custo estimado mostra `R$ 0,00` quando `isAwaitingPlug`
+- Status visual: "Aguardando conexão do plugue"
 
