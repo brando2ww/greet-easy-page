@@ -224,6 +224,14 @@ export default function Carregamento() {
         <h1 className="text-lg font-semibold text-foreground">Modo de Carregamento</h1>
       </div>
 
+      {/* Offline banner */}
+      {isOffline && (
+        <div className="mx-4 mb-2 px-4 py-2 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-2">
+          <WifiOff className="h-4 w-4 text-destructive" />
+          <span className="text-sm font-medium text-destructive">Sem conexão com a internet</span>
+        </div>
+      )}
+
       <div className="flex-1 px-4 space-y-4 pb-28 overflow-y-auto">
         {/* Card 1 - Status */}
         <Card className="border-0 shadow-[var(--shadow-soft)]">
