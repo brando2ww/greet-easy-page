@@ -34,7 +34,7 @@ export default function Home() {
             const Icon = card.icon;
             return (
               <Link key={card.key} to={card.path}>
-                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[140px] relative overflow-hidden">
+                <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden">
                   {card.key === "stations" && (
                     <img
                       src={evChargerBg}
