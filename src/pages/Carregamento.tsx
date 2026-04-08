@@ -193,14 +193,14 @@ export default function Carregamento() {
   const filledSegments = isCompleted ? totalSegments : (hasSoC ? Math.max(socValue > 0 ? 1 : 0, Math.floor(progressAngle * totalSegments)) : 0);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-gray-950 text-white">
+    <div className="flex flex-col min-h-[100dvh] bg-white text-gray-900">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-2">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
-          <ArrowLeft className="h-5 w-5 text-white" />
+        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <ArrowLeft className="h-5 w-5 text-gray-900" />
         </button>
         <div className="flex-1 text-center">
-          <p className="text-sm text-gray-400">Veículo Elétrico</p>
+          <p className="text-sm text-gray-500">Veículo Elétrico</p>
           <h1 className="text-lg font-semibold">{chargerName}</h1>
         </div>
         <div className="w-9" />
@@ -224,7 +224,7 @@ export default function Carregamento() {
 
           {/* Background ring */}
           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 280 280">
-            <circle cx="140" cy="140" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+            <circle cx="140" cy="140" r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="10" />
             <circle
               cx="140" cy="140" r={radius}
               fill="none"
@@ -261,7 +261,7 @@ export default function Carregamento() {
         {/* Battery segments */}
         <div className="w-full max-w-xs mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Progresso</span>
+            <span className="text-xs text-gray-400 uppercase tracking-wide">Progresso</span>
             <span className="text-xs font-semibold text-primary">{hasSoC ? `${socValue}%` : '--%'}</span>
           </div>
           <div className="flex gap-1">
@@ -269,7 +269,7 @@ export default function Carregamento() {
               <div
                 key={i}
                 className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${
-                  i < filledSegments ? "bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]" : "bg-white/10"
+                  i < filledSegments ? "bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]" : "bg-gray-200"
                 }`}
               />
             ))}
@@ -278,20 +278,20 @@ export default function Carregamento() {
 
         {/* Stats row */}
         <div className="w-full max-w-xs grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <Clock className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+          <div className="bg-gray-100 rounded-2xl p-4 text-center">
+            <Clock className="h-5 w-5 text-gray-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{Math.floor(elapsed / 60)}</p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Minutos</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Minutos</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <DollarSign className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+          <div className="bg-gray-100 rounded-2xl p-4 text-center">
+            <DollarSign className="h-5 w-5 text-gray-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{formatCurrency(estimatedCost)}</p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Custo</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Custo</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-4 text-center">
-            <Zap className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+          <div className="bg-gray-100 rounded-2xl p-4 text-center">
+            <Zap className="h-5 w-5 text-gray-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{energyConsumed.toFixed(1)}</p>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">kWh</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">kWh</p>
           </div>
         </div>
 
@@ -316,15 +316,15 @@ export default function Carregamento() {
       </div>
 
       <AlertDialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
-        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+        <AlertDialogContent className="bg-white border-gray-200 text-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>Parar Carregamento?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogDescription className="text-gray-500">
               Tem certeza que deseja encerrar esta sessão de carregamento? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="bg-gray-100 border-gray-200 text-gray-900 hover:bg-gray-200">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setShowStopConfirm(false); handleStop(); }} className="bg-primary text-primary-foreground">
               Sim, Parar
             </AlertDialogAction>
