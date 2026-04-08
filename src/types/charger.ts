@@ -103,6 +103,7 @@ export interface ChargingSessionRow {
   stop_reason: string | null;
   id_tag: string | null;
   vehicle_info: string | null;
+  soc: number | null;
   created_at: string;
   updated_at: string;
 }
