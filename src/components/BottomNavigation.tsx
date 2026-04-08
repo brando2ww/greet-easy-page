@@ -16,7 +16,7 @@ export const BottomNavigation = () => {
 
   return (
     <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6">
-      <div className="flex items-center gap-2 bg-background rounded-full px-4 py-3 shadow-lg border border-border/50">
+      <div className="flex items-center gap-2 bg-foreground rounded-full px-4 py-3 shadow-lg border border-transparent">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -39,7 +39,7 @@ export const BottomNavigation = () => {
                   "relative z-10 w-5 h-5 transition-colors duration-200",
                   isActive
                     ? "text-primary-foreground"
-                    : "text-foreground/40"
+                    : "text-background/60"
                 )}
                 strokeWidth={1.8}
               />
