@@ -1,17 +1,18 @@
 
 
-## Alinhar imagem do carregador à esquerda no card
+## Alinhar imagem do carregador com o texto no card
+
+### Problema
+A imagem está centralizada no card (`left-1/2 -translate-x-1/2`), mas o texto está alinhado à esquerda com padding de 16px (`p-4`). Precisamos alinhar a imagem à esquerda, começando no mesmo ponto que o texto.
 
 ### Mudança
 
 **`src/pages/Home.tsx`** (linha 48):
-- Mudar posicionamento de `right-6` para `left-1/2 -translate-x-1/2` para centralizar a imagem no card, ou usar `right-10` para empurrá-la mais à esquerda.
-
-Dado que o texto está no canto inferior esquerdo, a melhor abordagem é centralizar a imagem horizontalmente no card:
+- Trocar `left-1/2 -translate-x-1/2` por `left-4` para alinhar a imagem com o padding do card onde o texto começa.
 
 ```tsx
-className="absolute top-2 left-1/2 -translate-x-1/2 h-20 object-contain pointer-events-none"
+className="absolute top-2 left-4 h-20 object-contain pointer-events-none"
 ```
 
-Isso centraliza a imagem no card, alinhando-a melhor com o texto abaixo.
+Um arquivo, uma linha alterada.
 
