@@ -129,7 +129,7 @@ export default function Home() {
               <img
                 src={evCar3d}
                 alt=""
-                className="absolute right-[-20px] -bottom-16 h-[275px] object-contain pointer-events-none"
+                className="absolute right-[-20px] -bottom-16 h-[275px] object-contain pointer-events-none drop-shadow-2xl"
               />
             </div>
           </div>
