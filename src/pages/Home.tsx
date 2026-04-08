@@ -88,10 +88,11 @@ export default function Home() {
               <Skeleton className="min-h-[200px] rounded-xl" />
             </div>
             <div className="space-y-3">
-              <Skeleton className="h-6 w-32 rounded-md" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-[140px] rounded-2xl" />
+            <Skeleton className="h-6 w-32 rounded-md" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
             </div>
           </div>
         ) : (
