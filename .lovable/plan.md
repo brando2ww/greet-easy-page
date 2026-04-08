@@ -1,16 +1,28 @@
 
 
-## Mapa em escala de cinza
+## Cores apenas nos markers do mapa
 
-### Mudança
+### Problema atual
+A classe `grayscale` está aplicada no container inteiro do mapa, o que remove as cores de tudo — incluindo os markers dos carregadores e o ponto de localização do usuário.
 
-**`src/components/map/StationsMap.tsx`**: Alterar o estilo do mapa de `mapbox://styles/mapbox/streets-v12` para `mapbox://styles/mapbox/light-v11` e aplicar um filtro CSS `grayscale(100%)` no container do mapa para garantir que fique totalmente sem cores.
+### Solução
+Mover o filtro `grayscale` para afetar apenas o canvas do Mapbox (tiles/mapa base), mantendo os markers com suas cores originais. Isso será feito separando as camadas:
 
-### Detalhes técnicos
-- Trocar o style do Mapbox para `light-v11` (mais neutro)
-- Adicionar classe CSS `grayscale` (Tailwind) no `div` do mapa para remover todas as cores
-- Os markers dos carregadores continuarão coloridos pois ficam em camada separada
+**`src/components/map/StationsMap.tsx`**:
+- Remover `grayscale` do `div` do mapa
+- Aplicar o grayscale via CSS apenas no canvas do Mapbox usando um seletor `.mapboxgl-canvas` no index.css
 
-### Arquivo editado
+**`src/index.css`**:
+- Adicionar regra CSS:
+```css
+.mapboxgl-canvas {
+  filter: grayscale(100%);
+}
+```
+
+Isso garante que apenas os tiles do mapa fiquem cinza, enquanto os markers (carregadores coloridos e ponto azul de localização) mantêm suas cores.
+
+### Arquivos editados
 - `src/components/map/StationsMap.tsx`
+- `src/index.css`
 
