@@ -1,23 +1,35 @@
-// Register Service Worker
-if ('serviceWorker' in navigator) {
+const isPreviewOrDev =
+  location.hostname.includes('lovableproject.com') ||
+  location.hostname.includes('lovable.app') ||
+  location.hostname === 'localhost' ||
+  location.hostname === '127.0.0.1';
+
+if (isPreviewOrDev && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister());
+  });
+
+  if (window.caches) {
+    caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+  }
+}
+
+if (!isPreviewOrDev && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
         console.log('SW registered: ', registration);
 
-        // Check for updates periodically
         setInterval(() => {
           registration.update();
-        }, 60000); // Check every minute
+        }, 60000);
 
-        // Listen for updates
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
-          
-          newWorker.addEventListener('statechange', () => {
+
+          newWorker?.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New service worker available
               if (confirm('Nova versão disponível! Deseja atualizar?')) {
                 newWorker.postMessage({ type: 'SKIP_WAITING' });
                 window.location.reload();
@@ -32,26 +44,19 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Handle install prompt
 let deferredPrompt;
 
 window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevent the mini-infobar from appearing on mobile
   e.preventDefault();
-  // Stash the event so it can be triggered later
   deferredPrompt = e;
-  
-  // Dispatch custom event for app to listen to
   window.dispatchEvent(new CustomEvent('pwa-installable', { detail: { prompt: e } }));
 });
 
-// Listen for app installed
 window.addEventListener('appinstalled', () => {
   console.log('PWA was installed');
   deferredPrompt = null;
 });
 
-// Export prompt function for use in components
 window.showInstallPrompt = async () => {
   if (!deferredPrompt) {
     return false;
@@ -59,7 +64,6 @@ window.showInstallPrompt = async () => {
 
   deferredPrompt.prompt();
   const { outcome } = await deferredPrompt.userChoice;
-  
   deferredPrompt = null;
   return outcome === 'accepted';
 };
