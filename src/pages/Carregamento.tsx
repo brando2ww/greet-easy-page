@@ -319,7 +319,7 @@ export default function Carregamento() {
         <AlertDialogContent className="bg-white border-gray-200 text-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>Parar Carregamento?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogDescription className="text-gray-500">
               Tem certeza que deseja encerrar esta sessão de carregamento? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
