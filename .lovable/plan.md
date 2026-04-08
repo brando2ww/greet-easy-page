@@ -1,12 +1,13 @@
 
 
-## Corrigir hover do botão de filtros
-
-### Problema
-O botão usa `variant="outline"`, que aplica `hover:text-accent-foreground` (branco no dark mode). O `hover:bg-background/90` neutraliza o fundo, mas não a cor do texto.
+## Botão de localização: fundo escuro, ícone branco, circular e maior
 
 ### Mudança
 
-**`src/pages/Estacoes.tsx`** (linha 74):
-- Adicionar `hover:text-current` à className do botão para manter a cor do ícone no hover.
+**`src/components/map/StationsMap.tsx`** (linha 224-231):
+- Alterar classes do `Button`: fundo escuro (`bg-gray-900`), hover escuro (`hover:bg-gray-800`), texto branco (`text-white`), totalmente circular (`rounded-full`), tamanho maior (`h-14 w-14`)
+- Aumentar o ícone: `h-6 w-6`
+
+### Arquivo editado
+- `src/components/map/StationsMap.tsx`
 
