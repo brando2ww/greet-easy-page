@@ -71,7 +71,7 @@ export default function Estacoes() {
           size="icon"
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className={`h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full hover:bg-background/90 ${showFilters ? 'text-primary' : ''}`}
+          className={`h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full hover:bg-background/90 hover:text-current ${showFilters ? 'text-primary' : ''}`}
         >
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
