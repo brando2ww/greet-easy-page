@@ -44,8 +44,8 @@ export default function Home() {
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-bold text-foreground">Hey! {firstName}</p>
-          <p className="text-xs text-muted-foreground">Ready to have a ride today?</p>
+          <p className="text-sm font-bold text-foreground">Olá, {firstName}!</p>
+          <p className="text-xs text-muted-foreground">Pronto para carregar hoje?</p>
         </div>
       </div>
       <Button variant="outline" size="icon" className="relative rounded-full">
