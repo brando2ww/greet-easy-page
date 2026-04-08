@@ -1,13 +1,12 @@
 
 
-## Mais arredondamento e menos margem superior na barra de pesquisa
+## Remover filtros da página de Estações
 
 ### Mudanças
 
 **`src/pages/Estacoes.tsx`**:
-- Alterar `top-16` para `top-10` nos controles flutuantes, reduzindo a margem superior
-- Alterar `rounded-2xl` para `rounded-full` no Input, no botão de filtros e nos badges de filtro para máximo arredondamento
-
-### Arquivo editado
-- `src/pages/Estacoes.tsx`
+- Remover o estado `activeFilters` e a função `toggleFilter`
+- Remover o array `filterChips`
+- Remover o bloco de badges/chips de filtro do `floatingControls` (linhas ~103-119)
+- Simplificar o `filteredChargers` para não depender de filtros de status
 
