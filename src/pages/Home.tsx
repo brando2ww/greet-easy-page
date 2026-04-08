@@ -48,7 +48,7 @@ export default function Home() {
           <p className="text-xs text-muted-foreground">Pronto para carregar hoje?</p>
         </div>
       </div>
-      <Button variant="ghost" size="icon" <Button variant="ghost" size="icon" className="relative rounded-full bg-foreground hover:bg-foreground text-white hover:text-white">>
+      <Button variant="ghost" size="icon" className="relative rounded-full bg-foreground hover:bg-foreground text-white hover:text-white">
         <Bell size={18} strokeWidth={2} />
         <Badge className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 text-[10px] flex items-center justify-center">
           3
