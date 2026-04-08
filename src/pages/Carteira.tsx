@@ -109,7 +109,7 @@ const Carteira = () => {
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case "deposit":
-        return <ArrowDownCircle className="w-5 h-5 text-green-500" />;
+        return <ArrowDownCircle className="w-5 h-5 text-primary" />;
       case "withdrawal":
         return <ArrowUpCircle className="w-5 h-5 text-red-500" />;
       case "charge":
@@ -122,7 +122,7 @@ const Carteira = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge variant="default" className="bg-green-500 text-white text-xs">{t("wallet.statusCompleted")}</Badge>;
+        return <Badge variant="default" className="bg-primary text-white text-xs">{t("wallet.statusCompleted")}</Badge>;
       case "pending":
         return <Badge variant="secondary" className="text-xs">{t("wallet.statusPending")}</Badge>;
       case "failed":
@@ -167,7 +167,7 @@ const Carteira = () => {
                 {/* Add Balance Drawer */}
                 <Drawer open={addOpen} onOpenChange={setAddOpen}>
                   <DrawerTrigger asChild>
-                    <Button className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white">
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       <Plus className="w-4 h-4" />
                       {t("wallet.addBalance")}
                     </Button>
@@ -206,7 +206,7 @@ const Carteira = () => {
                       </div>
                       <p className="text-xs text-muted-foreground">{t("wallet.amountRange")}</p>
                       <Button
-                        className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                         disabled={!amount || isProcessing}
                         onClick={() => handleAddBalance(parseFloat(amount))}
                       >
@@ -272,7 +272,7 @@ const Carteira = () => {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold font-montserrat">{t("wallet.paymentMethods")}</h3>
           <div className="flex items-center gap-3 py-4 border-b">
-            <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
               <WalletCardIcon className="w-7 h-7" fill="white" />
             </div>
             <span className="text-sm font-medium">{t("wallet.walletBalance")}</span>
@@ -312,7 +312,7 @@ const Carteira = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm font-semibold ${tx.type === "deposit" ? "text-green-500" : "text-destructive"}`}>
+                    <span className={`text-sm font-semibold ${tx.type === "deposit" ? "text-primary" : "text-destructive"}`}>
                       {tx.type === "deposit" ? "+" : "-"}{formatCurrency(tx.amount)}
                     </span>
                     {getStatusBadge(tx.status)}

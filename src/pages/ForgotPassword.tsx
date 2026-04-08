@@ -69,7 +69,7 @@ const ForgotPassword = () => {
 
         {sent ? (
           <div className="text-center space-y-4">
-            <CheckCircle className="w-16 h-16 text-green-400 mx-auto" />
+            <CheckCircle className="w-16 h-16 text-primary mx-auto" />
             <h1 className="text-white text-2xl font-bold">{t("auth.forgotPassword.sentTitle")}</h1>
             <p className="text-white/60 text-sm">{t("auth.forgotPassword.sentDescription")}</p>
             <Button

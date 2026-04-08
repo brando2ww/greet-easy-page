@@ -18,7 +18,7 @@ export const ChargingHistorySheet = ({ open, onOpenChange }: ChargingHistoryShee
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
-        return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Concluída</Badge>;
+        return <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Concluída</Badge>;
       case "in_progress":
         return <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">Em andamento</Badge>;
       default:
@@ -92,7 +92,7 @@ export const ChargingHistorySheet = ({ open, onOpenChange }: ChargingHistoryShee
                       <div className="flex items-center justify-between pt-2 border-t">
                         {session.energyConsumed && (
                           <div className="flex items-center gap-1.5 text-sm">
-                            <Battery className="w-4 h-4 text-green-600" />
+                            <Battery className="w-4 h-4 text-primary" />
                             <span className="font-medium">{session.energyConsumed.toFixed(2)} kWh</span>
                           </div>
                         )}

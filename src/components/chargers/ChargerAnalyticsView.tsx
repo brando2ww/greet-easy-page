@@ -78,14 +78,14 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
     <div className="space-y-6">
       {/* Top Performers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+        <Card className="p-6 backdrop-blur-sm bg-background/95 border-primary/20">
           <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="h-5 w-5 text-green-600" />
+            <DollarSign className="h-5 w-5 text-primary" />
             <h3 className="font-bold text-lg">Top 3 - Receita (7 dias)</h3>
           </div>
           <div className="space-y-3">
             {topByRevenue.map((charger, index) => (
-              <div key={charger.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div key={charger.id} className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`
                     flex items-center justify-center h-8 w-8 rounded-full font-bold
@@ -97,20 +97,20 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
                   </div>
                   <span className="font-medium">{charger.name}</span>
                 </div>
-                <span className="font-bold text-green-600">R$ {charger.revenue.toFixed(2)}</span>
+                <span className="font-bold text-primary">R$ {charger.revenue.toFixed(2)}</span>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+        <Card className="p-6 backdrop-blur-sm bg-background/95 border-primary/20">
           <div className="flex items-center gap-2 mb-4">
-            <Zap className="h-5 w-5 text-green-600" />
+            <Zap className="h-5 w-5 text-primary" />
             <h3 className="font-bold text-lg">Top 3 - Sessões (7 dias)</h3>
           </div>
           <div className="space-y-3">
             {topBySessions.map((charger, index) => (
-              <div key={charger.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div key={charger.id} className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={`
                     flex items-center justify-center h-8 w-8 rounded-full font-bold
@@ -122,7 +122,7 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
                   </div>
                   <span className="font-medium">{charger.name}</span>
                 </div>
-                <span className="font-bold text-green-600">{charger.sessions} sessões</span>
+                <span className="font-bold text-primary">{charger.sessions} sessões</span>
               </div>
             ))}
           </div>
@@ -132,7 +132,7 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
       {/* Gráficos comparativos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Receita por carregador */}
-        <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+        <Card className="p-6 backdrop-blur-sm bg-background/95 border-primary/20">
           <h3 className="font-bold text-lg mb-4">Receita por Carregador (7 dias)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={analyticsData}>
@@ -142,18 +142,18 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                  border: '1px solid #86efac',
+                  border: '1px solid #bfd13b',
                   borderRadius: '8px' 
                 }}
                 formatter={(value: number) => [`R$ ${value.toFixed(2)}`, 'Receita']}
               />
-              <Bar dataKey="revenue" fill="#22c55e" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="revenue" fill="#bfd13b" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
 
         {/* Sessões por carregador */}
-        <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+        <Card className="p-6 backdrop-blur-sm bg-background/95 border-primary/20">
           <h3 className="font-bold text-lg mb-4">Sessões por Carregador (7 dias)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={analyticsData}>
@@ -163,18 +163,18 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                  border: '1px solid #86efac',
+                  border: '1px solid #bfd13b',
                   borderRadius: '8px' 
                 }}
                 formatter={(value: number) => [value, 'Sessões']}
               />
-              <Bar dataKey="sessions" fill="#86efac" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="sessions" fill="#bfd13b" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
 
         {/* Taxa de utilização */}
-        <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+        <Card className="p-6 backdrop-blur-sm bg-background/95 border-primary/20">
           <h3 className="font-bold text-lg mb-4">Taxa de Utilização (%)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={analyticsData}>
@@ -184,7 +184,7 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                  border: '1px solid #86efac',
+                  border: '1px solid #bfd13b',
                   borderRadius: '8px' 
                 }}
                 formatter={(value: number) => [`${value.toFixed(1)}%`, 'Utilização']}
@@ -192,7 +192,7 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
               <Line 
                 type="monotone" 
                 dataKey="utilization" 
-                stroke="#22c55e" 
+                stroke="#bfd13b" 
                 strokeWidth={3}
                 dot={{ fill: '#22c55e', r: 5 }}
               />
@@ -201,7 +201,7 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
         </Card>
 
         {/* Energia total */}
-        <Card className="p-6 backdrop-blur-sm bg-background/95 border-green-200/50">
+        <Card className="p-6 backdrop-blur-sm bg-background/95 border-primary/20">
           <h3 className="font-bold text-lg mb-4">Energia Entregue (kWh)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={analyticsData}>
@@ -211,12 +211,12 @@ export const ChargerAnalyticsView = ({ chargers }: ChargerAnalyticsViewProps) =>
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                  border: '1px solid #86efac',
+                  border: '1px solid #bfd13b',
                   borderRadius: '8px' 
                 }}
                 formatter={(value: number) => [`${value.toFixed(2)} kWh`, 'Energia']}
               />
-              <Bar dataKey="energy" fill="#10b981" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="energy" fill="#bfd13b" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

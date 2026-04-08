@@ -60,7 +60,7 @@ const CarteiraSucesso = () => {
           </>
         ) : success ? (
           <>
-            <CheckCircle className="w-16 h-16 mx-auto text-green-500" />
+            <CheckCircle className="w-16 h-16 mx-auto text-primary" />
             <h2 className="text-2xl font-bold">{t("wallet.paymentSuccess")}</h2>
             <p className="text-muted-foreground">{t("wallet.paymentSuccessDescription")}</p>
             <Button onClick={() => navigate("/carteira")} className="w-full">

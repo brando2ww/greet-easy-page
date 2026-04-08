@@ -401,7 +401,7 @@ const Carregadores = () => {
       mobileHeader={
         <div className="flex items-center justify-between p-4">
           <h1 className="text-xl font-bold">Carregadores</h1>
-          <Button onClick={handleAddNew} size="sm" className="bg-green-500 hover:bg-green-600 h-9 gap-1.5">
+          <Button onClick={handleAddNew} size="sm" className="bg-primary hover:bg-primary/90 h-9 gap-1.5">
             <Plus className="h-4 w-4" />
             <span className="text-xs">Novo</span>
           </Button>
@@ -413,14 +413,14 @@ const Carregadores = () => {
         {/* Header Desktop */}
         <div className="hidden md:flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
               Carregadores
             </h1>
             <p className="text-muted-foreground mt-1">
               Gerencie os carregadores da rede
             </p>
           </div>
-          <Button onClick={handleAddNew} className="gap-2 bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transition-all">
+          <Button onClick={handleAddNew} className="gap-2 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all">
             <Plus className="h-5 w-5" />
             Adicionar Carregador
           </Button>
@@ -448,13 +448,13 @@ const Carregadores = () => {
         {/* Conteúdo baseado na vista */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-muted-foreground">Carregando carregadores...</p>
           </div>
         ) : filteredChargers.length === 0 ? (
-          <div className="text-center py-16 md:py-20 backdrop-blur-sm bg-background/95 border border-green-200/50 rounded-lg">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Plus className="h-8 w-8 md:h-10 md:w-10 text-green-500" />
+          <div className="text-center py-16 md:py-20 backdrop-blur-sm bg-background/95 border border-primary/20/50 rounded-lg">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Plus className="h-8 w-8 md:h-10 md:w-10 text-primary" />
             </div>
             <h3 className="text-lg md:text-xl font-semibold mb-2">
               {searchQuery || statusFilter !== "all" ? "Nenhum resultado" : "Nenhum carregador"}
@@ -472,7 +472,7 @@ const Carregadores = () => {
                   setSearchQuery("");
                   setStatusFilter("all");
                 }}
-                className="border-green-200"
+                className="border-primary/20"
               >
                 Limpar filtros
               </Button>
@@ -480,7 +480,7 @@ const Carregadores = () => {
               <Button
                 onClick={handleAddNew}
                 size="sm"
-                className="bg-green-500 hover:bg-green-600"
+                className="bg-primary hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4 mr-1.5" />
                 Adicionar carregador
@@ -540,13 +540,13 @@ const Carregadores = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Seção 1: Informações Básicas */}
-              <Card className="border-green-200 bg-green-50/50">
+              <Card className="border-primary/20 bg-primary/5">
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <Info className="h-4 w-4 text-green-600" />
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Info className="h-4 w-4 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-green-900">Informações Básicas</h3>
+                    <h3 className="font-semibold text-primary">Informações Básicas</h3>
                   </div>
                   
                   <FormField
@@ -725,13 +725,13 @@ const Carregadores = () => {
                                   setAddressFilled(false);
                                 }}
                                 onBlur={handleCEPBlur}
-                                className={addressFilled ? "border-green-500" : ""}
+                                className={addressFilled ? "border-primary" : ""}
                               />
                               {isLoadingAddress && (
                                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-purple-600" />
                               )}
                               {addressFilled && !isLoadingAddress && (
-                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-600" />
+                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                               )}
                             </div>
                           </FormControl>
@@ -771,7 +771,7 @@ const Carregadores = () => {
                             {...field} 
                             placeholder="Será preenchido ao buscar o CEP" 
                             disabled={!addressFilled && !field.value}
-                            className={addressFilled ? "border-green-500" : ""}
+                            className={addressFilled ? "border-primary" : ""}
                           />
                         </FormControl>
                         <FormMessage />
@@ -786,7 +786,7 @@ const Carregadores = () => {
                       <MapPin className="h-4 w-4" />
                       <span>Coordenadas GPS (preenchidas automaticamente)</span>
                       {isLoadingCoordinates && <Badge variant="outline" className="text-xs">Buscando...</Badge>}
-                      {coordinatesFilled && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                      {coordinatesFilled && <CheckCircle2 className="h-4 w-4 text-primary" />}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -803,7 +803,7 @@ const Carregadores = () => {
                                   type="number" 
                                   step="any" 
                                   placeholder="-23.550520"
-                                  className={coordinatesFilled ? "border-green-500 text-xs" : "text-xs"}
+                                  className={coordinatesFilled ? "border-primary text-xs" : "text-xs"}
                                 />
                               </div>
                             </FormControl>
@@ -825,7 +825,7 @@ const Carregadores = () => {
                                   type="number" 
                                   step="any" 
                                   placeholder="-46.633308"
-                                  className={coordinatesFilled ? "border-green-500 text-xs" : "text-xs"}
+                                  className={coordinatesFilled ? "border-primary text-xs" : "text-xs"}
                                 />
                               </div>
                             </FormControl>
@@ -854,7 +854,7 @@ const Carregadores = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
                   {(createMutation.isPending || updateMutation.isPending) && (

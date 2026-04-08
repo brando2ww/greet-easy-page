@@ -111,11 +111,11 @@ export default function Configuracoes() {
 
           {/* App Instalado - Show only if running standalone */}
           {isStandalone && (
-            <Card className="border-green-500/50 bg-green-500/5">
+            <Card className="border-primary/50 bg-primary/5">
               <CardContent className="p-4 flex items-center gap-3">
-                <Check className="w-5 h-5 text-green-600" />
+                <Check className="w-5 h-5 text-primary" />
                 <div className="flex-1">
-                  <p className="font-medium text-green-600">App Instalado</p>
+                  <p className="font-medium text-primary">App Instalado</p>
                   <p className="text-sm text-muted-foreground">Funcionando em modo nativo</p>
                 </div>
               </CardContent>
