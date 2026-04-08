@@ -23,6 +23,7 @@ interface TransactionRow {
   stop_reason: string | null;
   id_tag: string | null;
   vehicle_info: string | null;
+  soc: number | null;
   chargers?: { name: string; location: string };
 }
 
