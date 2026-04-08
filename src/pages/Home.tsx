@@ -6,8 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useChargingHistory } from "@/hooks/useChargingHistory";
 import { Card } from "@/components/ui/card";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
-import evChargerBg from "@/assets/ev-charger-bg.png";
 import chargerStation from "@/assets/charger-station.png";
+import evCarIcon from "@/assets/ev-car-icon.png";
 import { format } from "date-fns";
 
 const actionCards = [
@@ -43,9 +43,9 @@ export default function Home() {
                   )}
                   {card.key === "startCharging" && (
                     <img
-                      src={evChargerBg}
+                      src={evCarIcon}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+                      className="absolute top-8 left-4 h-20 object-contain pointer-events-none"
                     />
                   )}
                   <div className="flex flex-col h-full justify-end gap-3 relative z-10">
