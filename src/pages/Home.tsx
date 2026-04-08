@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
 import chargerStation from "@/assets/charger-station.png";
 import evCarIcon from "@/assets/ev-car-icon.png";
+import evCar3d from "@/assets/ev-car-3d.png";
 import { format } from "date-fns";
 
 const actionCards = [
