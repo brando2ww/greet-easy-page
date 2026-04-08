@@ -52,6 +52,6 @@ export const BottomNavigation = () => {
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
 };
