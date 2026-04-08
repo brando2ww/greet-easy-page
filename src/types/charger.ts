@@ -36,6 +36,7 @@ export interface Transaction {
   stopReason: string | null;
   idTag: string | null;
   vehicleInfo: string | null;
+  soc: number | null;
   charger?: {
     name: string;
     location: string;
@@ -102,6 +103,7 @@ export interface ChargingSessionRow {
   stop_reason: string | null;
   id_tag: string | null;
   vehicle_info: string | null;
+  soc: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -146,6 +148,7 @@ export function mapSessionRowToTransaction(row: ChargingSessionRow & { chargers?
     stopReason: row.stop_reason,
     idTag: row.id_tag,
     vehicleInfo: row.vehicle_info,
+    soc: row.soc,
     charger: row.chargers ? {
       name: row.chargers.name,
       location: row.chargers.location,

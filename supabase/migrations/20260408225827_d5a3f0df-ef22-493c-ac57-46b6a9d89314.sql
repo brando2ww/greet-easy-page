@@ -1,0 +1,1 @@
+ALTER TABLE public.charging_sessions ADD COLUMN soc integer;

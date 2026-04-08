@@ -179,24 +179,18 @@ export default function Carregamento() {
     }
   };
 
-  // Circular progress
+  // Circular progress based on real SoC
   const radius = 120;
   const circumference = 2 * Math.PI * radius;
-  const [progressAngle, setProgressAngle] = useState(0);
 
-  useEffect(() => {
-    if (isCompleted) { setProgressAngle(1); return; }
-    const id = setInterval(() => {
-      setProgressAngle((p) => (p >= 0.88 ? 0.55 : p + 0.003));
-    }, 100);
-    return () => clearInterval(id);
-  }, [isCompleted]);
-
+  const hasSoC = session?.soc !== null && session?.soc !== undefined;
+  const socValue = session?.soc ?? 0;
+  const progressAngle = isCompleted ? 1 : (hasSoC ? socValue / 100 : 0);
   const offset = circumference - progressAngle * circumference;
 
   // Battery segments
   const totalSegments = 10;
-  const filledSegments = isCompleted ? totalSegments : Math.max(1, Math.floor(progressAngle * totalSegments));
+  const filledSegments = isCompleted ? totalSegments : (hasSoC ? Math.max(socValue > 0 ? 1 : 0, Math.floor(progressAngle * totalSegments)) : 0);
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-gray-950 text-white">
@@ -268,7 +262,7 @@ export default function Carregamento() {
         <div className="w-full max-w-xs mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500 uppercase tracking-wide">Progresso</span>
-            <span className="text-xs font-semibold text-primary">{Math.round(progressAngle * 100)}%</span>
+            <span className="text-xs font-semibold text-primary">{hasSoC ? `${socValue}%` : '--%'}</span>
           </div>
           <div className="flex gap-1">
             {Array.from({ length: totalSegments }).map((_, i) => (

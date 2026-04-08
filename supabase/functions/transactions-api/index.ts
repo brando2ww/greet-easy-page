@@ -23,6 +23,7 @@ interface TransactionRow {
   stop_reason: string | null;
   id_tag: string | null;
   vehicle_info: string | null;
+  soc: number | null;
   chargers?: { name: string; location: string };
 }
 
@@ -41,6 +42,7 @@ interface Transaction {
   stopReason: string | null;
   idTag: string | null;
   vehicleInfo: string | null;
+  soc: number | null;
   charger?: { name: string; location: string };
 }
 
@@ -60,6 +62,7 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
     stopReason: row.stop_reason,
     idTag: row.id_tag,
     vehicleInfo: row.vehicle_info,
+    soc: row.soc,
     charger: row.chargers ? {
       name: row.chargers.name,
       location: row.chargers.location,
