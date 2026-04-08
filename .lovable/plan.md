@@ -1,13 +1,22 @@
 
 
-## Deixar ícones inativos do menu em branco
+## Botão de notificação escuro
 
 ### Mudança
 
-**`src/components/BottomNavigation.tsx`** (linha ~42):
+**`src/pages/Home.tsx`** (linha ~51):
 
-De: `text-background/60`
-Para: `text-white`
+Trocar o `Button` de `variant="outline"` para estilo com fundo escuro (`bg-foreground`), ícone branco (`text-white`), sem efeito hover:
 
-Isso faz os ícones inativos ficarem brancos puros, com melhor contraste sobre o fundo escuro.
+De:
+```tsx
+<Button variant="outline" size="icon" className="relative rounded-full">
+```
+
+Para:
+```tsx
+<Button variant="ghost" size="icon" className="relative rounded-full bg-foreground hover:bg-foreground text-white">
+```
+
+E garantir que o ícone `Bell` use `text-white` (ou herde do pai).
 
