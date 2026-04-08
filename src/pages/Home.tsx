@@ -45,7 +45,7 @@ export default function Home() {
                     <img
                       src={chargerStation}
                       alt=""
-                      className="absolute top-2 right-6 h-20 object-contain pointer-events-none"
+                      className="absolute top-2 left-1/2 -translate-x-1/2 h-20 object-contain pointer-events-none"
                     />
                   )}
                   <div className="flex flex-col h-full justify-end gap-3 relative z-10">
