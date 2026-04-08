@@ -1,22 +1,20 @@
 
 
-## Botão de notificação escuro
+## Remover efeito hover do botão de notificação
 
 ### Mudança
 
 **`src/pages/Home.tsx`** (linha ~51):
 
-Trocar o `Button` de `variant="outline"` para estilo com fundo escuro (`bg-foreground`), ícone branco (`text-white`), sem efeito hover:
+Adicionar `hover:text-white` ao className do Button para evitar que o variant ghost sobreponha a cor do texto no hover:
 
 De:
 ```tsx
-<Button variant="outline" size="icon" className="relative rounded-full">
+className="relative rounded-full bg-foreground hover:bg-foreground text-white"
 ```
 
 Para:
 ```tsx
-<Button variant="ghost" size="icon" className="relative rounded-full bg-foreground hover:bg-foreground text-white">
+className="relative rounded-full bg-foreground hover:bg-foreground text-white hover:text-white"
 ```
-
-E garantir que o ícone `Bell` use `text-white` (ou herde do pai).
 
