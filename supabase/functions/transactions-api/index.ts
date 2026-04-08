@@ -42,6 +42,7 @@ interface Transaction {
   stopReason: string | null;
   idTag: string | null;
   vehicleInfo: string | null;
+  soc: number | null;
   charger?: { name: string; location: string };
 }
 
