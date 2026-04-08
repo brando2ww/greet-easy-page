@@ -70,7 +70,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: 'mapbox://styles/mapbox/light-v11',
         center: initialCenter,
         zoom: initialZoom,
       });
@@ -218,7 +218,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="absolute inset-0" />
+      <div ref={mapContainer} className="absolute inset-0 grayscale" />
       
       {userLocation && (
         <Button
