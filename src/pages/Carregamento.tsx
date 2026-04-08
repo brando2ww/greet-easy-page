@@ -196,8 +196,8 @@ export default function Carregamento() {
     <div className="flex flex-col min-h-[100dvh] bg-white text-gray-900">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-2">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
-          <ArrowLeft className="h-5 w-5 text-white" />
+        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <ArrowLeft className="h-5 w-5 text-gray-900" />
         </button>
         <div className="flex-1 text-center">
           <p className="text-sm text-gray-400">Veículo Elétrico</p>
