@@ -96,7 +96,7 @@ export default function Estacoes() {
             className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full"
           />
         </div>
-        <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-2xl">
+        <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full">
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
       </div>
