@@ -72,15 +72,19 @@ export default function Estacoes() {
   }, [chargers, searchQuery, activeFilters]);
 
   const header = (
-    <div className="p-4 space-y-3">
-      <div className="flex justify-start mb-2">
+    <div className="p-4">
+      <div className="flex justify-start">
         <img 
           src={speedLogo} 
           alt="Speed Charger" 
           className="h-10"
         />
       </div>
-      
+    </div>
+  );
+
+  const floatingControls = (
+    <div className="absolute top-4 left-4 right-4 z-10 space-y-2">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -89,10 +93,10 @@ export default function Estacoes() {
             placeholder={t('stations.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11"
+            className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0"
           />
         </div>
-        <Button size="icon" variant="outline" className="h-11 w-11">
+        <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0">
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
       </div>
@@ -103,10 +107,10 @@ export default function Estacoes() {
             key={chip.key}
             variant={activeFilters.includes(chip.key) ? "default" : "outline"}
             className={cn(
-              "cursor-pointer whitespace-nowrap px-4 py-2 transition-colors",
+              "cursor-pointer whitespace-nowrap px-4 py-2 transition-colors shadow-md",
               activeFilters.includes(chip.key) 
                 ? "bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground border-primary" 
-                : "hover:bg-primary/5 dark:hover:bg-primary/10"
+                : "bg-background/90 backdrop-blur-sm hover:bg-primary/5 dark:hover:bg-primary/10"
             )}
             onClick={() => toggleFilter(chip.key)}
           >
@@ -118,8 +122,8 @@ export default function Estacoes() {
   );
 
   return (
-    <ResponsiveLayout mobileHeader={header} showBottomNav>
-      <div className="h-full flex flex-col">
+    <ResponsiveLayout mobileHeader={header} showBottomNav noBorder>
+      <div className="h-full flex flex-col relative">
         {isLoading ? (
           <div className="h-full flex items-center justify-center flex-col gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -156,7 +160,10 @@ export default function Estacoes() {
             </div>
           </div>
         ) : (
-          <StationsMap chargers={filteredChargers} mapboxToken={MAPBOX_TOKEN} />
+          <>
+            {floatingControls}
+            <StationsMap chargers={filteredChargers} mapboxToken={MAPBOX_TOKEN} />
+          </>
         )}
       </div>
     </ResponsiveLayout>
