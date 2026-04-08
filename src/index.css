@@ -222,7 +222,7 @@ All colors MUST be HSL.
 
 /* Grayscale only map tiles, keep markers colored */
 .mapboxgl-canvas {
-  filter: grayscale(100%);
+  filter: grayscale(30%) contrast(1.1);
 }
 
 /* Hide Mapbox branding */
