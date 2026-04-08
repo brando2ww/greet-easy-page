@@ -606,6 +606,7 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
     const meterValues = payload.meterValue || [];
     const rows = [];
     let latestEnergyWh = null;
+    let latestSoC = null;
 
     for (const mv of meterValues) {
       const ts = mv.timestamp || new Date().toISOString();
@@ -614,7 +615,7 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
       for (const sv of sampledValues) {
         const measurand = sv.measurand || 'Energy.Active.Import.Register';
         const value = parseFloat(sv.value);
-        const unit = sv.unit || (measurand.includes('Energy') ? 'Wh' : measurand.includes('Power') ? 'W' : measurand.includes('Voltage') ? 'V' : measurand.includes('Current') ? 'A' : '');
+        const unit = sv.unit || (measurand.includes('Energy') ? 'Wh' : measurand.includes('Power') ? 'W' : measurand.includes('Voltage') ? 'V' : measurand.includes('Current') ? 'A' : measurand === 'SoC' ? 'Percent' : '');
         const phase = sv.phase || null;
         const context = sv.context || 'Sample.Periodic';
 
@@ -635,6 +636,11 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
         // Track latest energy reading
         if (measurand === 'Energy.Active.Import.Register') {
           latestEnergyWh = value;
+        }
+
+        // Track latest SoC reading
+        if (measurand === 'SoC') {
+          latestSoC = Math.round(value);
         }
       }
     }
