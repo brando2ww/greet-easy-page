@@ -33,7 +33,7 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3">
           {actionCards.map((card) => (
               <Link key={card.key} to={card.path}>
-                <Card <Card className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]">>
+                <Card className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]">
                   {card.key === "stations" && (
                     <img
                       src={chargerStation}
