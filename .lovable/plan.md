@@ -1,20 +1,20 @@
 
 
-## Adicionar mais margem acima do header
+## Traduzir textos do header para português
 
 ### Mudança
 
-**`src/components/MobileLayout.tsx`** (linha 15):
-- Adicionar `pt-6` (24px) ao header fixo para dar mais espaço acima do conteúdo do header (safe area / respiro visual)
+**`src/pages/Home.tsx`** (linhas 47-48):
 
 De:
 ```tsx
-"fixed top-0 left-0 right-0 bg-background z-40 max-w-md mx-auto"
-```
-Para:
-```tsx
-"fixed top-0 left-0 right-0 bg-background z-40 max-w-md mx-auto pt-6"
+<p className="text-sm font-bold text-foreground">Hey! {firstName}</p>
+<p className="text-xs text-muted-foreground">Ready to have a ride today?</p>
 ```
 
-- Ajustar o padding-top do `<main>` de `pt-14` para `pt-20` para compensar o header mais alto (linha 24)
+Para:
+```tsx
+<p className="text-sm font-bold text-foreground">Olá, {firstName}!</p>
+<p className="text-xs text-muted-foreground">Pronto para carregar hoje?</p>
+```
 
