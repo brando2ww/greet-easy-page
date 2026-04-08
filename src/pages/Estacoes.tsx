@@ -84,7 +84,7 @@ export default function Estacoes() {
   );
 
   const floatingControls = (
-    <div className="absolute top-16 left-4 right-4 z-10 space-y-2">
+    <div className="absolute top-10 left-4 right-4 z-10 space-y-2">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -93,10 +93,10 @@ export default function Estacoes() {
             placeholder={t('stations.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-2xl"
+            className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full"
           />
         </div>
-        <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-2xl">
+        <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full">
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
       </div>
