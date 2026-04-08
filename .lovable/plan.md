@@ -1,23 +1,26 @@
 
 
-## Remover retângulo branco e fazer o mapa ocupar toda a tela
+## Mudar fundo do bottom menu para branco
 
-### Problema
-O `MobileLayout` aplica `pb-16` no `<main>`, criando um espaço branco fixo embaixo. Como o menu agora é flutuante (`bottom-6`, `rounded-full`), esse padding não é mais necessário — ele cria o retângulo branco visível atrás do menu.
+### Mudanca
 
-### Mudança
-
-**`src/components/MobileLayout.tsx`** (linha 23):
-- Remover `pb-16` da classe do `<main>`, permitindo que o conteúdo (mapa) ocupe 100% da altura disponível.
+**`src/components/BottomNavigation.tsx`** (linha 19):
+- Trocar `bg-foreground` por `bg-background` no container do menu
+- Ajustar cor dos icones inativos de `text-background/60` para `text-foreground/40`
 
 De:
 ```tsx
-"flex-1 flex flex-col pb-16 overflow-y-auto scrollbar-hide"
+<div className="flex items-center gap-2 bg-foreground rounded-full px-4 py-3 shadow-lg">
 ```
 Para:
 ```tsx
-"flex-1 flex flex-col overflow-y-auto scrollbar-hide"
+<div className="flex items-center gap-2 bg-background rounded-full px-4 py-3 shadow-lg border border-border/50">
 ```
 
-O menu flutuante já está posicionado com `fixed bottom-6` e `z-50`, então não precisa de espaço reservado.
+E icones inativos (linha 42):
+```tsx
+: "text-foreground/40"
+```
+
+Adiciona `border border-border/50` para dar definicao visual ao menu branco sobre fundos claros.
 
