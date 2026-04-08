@@ -1,29 +1,21 @@
 
 
-## Inverter imagens entre os cards da Home
+## Adicionar animação de clique nos cards da Home
 
 ### Mudança
 
-**`src/pages/Home.tsx`** (linhas 37-49):
-- Card **"stations"**: trocar `evChargerBg` (fundo) por `chargerStation` com classes `absolute top-8 left-4 h-20 object-contain pointer-events-none`
-- Card **"startCharging"**: trocar `chargerStation` por `evChargerBg` com classes `absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none`
+**`src/pages/Home.tsx`** (linha 36, classe do `Card`):
+- Adicionar classes de transição e efeito `active:scale-95` para feedback visual ao toque/clique.
 
+De:
 ```tsx
-{card.key === "stations" && (
-  <img
-    src={chargerStation}
-    alt=""
-    className="absolute top-8 left-4 h-20 object-contain pointer-events-none"
-  />
-)}
-{card.key === "startCharging" && (
-  <img
-    src={evChargerBg}
-    alt=""
-    className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
-  />
-)}
+className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden"
 ```
 
-Um arquivo, troca direta de `src` e `className` entre os dois blocos.
+Para:
+```tsx
+className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]"
+```
+
+Isso aplica um leve "encolhimento" ao pressionar o card, dando feedback tátil imediato. Um arquivo, uma linha.
 
