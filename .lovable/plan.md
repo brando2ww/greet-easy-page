@@ -1,10 +1,19 @@
 
 
-## Posicionar carro mais para baixo no banner
+## Adicionar sombra no carro do banner
 
 ### Mudança
 
-**`src/pages/Home.tsx`**: Alterar o posicionamento vertical da imagem do carro de `-bottom-4` para `-bottom-16`, fazendo com que o carro ultrapasse mais o limite inferior do card.
+**`src/pages/Home.tsx`**: Adicionar `drop-shadow-2xl` (ou filtro CSS customizado) na classe da imagem do carro para criar efeito de sombra.
+
+Alterar a classe de:
+```
+className="absolute right-[-20px] -bottom-16 h-[275px] object-contain pointer-events-none"
+```
+Para:
+```
+className="absolute right-[-20px] -bottom-16 h-[275px] object-contain pointer-events-none drop-shadow-2xl"
+```
 
 ### Arquivo editado
 - `src/pages/Home.tsx`
