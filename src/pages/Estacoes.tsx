@@ -72,12 +72,12 @@ export default function Estacoes() {
   }, [chargers, searchQuery, activeFilters]);
 
   const header = (
-    <div className="px-4 pt-1 pb-1">
+    <div className="px-4 pt-1 pb-1 overflow-hidden">
       <div className="flex justify-center">
         <img 
           src={speedLogo} 
           alt="Speed Charger" 
-          className="h-6"
+          className="h-12"
         />
       </div>
     </div>
