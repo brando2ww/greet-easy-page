@@ -1,34 +1,46 @@
 
 
-## Redesign da página de Carregamento — estilo visual com carro e círculo
+## Progresso real baseado em dados OCPP
 
-### Visão geral
-Redesenhar completamente a página `Carregamento.tsx` para seguir o estilo da imagem de referência: fundo escuro, imagem do carro vista de cima no centro, círculo animado de progresso ao redor do carro, e stats abaixo.
+### Problema atual
+O círculo de progresso na página de carregamento usa uma animação falsa (`p + 0.003` a cada 100ms). Os dados reais de SoC (State of Charge / nível da bateria) já chegam via OCPP MeterValues e são salvos na tabela `meter_values`, mas **não são propagados** para a sessão nem para o frontend.
 
-### Layout (de cima para baixo)
+### Como os dados chegam hoje
+1. O carregador envia `MeterValues` via OCPP com `sampledValue` contendo measurands como `Energy.Active.Import.Register`, `SoC`, `Voltage`, `Current.Import`, etc.
+2. O servidor OCPP (`ocpp-standalone-server/server.js`) salva tudo na tabela `meter_values` e atualiza `energy_consumed` e `cost` na sessão — **mas ignora o SoC**
+3. O frontend consulta a sessão a cada 10s, mas não recebe SoC
 
-1. **Header** — fundo escuro (`bg-gray-950`), nome do veículo (marca/modelo do primeiro veículo cadastrado ou "Veículo Elétrico"), botão voltar
-2. **Imagem do carro** — usar a imagem `Design_sem_nome_20.png` (carro visto de cima), copiar para `src/assets/car-top-view.png`, centralizada
-3. **Círculo de progresso SVG** — anel circular ao redor do carro com gradiente verde (primary), animado conforme o progresso da sessão
-4. **Timer + status** — tempo decorrido e label de status abaixo do círculo
-5. **Barra de segmentos** — representação visual tipo "battery blocks" com porcentagem
-6. **Stats row** — 3 colunas: Tempo estimado, Preço (custo), Energia (kWh) com ícones
-7. **Botão "Stop Charging"** — verde (primary), arredondado, na parte inferior
-8. **Bottom Navigation** — mantém o existente
+### Solução em 3 camadas
 
-### Mudanças técnicas
+#### 1. Servidor OCPP — propagar SoC para a sessão
+**`ocpp-standalone-server/server.js`** (função `handleMeterValues`):
+- Capturar o measurand `SoC` além do `Energy.Active.Import.Register`
+- Atualizar o campo `soc` na tabela `charging_sessions` junto com `energy_consumed` e `cost`
 
-**Novo arquivo de asset**: Copiar `user-uploads://Design_sem_nome_20.png` para `src/assets/car-top-view.png`
+#### 2. Banco de dados — adicionar coluna `soc`
+**Nova migração SQL**:
+- Adicionar coluna `soc integer` à tabela `charging_sessions` (porcentagem 0-100, nullable)
 
-**`src/pages/Carregamento.tsx`**: Reescrever o JSX completamente:
-- Fundo escuro (`bg-gray-950 text-white`)
-- SVG circular com `stroke-dasharray` / `stroke-dashoffset` para o anel de progresso
-- Importar imagem do carro e centralizar dentro do círculo
-- Remover os Cards e chart (manter apenas dados essenciais: tempo, custo, energia)
-- Botão de parar com estilo verde (`bg-primary`) ao invés de destructive
-- Toda lógica de negócio (polling, timer, auto-stop, offline) permanece inalterada
+#### 3. Edge Function — retornar SoC na API
+**`supabase/functions/transactions-api/index.ts`**:
+- Incluir `soc` no select da sessão
+- Mapear para `soc` no objeto Transaction retornado
 
-### Arquivo editado
-- `src/assets/car-top-view.png` (novo)
-- `src/pages/Carregamento.tsx` (reescrita visual)
+#### 4. Frontend — usar SoC real no progresso
+**`src/types/charger.ts`**:
+- Adicionar `soc: number | null` aos tipos `Transaction`, `ChargingSessionRow` e mapper
+
+**`src/pages/Carregamento.tsx`**:
+- Substituir a animação falsa por `session?.soc ?? 0` (valor 0-100)
+- Converter para fração (0-1) para o `strokeDashoffset` do SVG
+- Mostrar porcentagem real no display
+- Manter animação suave com `transition-all duration-1000`
+- Fallback: se SoC for null (carregador não envia), usar progresso baseado em energia consumida vs capacidade estimada, ou exibir "--%" com animação de pulso
+
+### Arquivos editados
+- `ocpp-standalone-server/server.js`
+- Nova migração SQL (coluna `soc`)
+- `supabase/functions/transactions-api/index.ts`
+- `src/types/charger.ts`
+- `src/pages/Carregamento.tsx`
 
