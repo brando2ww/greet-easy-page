@@ -93,7 +93,7 @@ export default function Estacoes() {
             placeholder={t('stations.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0"
+            className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-2xl"
           />
         </div>
         <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0">
