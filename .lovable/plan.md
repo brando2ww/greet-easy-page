@@ -1,18 +1,11 @@
 
 
-## Reduzir altura do header pela metade
+## Aumentar logo 2x sem alterar header
 
-### Mudanças
+### Mudança
 
-**`src/pages/Estacoes.tsx`** (linha 75):
-- Reduzir padding: `px-4 pt-2 pb-4` → `px-4 pt-1 pb-1`
-- Reduzir logo: `h-10` → `h-6`
+**`src/pages/Estacoes.tsx`**: Alterar a classe do logo de `h-6` para `h-12`, mantendo o padding do container (`px-4 pt-1 pb-1`) inalterado. Adicionar `overflow-hidden` no container para garantir que o header não expanda.
 
-**`src/components/MobileLayout.tsx`**:
-- Reduzir safe area do header: `pt-6` → `pt-3` (linha 15)
-- Reduzir offset do conteúdo: `pt-20` → `pt-12` (linha 24)
-
-### Arquivos editados
+### Arquivo editado
 - `src/pages/Estacoes.tsx`
-- `src/components/MobileLayout.tsx`
 
