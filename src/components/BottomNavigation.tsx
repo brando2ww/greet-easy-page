@@ -39,7 +39,7 @@ export const BottomNavigation = () => {
                   "relative z-10 w-5 h-5 transition-colors duration-200",
                   isActive
                     ? "text-primary-foreground"
-                    : "text-background/60"
+                    : "text-foreground/40"
                 )}
                 strokeWidth={1.8}
               />
