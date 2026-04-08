@@ -1,20 +1,16 @@
 
 
-## Adicionar sombra no carro do banner
+## Mapa em escala de cinza
 
 ### Mudança
 
-**`src/pages/Home.tsx`**: Adicionar `drop-shadow-2xl` (ou filtro CSS customizado) na classe da imagem do carro para criar efeito de sombra.
+**`src/components/map/StationsMap.tsx`**: Alterar o estilo do mapa de `mapbox://styles/mapbox/streets-v12` para `mapbox://styles/mapbox/light-v11` e aplicar um filtro CSS `grayscale(100%)` no container do mapa para garantir que fique totalmente sem cores.
 
-Alterar a classe de:
-```
-className="absolute right-[-20px] -bottom-16 h-[275px] object-contain pointer-events-none"
-```
-Para:
-```
-className="absolute right-[-20px] -bottom-16 h-[275px] object-contain pointer-events-none drop-shadow-2xl"
-```
+### Detalhes técnicos
+- Trocar o style do Mapbox para `light-v11` (mais neutro)
+- Adicionar classe CSS `grayscale` (Tailwind) no `div` do mapa para remover todas as cores
+- Os markers dos carregadores continuarão coloridos pois ficam em camada separada
 
 ### Arquivo editado
-- `src/pages/Home.tsx`
+- `src/components/map/StationsMap.tsx`
 
