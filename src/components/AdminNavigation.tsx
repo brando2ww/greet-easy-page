@@ -47,12 +47,12 @@ export const AdminNavigation = () => {
             const isChargerItem = item.path === '/admin/carregadores';
             return <Link key={item.path} to={item.path} className={cn("flex flex-col items-center justify-center gap-1 min-w-[60px] py-2 px-1 group", isChargerItem ? "-mt-6" : "pb-2")}>
                   {isChargerItem ? <div className="relative z-10">
-                      <div className={cn("rounded-full bg-gradient-to-br from-green-300 to-lime-400 shadow-lg shadow-green-400/50 transition-all duration-300 w-16 h-16 flex items-center justify-center", "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-green-400/60", isActive && "scale-110 shadow-xl shadow-green-400/60")}>
+                      <div className={cn("rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/50 transition-all duration-300 w-16 h-16 flex items-center justify-center", "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary/60", isActive && "scale-110 shadow-xl shadow-primary/60")}>
                         <Icon strokeWidth={1.5} className="w-8 h-8 text-white" />
                       </div>
-                    </div> : <Icon strokeWidth={1.0} className={cn("transition-all duration-300 ease-out", isActive ? "w-7 h-7 scale-110 text-green-600" : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-green-600")} />}
+                    </div> : <Icon strokeWidth={1.0} className={cn("transition-all duration-300 ease-out", isActive ? "w-7 h-7 scale-110 text-primary" : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-primary")} />}
                   
-                  <span className={cn("text-[10px] transition-all duration-300 text-center leading-tight", isActive ? "font-semibold text-green-600" : "text-muted-foreground group-hover:text-green-600")}>
+                  <span className={cn("text-[10px] transition-all duration-300 text-center leading-tight", isActive ? "font-semibold text-primary" : "text-muted-foreground group-hover:text-primary")}>
                     {item.label}
                   </span>
                 </Link>;

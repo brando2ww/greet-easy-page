@@ -168,7 +168,7 @@ export default function Veiculos() {
     setEditingVehicle(null);
   };
   const VehicleTypeCards = () => <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-green-500 hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'hybrid' ? '!border-primary border-3 shadow-lg hover:!border-primary/80' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('hybrid')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
@@ -181,10 +181,10 @@ export default function Veiculos() {
               }} />
               </div>
               <div className="p-1 rounded-md" style={{
-              backgroundColor: 'rgba(34, 197, 94, 0.2)'
+              backgroundColor: 'rgba(191, 209, 59, 0.2)'
             }}>
                 <Leaf className="w-3 h-3" style={{
-                color: '#22C55E'
+                color: '#bfd13b'
               }} />
               </div>
             </div>
@@ -195,16 +195,16 @@ export default function Veiculos() {
         </CardContent>
       </Card>
 
-      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? '!border-green-600 border-3 shadow-lg hover:!border-green-700' : 'hover:border-green-500 hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
+      <Card className={`cursor-pointer border-2 transition-all duration-200 hover:scale-105 ${selectedType === 'electric' ? '!border-primary border-3 shadow-lg hover:!border-primary/80' : 'hover:border-primary hover:shadow-lg'}`} onClick={() => handleVehicleTypeSelect('electric')}>
         <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
           <div className="relative inline-block">
             <CarIcon className="w-20 h-20 text-foreground" />
             <div className="absolute -bottom-1 -right-1 flex gap-1">
               <div className="p-1 rounded-md" style={{
-              backgroundColor: 'rgba(34, 197, 94, 0.2)'
+              backgroundColor: 'rgba(191, 209, 59, 0.2)'
             }}>
                 <Zap className="w-3 h-3" style={{
-                color: '#22C55E'
+                color: '#bfd13b'
               }} />
               </div>
             </div>
@@ -224,32 +224,32 @@ export default function Veiculos() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <Label htmlFor="brand">Marca do veículo</Label>
-          <Input id="brand" {...register('brand')} placeholder="Tesla, BYD, Nissan..." className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          <Input id="brand" {...register('brand')} placeholder="Tesla, BYD, Nissan..." className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.brand && <p className="text-sm text-destructive mt-1">{errors.brand.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="model">Modelo do veículo</Label>
-          <Input id="model" {...register('model')} placeholder="Model 3, Dolphin, Leaf..." className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          <Input id="model" {...register('model')} placeholder="Model 3, Dolphin, Leaf..." className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="year">Ano do veículo</Label>
-          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} placeholder="2024" min="2015" max="2025" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} placeholder="2024" min="2015" max="2025" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.year && <p className="text-sm text-destructive mt-1">{errors.year.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="color">Cor do veículo</Label>
-          <Input id="color" {...register('color')} placeholder="Branco, Preto, Vermelho..." className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          <Input id="color" {...register('color')} placeholder="Branco, Preto, Vermelho..." className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.color && <p className="text-sm text-destructive mt-1">{errors.color.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="plug_type">Plugs ou adaptadores</Label>
           <Select onValueChange={value => setValue('plug_type', value)}>
-            <SelectTrigger className="focus-visible:!border-green-600 focus-visible:!ring-green-600">
+            <SelectTrigger className="focus-visible:!border-primary focus-visible:!ring-primary">
               <SelectValue placeholder="Selecionar ⊕" />
             </SelectTrigger>
             <SelectContent>
@@ -267,7 +267,7 @@ export default function Veiculos() {
             <Label htmlFor="plate">Placa (opcional)</Label>
             <Info className="w-4 h-4 text-muted-foreground" />
           </div>
-          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} className="focus-visible:!border-green-600 focus-visible:!ring-green-600" onChange={e => {
+          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} className="focus-visible:!border-primary focus-visible:!ring-primary" onChange={e => {
           const value = e.target.value.toUpperCase();
           e.target.value = value;
           setValue('plate', value);
@@ -280,7 +280,7 @@ export default function Veiculos() {
 
         <div>
           <Label htmlFor="chassi">Chassi do veículo</Label>
-          <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+          <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           <p className="text-xs text-muted-foreground mt-1">Para receber benefícios exclusivos dos parceiros Speed Charger</p>
           {errors.chassi && <p className="text-sm text-destructive mt-1">{errors.chassi.message}</p>}
         </div>
@@ -289,7 +289,7 @@ export default function Veiculos() {
           <Label htmlFor="battery_capacity">Capacidade da bateria em kWh</Label>
           <Input id="battery_capacity" type="number" {...register('battery_capacity', {
           valueAsNumber: true
-        })} placeholder="75" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+        })} placeholder="75" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.battery_capacity && <p className="text-sm text-destructive mt-1">{errors.battery_capacity.message}</p>}
         </div>
 
@@ -297,7 +297,7 @@ export default function Veiculos() {
           <Label htmlFor="autonomy">Autonomia em km</Label>
           <Input id="autonomy" type="number" {...register('autonomy', {
           valueAsNumber: true
-        })} placeholder="Informe a autonomia em km" className="focus-visible:!border-green-600 focus-visible:!ring-green-600" />
+        })} placeholder="Informe a autonomia em km" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.autonomy && <p className="text-sm text-destructive mt-1">{errors.autonomy.message}</p>}
         </div>
 
@@ -305,7 +305,7 @@ export default function Veiculos() {
           <Button type="button" variant="outline" className="flex-1 hover:bg-destructive hover:text-destructive-foreground" onClick={handleFormCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white" disabled={isAddingVehicle || isUpdatingVehicle}>
+          <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isAddingVehicle || isUpdatingVehicle}>
             {editingVehicle 
               ? (isUpdatingVehicle ? 'Atualizando...' : 'Atualizar veículo')
               : (isAddingVehicle ? 'Adicionando...' : 'Adicionar veículo')
@@ -376,12 +376,12 @@ export default function Veiculos() {
         {vehicles.map(vehicle => <Card key={vehicle.id} className="overflow-hidden">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
-                <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   {vehicle.brand}
                 </Badge>
                 <Button 
                   variant="link" 
-                  className="h-auto p-0 text-green-600 hover:text-green-700 font-semibold"
+                  className="h-auto p-0 text-primary hover:text-primary/80 font-semibold"
                   onClick={() => handleEditVehicle(vehicle)}
                 >
                   Editar
@@ -389,8 +389,8 @@ export default function Veiculos() {
               </div>
               
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CarIcon className="w-8 h-8 text-green-600" />
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CarIcon className="w-8 h-8 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-base truncate">{vehicle.model}</h3>
@@ -418,7 +418,7 @@ export default function Veiculos() {
 
         {/* Add New Vehicle Button */}
         <Button 
-          className="w-full h-14 bg-green-600 hover:bg-green-700 text-white text-base font-semibold"
+          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold"
           onClick={() => setIsTypeDialogOpen(true)}
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -459,7 +459,7 @@ export default function Veiculos() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="hover:bg-green-600 hover:text-white">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel className="hover:bg-primary hover:text-primary-foreground">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => vehicleToDelete && handleDeleteVehicle(vehicleToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('common.delete')}
             </AlertDialogAction>

@@ -12,7 +12,7 @@ export default function Dicas() {
       icon: Battery,
       title: "Economize bateria",
       description: "Dicas para maximizar a autonomia do seu veículo elétrico",
-      color: "bg-green-500"
+      color: "bg-primary"
     },
     {
       id: 2,

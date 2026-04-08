@@ -42,7 +42,7 @@ interface ChargerListViewProps {
 }
 
 const statusConfig = {
-  available: { label: "Disponível", class: "bg-green-100 text-green-700" },
+  available: { label: "Disponível", class: "bg-primary/10 text-primary" },
   in_use: { label: "Em Uso", class: "bg-blue-100 text-blue-700" },
   maintenance: { label: "Manutenção", class: "bg-yellow-100 text-yellow-700" },
   offline: { label: "Offline", class: "bg-red-100 text-red-700" },
@@ -63,7 +63,7 @@ const ChargerRow = ({
   const config = statusConfig[charger.status as keyof typeof statusConfig] || statusConfig.available;
 
   return (
-    <TableRow className="hover:bg-green-50/50 transition-colors">
+    <TableRow className="hover:bg-primary/5 transition-colors">
       <TableCell>
         <div>
           <div className="font-semibold">{charger.name}</div>
@@ -115,7 +115,7 @@ const ChargerRow = ({
               variant="ghost"
               size="icon"
               onClick={() => onViewQRCode(charger)}
-              className="h-8 w-8 hover:bg-green-100 hover:text-green-600"
+              className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
               title="Ver QR Code"
             >
               <QrCode className="h-4 w-4" />
@@ -125,7 +125,7 @@ const ChargerRow = ({
             variant="ghost"
             size="icon"
             onClick={() => onEdit(charger)}
-            className="h-8 w-8 hover:bg-green-100 hover:text-green-600"
+            className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -145,10 +145,10 @@ const ChargerRow = ({
 
 export const ChargerListView = ({ chargers, onEdit, onDelete, onViewQRCode }: ChargerListViewProps) => {
   return (
-    <div className="rounded-lg border border-green-200/50 overflow-hidden backdrop-blur-sm bg-background/95">
+    <div className="rounded-lg border border-primary/20 overflow-hidden backdrop-blur-sm bg-background/95">
       <Table>
         <TableHeader>
-          <TableRow className="bg-green-50 hover:bg-green-50">
+          <TableRow className="bg-primary/5 hover:bg-primary/5">
             <TableHead className="font-bold">Carregador</TableHead>
             <TableHead className="font-bold">Status</TableHead>
             <TableHead className="font-bold text-center">Potência</TableHead>

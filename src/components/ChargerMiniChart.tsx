@@ -7,7 +7,7 @@ interface ChargerMiniChartProps {
   color?: string;
 }
 
-export const ChargerMiniChart = ({ data, dataKey, color = '#86efac' }: ChargerMiniChartProps) => {
+export const ChargerMiniChart = ({ data, dataKey, color = '#bfd13b' }: ChargerMiniChartProps) => {
   if (!data || data.length === 0) {
     return (
       <div className="h-12 flex items-center justify-center text-xs opacity-50">

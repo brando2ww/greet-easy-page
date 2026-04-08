@@ -17,15 +17,15 @@ export const ChargersHeader = ({ stats, globalUtilization }: ChargersHeaderProps
       label: "Total",
       value: stats.total,
       icon: Activity,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      color: "text-primary",
+      bgColor: "bg-primary/5",
     },
     {
       label: "Disponíveis",
       value: stats.available,
       icon: Zap,
-      color: "text-green-500",
-      bgColor: "bg-green-50",
+      color: "text-primary",
+      bgColor: "bg-primary/5",
       pulse: true,
     },
     {
@@ -54,7 +54,7 @@ export const ChargersHeader = ({ stats, globalUtilization }: ChargersHeaderProps
           return (
             <Card
               key={metric.label}
-              className="min-w-[140px] md:min-w-0 p-3 md:p-4 backdrop-blur-sm bg-background/95 border-green-200/50"
+              className="min-w-[140px] md:min-w-0 p-3 md:p-4 backdrop-blur-sm bg-background/95 border-primary/20"
             >
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 md:p-2 rounded-lg ${metric.bgColor} ${metric.pulse ? 'animate-pulse' : ''}`}>
@@ -71,20 +71,20 @@ export const ChargersHeader = ({ stats, globalUtilization }: ChargersHeaderProps
       </div>
 
       {/* Barra de utilização global - compacta */}
-      <Card className="p-3 md:p-4 backdrop-blur-sm bg-background/95 border-green-200/50">
+      <Card className="p-3 md:p-4 backdrop-blur-sm bg-background/95 border-primary/20">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium">Utilização</span>
             <span className="font-bold text-sm">{globalUtilization.toFixed(0)}%</span>
           </div>
-          <div className="h-1.5 md:h-2 bg-green-50 rounded-full overflow-hidden">
+          <div className="h-1.5 md:h-2 bg-primary/5 rounded-full overflow-hidden">
             <div
               className={`h-full transition-all duration-500 rounded-full ${
                 globalUtilization > 80
                   ? 'bg-gradient-to-r from-yellow-400 to-red-500'
                   : globalUtilization > 50
-                  ? 'bg-gradient-to-r from-green-400 to-yellow-400'
-                  : 'bg-gradient-to-r from-green-400 to-green-500'
+                  ? 'bg-gradient-to-r from-primary to-yellow-400'
+                  : 'bg-gradient-to-r from-primary to-primary'
               }`}
               style={{ width: `${Math.min(globalUtilization, 100)}%` }}
             />

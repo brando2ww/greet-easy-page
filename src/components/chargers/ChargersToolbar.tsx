@@ -18,7 +18,7 @@ export const ChargersToolbar = ({
 }: ChargersToolbarProps) => {
   const statusOptions = [
     { value: "all", label: "Todos", color: "bg-gray-100 text-gray-700 hover:bg-gray-200" },
-    { value: "available", label: "Disponível", color: "bg-green-100 text-green-700 hover:bg-green-200" },
+    { value: "available", label: "Disponível", color: "bg-primary/10 text-primary hover:bg-primary/20" },
     { value: "in_use", label: "Em Uso", color: "bg-blue-100 text-blue-700 hover:bg-blue-200" },
     { value: "maintenance", label: "Manutenção", color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200" },
     { value: "offline", label: "Offline", color: "bg-red-100 text-red-700 hover:bg-red-200" },
@@ -33,7 +33,7 @@ export const ChargersToolbar = ({
           placeholder="Buscar..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 md:pl-10 h-9 md:h-10 text-sm backdrop-blur-sm bg-background/95 border-green-200/50"
+          className="pl-9 md:pl-10 h-9 md:h-10 text-sm backdrop-blur-sm bg-background/95 border-primary/20"
         />
       </div>
 
@@ -49,7 +49,7 @@ export const ChargersToolbar = ({
             variant={statusFilter === option.value ? "default" : "outline"}
             className={`cursor-pointer transition-all text-xs px-2 py-0.5 shrink-0 ${
               statusFilter === option.value
-                ? "bg-green-500 text-white"
+                ? "bg-primary text-primary-foreground"
                 : option.color
             }`}
             onClick={() => onStatusFilterChange(option.value)}

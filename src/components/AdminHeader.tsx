@@ -37,16 +37,16 @@ export const AdminHeader = () => {
                     "px-4 py-2 rounded-md transition-all duration-300",
                     isChargerItem ? "flex flex-col items-center gap-1" : "flex items-center gap-2",
                     !isChargerItem && (isActive
-                      ? "bg-green-50 text-green-600"
-                      : "text-muted-foreground hover:bg-green-50 hover:text-green-600")
+                      ? "bg-primary/5 text-primary"
+                      : "text-muted-foreground hover:bg-primary/5 hover:text-primary")
                   )}
                 >
                   {isChargerItem ? (
                     <>
                       <div className={cn(
-                        "rounded-full bg-gradient-to-br from-green-300 to-lime-400 shadow-lg shadow-green-400/50 transition-all duration-300 w-12 h-12 flex items-center justify-center",
-                        "hover:scale-125 hover:shadow-2xl hover:shadow-green-400/70",
-                        isActive && "scale-110 shadow-2xl shadow-green-400/70"
+                        "rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/50 transition-all duration-300 w-12 h-12 flex items-center justify-center",
+                        "hover:scale-125 hover:shadow-2xl hover:shadow-primary/70",
+                        isActive && "scale-110 shadow-2xl shadow-primary/70"
                       )}>
                         <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />
                       </div>

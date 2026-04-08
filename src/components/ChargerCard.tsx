@@ -41,7 +41,7 @@ export const ChargerCard = ({ charger, onEdit, onDelete }: ChargerCardProps) => 
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      available: { label: t('admin.available'), className: 'bg-green-500/10 text-green-600 border-green-500/20' },
+      available: { label: t('admin.available'), className: 'bg-primary/10 text-primary border-primary/20' },
       in_use: { label: t('admin.inUse'), className: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
       maintenance: { label: t('admin.maintenance'), className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20' },
       offline: { label: t('admin.offline'), className: 'bg-red-500/10 text-red-600 border-red-500/20' },
@@ -53,7 +53,7 @@ export const ChargerCard = ({ charger, onEdit, onDelete }: ChargerCardProps) => 
   const getChargerCardStyle = (status: string) => {
     if (status === 'available') {
       return {
-        card: 'bg-gradient-to-br from-green-300 to-lime-400 border-transparent shadow-xl hover:shadow-2xl hover:scale-[1.02]',
+        card: 'bg-gradient-to-br from-primary to-primary/80 border-transparent shadow-xl hover:shadow-2xl hover:scale-[1.02]',
         text: 'text-white',
         iconColor: 'text-white',
         badge: 'bg-white/20 text-white border-white/30',
@@ -62,7 +62,7 @@ export const ChargerCard = ({ charger, onEdit, onDelete }: ChargerCardProps) => 
     return {
       card: 'bg-white border-gray-200 shadow-md hover:shadow-lg',
       text: 'text-foreground',
-      iconColor: 'text-green-500 opacity-60',
+      iconColor: 'text-primary opacity-60',
       badge: 'bg-gray-100 text-gray-700 border-gray-200',
     };
   };
@@ -157,7 +157,7 @@ export const ChargerCard = ({ charger, onEdit, onDelete }: ChargerCardProps) => 
                   <ChargerMiniChart 
                     data={stats.dailyData} 
                     dataKey="sessions"
-                    color={charger.status === 'available' ? '#ffffff' : '#86efac'}
+                    color={charger.status === 'available' ? '#ffffff' : '#bfd13b'}
                   />
                 </div>
                 <div className={`bg-white/10 ${charger.status !== 'available' && 'bg-gray-50'} rounded-xl p-3`}>
@@ -165,7 +165,7 @@ export const ChargerCard = ({ charger, onEdit, onDelete }: ChargerCardProps) => 
                   <ChargerMiniChart 
                     data={stats.dailyData} 
                     dataKey="revenue"
-                    color={charger.status === 'available' ? '#ffffff' : '#22c55e'}
+                    color={charger.status === 'available' ? '#ffffff' : '#bfd13b'}
                   />
                 </div>
               </div>

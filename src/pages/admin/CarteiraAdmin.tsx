@@ -94,8 +94,8 @@ const CarteiraAdmin = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-50">
-                  <DollarSign className="w-5 h-5 text-green-600" />
+                <div className="p-2 rounded-lg bg-primary/5">
+                  <DollarSign className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{t('adminWallet.totalRevenue')}</p>
@@ -155,7 +155,7 @@ const CarteiraAdmin = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">Stripe</span>
                   {stripeConfig ? (
-                    <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                    <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
                       <CheckCircle className="w-3 h-3 mr-1" /> {t('adminWallet.linked')}
                     </Badge>
                   ) : (
@@ -196,7 +196,7 @@ const CarteiraAdmin = () => {
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">Mercado Pago</span>
                   {mpConfig ? (
-                    <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                    <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
                       <CheckCircle className="w-3 h-3 mr-1" /> {t('adminWallet.linked')}
                     </Badge>
                   ) : (
@@ -254,7 +254,7 @@ const CarteiraAdmin = () => {
                       <p className="text-xs text-muted-foreground">{formatDate(s.startedAt)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-green-600">{formatCurrency(Number(s.cost))}</p>
+                      <p className="text-sm font-semibold text-primary">{formatCurrency(Number(s.cost))}</p>
                       {s.energyConsumed && (
                         <p className="text-xs text-muted-foreground">{Number(s.energyConsumed).toFixed(2)} kWh</p>
                       )}

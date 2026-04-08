@@ -179,7 +179,7 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
       }
 
       const markerColor = 
-        charger.status === 'available' ? '#22c55e' :
+        charger.status === 'available' ? '#bfd13b' :
         charger.status === 'in_use' ? '#ef4444' :
         '#6b7280';
 

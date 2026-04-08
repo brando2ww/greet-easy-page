@@ -46,7 +46,7 @@ const navigationApps = [
     id: 'google' as NavigationApp,
     name: 'Google Maps',
     icon: GoogleMapsIcon,
-    color: 'bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900',
+    color: 'bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20',
   },
   {
     id: 'apple' as NavigationApp,

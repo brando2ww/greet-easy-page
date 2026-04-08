@@ -38,9 +38,9 @@ interface ChargerCardModernProps {
 const statusConfig = {
   available: {
     label: "Disponível",
-    color: "bg-green-500",
-    borderColor: "border-l-green-500",
-    badgeClass: "bg-green-100 text-green-700",
+    color: "bg-primary",
+    borderColor: "border-l-primary",
+    badgeClass: "bg-primary/10 text-primary",
   },
   in_use: {
     label: "Em Uso",
@@ -115,7 +115,7 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: C
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+                    className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                     onClick={() => onViewQRCode(charger)}
                   >
                     <QrCode className="h-3.5 w-3.5" />
@@ -124,7 +124,7 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: C
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+                  className="h-8 w-8 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                   onClick={() => onEdit(charger)}
                 >
                   <Edit className="h-3.5 w-3.5" />
@@ -149,26 +149,26 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: C
               </div>
             ) : stats ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
-                  <div className="text-lg md:text-2xl font-bold text-green-600">
+                <div className="bg-primary/5 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-primary">
                     {stats.utilizationRate.toFixed(0)}%
                   </div>
                   <div className="text-[10px] md:text-xs text-muted-foreground">Utilização</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
-                  <div className="text-lg md:text-2xl font-bold text-green-600">
+                <div className="bg-primary/5 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-primary">
                     R$ {stats.totalRevenue.toFixed(0)}
                   </div>
                   <div className="text-[10px] md:text-xs text-muted-foreground">Receita (7d)</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
-                  <div className="text-lg md:text-2xl font-bold text-green-600">
+                <div className="bg-primary/5 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-primary">
                     {stats.sessionsCount}
                   </div>
                   <div className="text-[10px] md:text-xs text-muted-foreground">Sessões</div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-2 md:p-3 text-center">
-                  <div className="text-lg md:text-2xl font-bold text-green-600">
+                <div className="bg-primary/5 rounded-lg p-2 md:p-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-primary">
                     {stats.totalEnergy.toFixed(0)}
                   </div>
                   <div className="text-[10px] md:text-xs text-muted-foreground">kWh</div>
@@ -180,13 +180,13 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: C
           {/* Coluna de gráficos - escondida no mobile */}
           {!isLoading && stats && (
             <div className="hidden md:block lg:w-64 space-y-2">
-              <div className="bg-green-50/50 rounded-lg p-3">
+              <div className="bg-primary/5/50 rounded-lg p-3">
                 <div className="text-xs text-muted-foreground mb-1">Sessões (7 dias)</div>
-                <ChargerMiniChart data={stats.dailyData} dataKey="sessions" color="#22c55e" />
+                <ChargerMiniChart data={stats.dailyData} dataKey="sessions" color="#bfd13b" />
               </div>
-              <div className="bg-green-50/50 rounded-lg p-3">
+              <div className="bg-primary/5/50 rounded-lg p-3">
                 <div className="text-xs text-muted-foreground mb-1">Receita (7 dias)</div>
-                <ChargerMiniChart data={stats.dailyData} dataKey="revenue" color="#86efac" />
+                <ChargerMiniChart data={stats.dailyData} dataKey="revenue" color="#bfd13b" />
               </div>
             </div>
           )}
@@ -198,7 +198,7 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: C
                 variant="outline"
                 size="icon"
                 onClick={() => onViewQRCode(charger)}
-                className="hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+                className="hover:bg-primary/10 hover:text-primary hover:border-primary/30"
               >
                 <QrCode className="h-4 w-4" />
               </Button>
@@ -207,7 +207,7 @@ export const ChargerCardModern = ({ charger, onEdit, onDelete, onViewQRCode }: C
               variant="outline"
               size="icon"
               onClick={() => onEdit(charger)}
-              className="hover:bg-green-100 hover:text-green-600 hover:border-green-300"
+              className="hover:bg-primary/10 hover:text-primary hover:border-primary/30"
             >
               <Edit className="h-4 w-4" />
             </Button>

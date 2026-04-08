@@ -105,8 +105,8 @@ export default function Estacoes() {
             className={cn(
               "cursor-pointer whitespace-nowrap px-4 py-2 transition-colors",
               activeFilters.includes(chip.key) 
-                ? "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white border-green-500" 
-                : "hover:bg-green-50 dark:hover:bg-green-950"
+                ? "bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground border-primary" 
+                : "hover:bg-primary/5 dark:hover:bg-primary/10"
             )}
             onClick={() => toggleFilter(chip.key)}
           >

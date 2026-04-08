@@ -92,7 +92,7 @@ export const ChargerDetailsModal = ({
   };
 
   const statusColor = 
-    charger.status === 'available' ? 'bg-green-500' :
+    charger.status === 'available' ? 'bg-primary' :
     charger.status === 'in_use' ? 'bg-red-500' :
     'bg-gray-500';
 
@@ -198,8 +198,8 @@ export const ChargerDetailsModal = ({
 
                 {/* Price */}
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-green-600">R$</span>
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">R$</span>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">
@@ -222,7 +222,7 @@ export const ChargerDetailsModal = ({
                 e.stopPropagation();
                 handleNavigate();
               }}
-              className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white"
+              className="w-full mt-4 bg-primary hover:bg-primary/90 text-white"
               size="lg"
             >
               <Navigation className="h-5 w-5 mr-2" />
