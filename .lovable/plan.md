@@ -1,33 +1,42 @@
 
 
-## Skeleton de carregamento na Home
+## Skeleton completo na Home (logo + cards + sessões)
 
-### O que muda
+### Problema
+O logo e as imagens aparecem com delay perceptível porque o skeleton só cobre os action cards, mas o logo e o header ficam visíveis sem conteúdo durante o carregamento.
 
-Adicionar estado de loading para os action cards e o bottom menu, mostrando placeholders com animação de skeleton enquanto o conteúdo carrega.
+### Solução
+Envolver **todo o conteúdo** da Home num estado `ready`, mostrando skeletons para o logo, os cards e as sessões recentes enquanto as imagens carregam.
 
-### Mudanças técnicas
+### Mudanças em `src/pages/Home.tsx`
 
-**`src/pages/Home.tsx`**:
-- Usar `isLoading` do `useChargingHistory` e um estado `imagesLoaded` para controlar quando as imagens dos cards terminaram de carregar
-- Adicionar um estado `useState` que começa `false` e vira `true` após um pequeno delay ou quando as imagens carregarem (usando `onLoad` nos `<img>`)
-- Quando `!ready`, mostrar skeletons no lugar dos action cards (2 retângulos com `Skeleton` de 200px de altura) e na seção de sessões recentes
-- Passar uma prop `loading` ou usar o mesmo estado para controlar a exibição do bottom nav
+Quando `!ready`, mostrar:
+1. **Skeleton do logo** — `<Skeleton className="h-10 w-40 rounded-md" />` no lugar do `<img>`
+2. **Skeletons dos cards** — já existem (manter)
+3. **Skeletons das sessões** — já existem via `isLoading` (manter)
 
-**`src/components/BottomNavigation.tsx`**:
-- Adicionar uma animação de entrada (fade-in) para que o menu apareça suavemente ao carregar, usando `motion.nav` com `initial={{ opacity: 0 }}` e `animate={{ opacity: 1 }}`
+Quando `ready`, mostrar tudo com `animate-fade-in`.
 
-**Skeleton dos cards** (dentro de Home.tsx):
+Estrutura simplificada:
 ```
-<div className="grid grid-cols-2 gap-3">
-  <Skeleton className="min-h-[200px] rounded-lg" />
-  <Skeleton className="min-h-[200px] rounded-lg" />
-</div>
+{!ready ? (
+  <div className="space-y-6">
+    <Skeleton className="h-10 w-40 rounded-md" />          {/* logo */}
+    <div className="grid grid-cols-2 gap-3">
+      <Skeleton className="min-h-[200px] rounded-xl" />    {/* card 1 */}
+      <Skeleton className="min-h-[200px] rounded-xl" />    {/* card 2 */}
+    </div>
+  </div>
+) : (
+  <div className="space-y-6 animate-fade-in">
+    <img src={speedLogo} ... />
+    {/* action cards */}
+  </div>
+)}
 ```
 
-**Lógica**: Usar um `useState(false)` + `useEffect` com um curto timeout (~300ms) ou preload das imagens para alternar para o conteúdo real, garantindo transição suave.
+As imagens hidden de preload permanecem **fora** do condicional para garantir que `onLoad` dispare.
 
-### Arquivos editados
-- `src/pages/Home.tsx` — adicionar skeleton state e componentes
-- `src/components/BottomNavigation.tsx` — adicionar animação de entrada fade-in
+### Arquivo editado
+- `src/pages/Home.tsx`
 
