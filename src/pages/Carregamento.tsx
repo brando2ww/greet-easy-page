@@ -277,12 +277,7 @@ export default function Carregamento() {
         </div>
 
         {/* Stats row */}
-        <div className="w-full max-w-xs grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-gray-100 rounded-2xl p-4 text-center">
-            <Clock className="h-5 w-5 text-gray-500 mx-auto mb-2" />
-            <p className="text-lg font-bold">{Math.floor(elapsed / 60)}</p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Minutos</p>
-          </div>
+        <div className="w-full max-w-xs grid grid-cols-2 gap-3 mb-8">
           <div className="bg-gray-100 rounded-2xl p-4 text-center">
             <DollarSign className="h-5 w-5 text-gray-500 mx-auto mb-2" />
             <p className="text-lg font-bold">{formatCurrency(estimatedCost)}</p>
