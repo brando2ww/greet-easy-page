@@ -1,18 +1,18 @@
 
 
-## Aumentar contraste do mapa — mais escuro
+## Mapa escuro e dessaturado como na referência
 
 ### Problema
-Mesmo com `grayscale(30%) contrast(1.1)`, o estilo `light-v11` do Mapbox continua muito claro para identificar cidades e vias.
+O filtro atual `grayscale(15%) contrast(1.15)` deixa o mapa quase totalmente colorido. A imagem de referência mostra um mapa completamente dessaturado (cinza) com bom contraste.
 
 ### Solução
-Duas mudanças combinadas:
 
-1. **`src/components/map/StationsMap.tsx`**: Trocar o estilo do mapa de `mapbox://styles/mapbox/light-v11` para `mapbox://styles/mapbox/streets-v12` — este estilo tem ruas, cidades e referências geográficas com muito mais destaque e cores mais definidas.
+**`src/index.css`** — alterar o filtro `.mapboxgl-canvas`:
+- De: `grayscale(15%) contrast(1.15)`
+- Para: `grayscale(100%) brightness(0.92) contrast(1.2)`
 
-2. **`src/index.css`**: Ajustar o filtro CSS para `grayscale(15%) contrast(1.15)` — menos dessaturação e mais contraste para manter legibilidade máxima.
+Isso remove todas as cores (como na referência), escurece levemente e aumenta o contraste para que ruas e nomes de cidades fiquem bem visíveis.
 
-### Arquivos editados
-- `src/components/map/StationsMap.tsx`
+### Arquivo editado
 - `src/index.css`
 
