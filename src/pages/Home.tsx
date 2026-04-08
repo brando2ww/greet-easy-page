@@ -41,6 +41,13 @@ export default function Home() {
                       className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
                     />
                   )}
+                  {card.key === "startCharging" && (
+                    <img
+                      src={chargerStation}
+                      alt=""
+                      className="absolute top-2 right-2 h-28 object-contain pointer-events-none"
+                    />
+                  )}
                   <div className="flex flex-col h-full justify-end gap-3 relative z-10">
                     <span className="font-semibold text-base text-foreground">
                       {t(`home.${card.key}`)}
