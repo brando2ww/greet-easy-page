@@ -220,6 +220,11 @@ All colors MUST be HSL.
   background-color: white !important;
 }
 
+/* Grayscale only map tiles, keep markers colored */
+.mapboxgl-canvas {
+  filter: grayscale(100%);
+}
+
 /* Hide Mapbox branding */
 .mapboxgl-ctrl-logo {
   display: none !important;
