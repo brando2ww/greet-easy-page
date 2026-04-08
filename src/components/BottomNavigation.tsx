@@ -15,7 +15,12 @@ export const BottomNavigation = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6">
+    <motion.nav
+      className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <div className="flex items-center gap-2 bg-foreground rounded-full px-4 py-3 shadow-lg border border-transparent">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -47,6 +52,6 @@ export const BottomNavigation = () => {
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
 };
