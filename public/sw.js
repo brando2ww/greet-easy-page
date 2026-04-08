@@ -64,7 +64,20 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle Google Fonts with dedicated cache
+  if (
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/@vite') ||
+    url.pathname.startsWith('/node_modules/.vite/') ||
+    url.pathname.includes('/.vite/') ||
+    url.pathname.endsWith('.tsx') ||
+    url.pathname.endsWith('.ts') ||
+    url.pathname.endsWith('.jsx') ||
+    url.pathname.endsWith('.js.map')
+  ) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
     event.respondWith(
       caches.open(FONT_CACHE).then((cache) => {
@@ -84,17 +97,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip other cross-origin requests
   if (url.origin !== location.origin) {
     return;
   }
 
-  // Network first for HTML pages
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone and cache successful responses
           if (response.ok) {
             const responseClone = response.clone();
             caches.open(RUNTIME_CACHE).then((cache) => {
@@ -105,14 +115,13 @@ self.addEventListener('fetch', (event) => {
         })
         .catch((error) => {
           console.log('[SW] Network failed for navigation, serving from cache:', error);
-          // Fallback to cache, then offline page
           return caches.match(request)
             .then((cachedResponse) => {
               if (cachedResponse) {
                 return cachedResponse;
               }
               return caches.match('/offline.html')
-                .then((offlinePage) => offlinePage || new Response('Offline', { 
+                .then((offlinePage) => offlinePage || new Response('Offline', {
                   status: 503,
                   statusText: 'Service Unavailable'
                 }));
@@ -122,28 +131,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for static assets
   event.respondWith(
     caches.open(RUNTIME_CACHE).then((cache) => {
       return cache.match(request).then((cachedResponse) => {
         const fetchPromise = fetch(request)
           .then((networkResponse) => {
-            if (networkResponse.ok) {
+            if (networkResponse.ok && request.method === 'GET') {
               cache.put(request, networkResponse.clone());
             }
             return networkResponse;
           })
-          .catch((error) => {
-            console.log('[SW] Network failed for asset:', request.url);
-            // If cached version exists, return it
+          .catch(() => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            // Return fallback image for failed images
             if (request.destination === 'image') {
               return caches.match('/fallback-image.png');
             }
-            // Return empty response for other failed requests
             return new Response('', { status: 503 });
           });
 
