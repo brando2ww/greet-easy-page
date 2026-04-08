@@ -193,7 +193,7 @@ export default function Carregamento() {
   const filledSegments = isCompleted ? totalSegments : (hasSoC ? Math.max(socValue > 0 ? 1 : 0, Math.floor(progressAngle * totalSegments)) : 0);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-gray-950 text-white">
+    <div className="flex flex-col min-h-[100dvh] bg-white text-gray-900">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-2">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
