@@ -1,83 +1,51 @@
-import { House, MapPin, Wallet, Car, User } from "lucide-react";
-import chargingIcon from "@/assets/charging-icon.png";
+import { House, MapPin, Zap, Wallet, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+
+const navItems = [
+  { icon: House, path: "/" },
+  { icon: MapPin, path: "/estacoes" },
+  { icon: Zap, path: "/iniciar-carga" },
+  { icon: Wallet, path: "/carteira" },
+  { icon: User, path: "/perfil" },
+];
 
 export const BottomNavigation = () => {
   const location = useLocation();
-  const { t } = useTranslation();
-
-  const navItems = [
-    { icon: House, label: t('navigation.home'), path: "/" },
-    { icon: MapPin, label: t('navigation.stations'), path: "/estacoes" },
-    { icon: null, label: t('navigation.chargingShort'), path: "/iniciar-carga" },
-    { icon: Wallet, label: t('navigation.wallet'), path: "/carteira" },
-    { icon: User, label: t('navigation.profile'), path: "/perfil" },
-  ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="relative max-w-md mx-auto">
-        <div className="relative bg-background/95 backdrop-blur-lg border-t border-border rounded-t-3xl">
-          <div className="flex justify-around items-center h-24 px-4 pb-8">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
-              const isCharging = item.path === "/iniciar-carga";
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 group relative",
-                    isCharging ? "-mt-6 w-16" : "py-2 px-1 min-w-[60px]"
-                  )}
-                >
-                  {isCharging ? (
-                    <>
-                      {/* Círculo animado para iniciar carga */}
-                      <div className="relative z-20">
-                        <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
-                          <img src={chargingIcon} alt="Iniciar Carga" className="h-8 w-8 object-contain" />
-                        </div>
-                      </div>
-                      
-                      {/* Label */}
-                      <span className="text-[10px] transition-all duration-300 text-center leading-tight mt-1 text-muted-foreground group-hover:text-foreground">
-                        {item.label}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      {/* Ícone normal */}
-                      <Icon
-                        strokeWidth={1.0}
-                        className={cn(
-                          "transition-all duration-300 ease-out",
-                          isActive
-                            ? "w-7 h-7 scale-110 text-foreground"
-                            : "w-6 h-6 text-muted-foreground group-hover:scale-105 group-hover:text-foreground"
-                        )} 
-                      />
-                      
-                      {/* Label */}
-                      <span className={cn(
-                        "text-[10px] transition-all duration-300 text-center leading-tight",
-                        isActive 
-                          ? "font-semibold text-foreground" 
-                          : "text-muted-foreground group-hover:text-foreground"
-                      )}>
-                        {item.label}
-                      </span>
-                    </>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+    <nav className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6">
+      <div className="flex items-center gap-2 bg-foreground rounded-full px-4 py-3 shadow-lg">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className="relative flex items-center justify-center w-12 h-12 rounded-full"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="absolute inset-0 bg-primary rounded-full"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                />
+              )}
+              <Icon
+                className={cn(
+                  "relative z-10 w-5 h-5 transition-colors duration-200",
+                  isActive
+                    ? "text-primary-foreground"
+                    : "text-background/60"
+                )}
+                strokeWidth={1.8}
+              />
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
