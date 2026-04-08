@@ -668,12 +668,22 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
         const consumed = (latestEnergyWh - meterStartWh) / 1000;
         const cost = consumed * (session.chargers?.price_per_kwh || 0.80);
 
+        const updateData = { energy_consumed: consumed, cost };
+        if (latestSoC !== null) updateData.soc = latestSoC;
+
         await supabase
           .from('charging_sessions')
-          .update({ energy_consumed: consumed, cost })
+          .update(updateData)
           .eq('id', sessionId);
 
-        console.log(`[MeterValues] Updated session ${sessionId}: ${consumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
+        console.log(`[MeterValues] Updated session ${sessionId}: ${consumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}${latestSoC !== null ? `, SoC: ${latestSoC}%` : ''}`);
+      } else if (latestSoC !== null && sessionId) {
+        // Update SoC even if no energy reading
+        await supabase
+          .from('charging_sessions')
+          .update({ soc: latestSoC })
+          .eq('id', sessionId);
+        console.log(`[MeterValues] Updated session ${sessionId} SoC: ${latestSoC}%`);
       }
     }
   } catch (dbError) {
