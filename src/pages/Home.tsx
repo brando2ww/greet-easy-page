@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { ArrowRight, Clock, Battery, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
 import chargerStation from "@/assets/charger-station.png";
 import evCarIcon from "@/assets/ev-car-icon.png";
@@ -21,7 +23,20 @@ const actionCards = [
 export default function Home() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { data: sessions } = useChargingHistory();
+  const { data: sessions, isLoading } = useChargingHistory();
+  const [ready, setReady] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+
+  useEffect(() => {
+    if (imagesLoaded >= 2) {
+      setReady(true);
+    }
+    // Fallback timeout
+    const timer = setTimeout(() => setReady(true), 1500);
+    return () => clearTimeout(timer);
+  }, [imagesLoaded]);
+
+  const handleImageLoad = () => setImagesLoaded((c) => c + 1);
 
   const fullName = user?.user_metadata?.full_name || t("profile.user");
   const firstName = fullName.split(" ")[0];
@@ -63,9 +78,19 @@ export default function Home() {
         {/* Logo */}
         <img src={speedLogo} alt="Nexcharge" className="h-10" />
 
+        {/* Preload images (hidden) */}
+        <img src={chargerStation} alt="" className="hidden" onLoad={handleImageLoad} />
+        <img src={evCarIcon} alt="" className="hidden" onLoad={handleImageLoad} />
+
         {/* Action Cards Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {actionCards.map((card) => (
+        {!ready ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="min-h-[200px] rounded-xl" />
+            <Skeleton className="min-h-[200px] rounded-xl" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 animate-fade-in">
+            {actionCards.map((card) => (
               <Link key={card.key} to={card.path}>
                 <Card className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]">
                   {card.key === "stations" && (
@@ -93,49 +118,61 @@ export default function Home() {
                 </Card>
               </Link>
             ))}
-        </div>
+          </div>
+        )}
 
         {/* Recent Sessions */}
-        {recentSessions.length > 0 && (
+        {isLoading ? (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              {t("home.recent")}
-            </h2>
+            <Skeleton className="h-6 w-32 rounded-md" />
             <div className="space-y-2">
-              {recentSessions.map((session) => (
-                <Card key={session.id} className="p-3 border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Battery className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {session.charger?.name || t("home.chargingSession")}
-                      </p>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        <span>
-                          {session.startedAt
-                            ? format(new Date(session.startedAt), "dd/MM · HH:mm")
-                            : "—"}
-                        </span>
-                        {session.energyConsumed != null && (
-                          <span className="ml-1">· {session.energyConsumed.toFixed(1)} kWh</span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-xs font-medium text-muted-foreground capitalize">
-                      {session.status === "completed"
-                        ? t("wallet.statusCompleted")
-                        : session.status === "in_progress"
-                        ? t("home.inProgress")
-                        : session.status}
-                    </span>
-                  </div>
-                </Card>
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 rounded-xl" />
               ))}
             </div>
           </div>
+        ) : (
+          recentSessions.length > 0 && (
+            <div className="space-y-3 animate-fade-in">
+              <h2 className="text-lg font-semibold text-foreground">
+                {t("home.recent")}
+              </h2>
+              <div className="space-y-2">
+                {recentSessions.map((session) => (
+                  <Card key={session.id} className="p-3 border-border/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Battery className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {session.charger?.name || t("home.chargingSession")}
+                        </p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            {session.startedAt
+                              ? format(new Date(session.startedAt), "dd/MM · HH:mm")
+                              : "—"}
+                          </span>
+                          {session.energyConsumed != null && (
+                            <span className="ml-1">· {session.energyConsumed.toFixed(1)} kWh</span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground capitalize">
+                        {session.status === "completed"
+                          ? t("wallet.statusCompleted")
+                          : session.status === "in_progress"
+                          ? t("home.inProgress")
+                          : session.status}
+                      </span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )
         )}
       </div>
     </ResponsiveLayout>
