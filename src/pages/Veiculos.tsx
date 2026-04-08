@@ -224,32 +224,32 @@ export default function Veiculos() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <Label htmlFor="brand">Marca do veículo</Label>
-          <Input id="brand" {...register('brand')} placeholder="Tesla, BYD, Nissan..." className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+          <Input id="brand" {...register('brand')} placeholder="Tesla, BYD, Nissan..." className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.brand && <p className="text-sm text-destructive mt-1">{errors.brand.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="model">Modelo do veículo</Label>
-          <Input id="model" {...register('model')} placeholder="Model 3, Dolphin, Leaf..." className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+          <Input id="model" {...register('model')} placeholder="Model 3, Dolphin, Leaf..." className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.model && <p className="text-sm text-destructive mt-1">{errors.model.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="year">Ano do veículo</Label>
-          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} placeholder="2024" min="2015" max="2025" className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} placeholder="2024" min="2015" max="2025" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.year && <p className="text-sm text-destructive mt-1">{errors.year.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="color">Cor do veículo</Label>
-          <Input id="color" {...register('color')} placeholder="Branco, Preto, Vermelho..." className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+          <Input id="color" {...register('color')} placeholder="Branco, Preto, Vermelho..." className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.color && <p className="text-sm text-destructive mt-1">{errors.color.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="plug_type">Plugs ou adaptadores</Label>
           <Select onValueChange={value => setValue('plug_type', value)}>
-            <SelectTrigger className="focus-visible:!border-primary focus-visible:!ring-green-600">
+            <SelectTrigger className="focus-visible:!border-primary focus-visible:!ring-primary">
               <SelectValue placeholder="Selecionar ⊕" />
             </SelectTrigger>
             <SelectContent>
@@ -267,7 +267,7 @@ export default function Veiculos() {
             <Label htmlFor="plate">Placa (opcional)</Label>
             <Info className="w-4 h-4 text-muted-foreground" />
           </div>
-          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} className="focus-visible:!border-primary focus-visible:!ring-green-600" onChange={e => {
+          <Input id="plate" {...register('plate')} placeholder="ABC-1234" maxLength={8} className="focus-visible:!border-primary focus-visible:!ring-primary" onChange={e => {
           const value = e.target.value.toUpperCase();
           e.target.value = value;
           setValue('plate', value);
@@ -280,7 +280,7 @@ export default function Veiculos() {
 
         <div>
           <Label htmlFor="chassi">Chassi do veículo</Label>
-          <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+          <Input id="chassi" {...register('chassi')} placeholder="Digite o chassi" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           <p className="text-xs text-muted-foreground mt-1">Para receber benefícios exclusivos dos parceiros Speed Charger</p>
           {errors.chassi && <p className="text-sm text-destructive mt-1">{errors.chassi.message}</p>}
         </div>
@@ -289,7 +289,7 @@ export default function Veiculos() {
           <Label htmlFor="battery_capacity">Capacidade da bateria em kWh</Label>
           <Input id="battery_capacity" type="number" {...register('battery_capacity', {
           valueAsNumber: true
-        })} placeholder="75" className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+        })} placeholder="75" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.battery_capacity && <p className="text-sm text-destructive mt-1">{errors.battery_capacity.message}</p>}
         </div>
 
@@ -297,7 +297,7 @@ export default function Veiculos() {
           <Label htmlFor="autonomy">Autonomia em km</Label>
           <Input id="autonomy" type="number" {...register('autonomy', {
           valueAsNumber: true
-        })} placeholder="Informe a autonomia em km" className="focus-visible:!border-primary focus-visible:!ring-green-600" />
+        })} placeholder="Informe a autonomia em km" className="focus-visible:!border-primary focus-visible:!ring-primary" />
           {errors.autonomy && <p className="text-sm text-destructive mt-1">{errors.autonomy.message}</p>}
         </div>
 
@@ -459,7 +459,7 @@ export default function Veiculos() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="hover:bg-green-600 hover:text-white">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel className="hover:bg-primary hover:text-primary-foreground">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => vehicleToDelete && handleDeleteVehicle(vehicleToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('common.delete')}
             </AlertDialogAction>

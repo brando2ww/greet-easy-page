@@ -192,7 +192,7 @@ export const ChargerQRCode = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <QrCode className="h-5 w-5 text-green-600" />
+            <QrCode className="h-5 w-5 text-primary" />
             QR Code do Carregador
           </DialogTitle>
           <DialogDescription>
@@ -208,7 +208,7 @@ export const ChargerQRCode = ({
           </div>
 
           {/* QR Code */}
-          <div ref={qrRef} className="flex justify-center p-6 bg-white rounded-lg border-2 border-green-200">
+          <div ref={qrRef} className="flex justify-center p-6 bg-white rounded-lg border-2 border-primary/20">
             <QRCodeSVG value={chargerId} size={256} level="H" />
           </div>
 
@@ -249,11 +249,11 @@ export const ChargerQRCode = ({
           </div>
 
           {/* Instruções */}
-          <div className="bg-green-50 rounded-lg p-4 text-sm space-y-2">
-            <div className="font-semibold text-green-900">
+          <div className="bg-primary/5 rounded-lg p-4 text-sm space-y-2">
+            <div className="font-semibold text-primary">
               Como usar:
             </div>
-            <ol className="list-decimal list-inside space-y-1 text-green-800">
+            <ol className="list-decimal list-inside space-y-1 text-primary/80">
               <li>Abra o aplicativo Speed</li>
               <li>Toque em "Iniciar Carga"</li>
               <li>Escaneie este QR code ou insira o código manualmente</li>
