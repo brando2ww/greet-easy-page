@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
 import chargerStation from "@/assets/charger-station.png";
 import evCarIcon from "@/assets/ev-car-icon.png";
+import evCar3d from "@/assets/ev-car-3d.png";
 import { format } from "date-fns";
 
 const actionCards = [
@@ -87,10 +88,11 @@ export default function Home() {
               <Skeleton className="min-h-[200px] rounded-xl" />
             </div>
             <div className="space-y-3">
-              <Skeleton className="h-6 w-32 rounded-md" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-[140px] rounded-2xl" />
+            <Skeleton className="h-6 w-32 rounded-md" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
             </div>
           </div>
         ) : (
@@ -115,6 +117,20 @@ export default function Home() {
                   </Card>
                 </Link>
               ))}
+            </div>
+            {/* Banner promocional */}
+            <div className="relative rounded-2xl bg-foreground p-5 overflow-visible min-h-[140px]">
+              <div className="relative z-10 max-w-[55%]">
+                <span className="text-primary text-xs font-medium">Nexcharge</span>
+                <h3 className="text-background text-lg font-bold leading-tight mt-1">
+                  Carregue seu Veículo Facilmente Aqui
+                </h3>
+              </div>
+              <img
+                src={evCar3d}
+                alt=""
+                className="absolute right-[-10px] bottom-0 h-[130px] object-contain pointer-events-none"
+              />
             </div>
           </div>
         )}
