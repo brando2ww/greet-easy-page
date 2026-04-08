@@ -123,7 +123,7 @@ export default function Home() {
               <div className="relative z-10 max-w-[55%]">
                 <span className="text-primary text-xs font-medium">Nexcharge</span>
                 <h3 className="text-background text-lg font-bold leading-tight mt-1">
-                  Carregue seu Veículo Facilmente Aqui
+                  Carregue seu Veículo Facilmente
                 </h3>
               </div>
               <img
