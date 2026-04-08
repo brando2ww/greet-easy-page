@@ -148,6 +148,7 @@ export function mapSessionRowToTransaction(row: ChargingSessionRow & { chargers?
     stopReason: row.stop_reason,
     idTag: row.id_tag,
     vehicleInfo: row.vehicle_info,
+    soc: row.soc,
     charger: row.chargers ? {
       name: row.chargers.name,
       location: row.chargers.location,
