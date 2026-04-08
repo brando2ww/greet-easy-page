@@ -1,10 +1,13 @@
-import { ArrowRight, Clock, Battery } from "lucide-react";
+import { ArrowRight, Clock, Battery, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChargingHistory } from "@/hooks/useChargingHistory";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
 import chargerStation from "@/assets/charger-station.png";
 import evCarIcon from "@/assets/ev-car-icon.png";
@@ -20,12 +23,43 @@ export default function Home() {
   const { user } = useAuth();
   const { data: sessions } = useChargingHistory();
 
-  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || t("profile.user");
+  const fullName = user?.user_metadata?.full_name || t("profile.user");
+  const firstName = fullName.split(" ")[0];
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const initials = fullName
+    .split(" ")
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   const recentSessions = sessions?.slice(0, 3) || [];
 
+  const homeHeader = (
+    <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10">
+          {avatarUrl && <AvatarImage src={avatarUrl} alt={firstName} />}
+          <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="text-sm font-bold text-foreground">Hey! {firstName}</p>
+          <p className="text-xs text-muted-foreground">Ready to have a ride today?</p>
+        </div>
+      </div>
+      <Button variant="outline" size="icon" className="relative rounded-full">
+        <Bell size={18} strokeWidth={2} />
+        <Badge className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 text-[10px] flex items-center justify-center">
+          3
+        </Badge>
+      </Button>
+    </div>
+  );
+
   return (
-    <ResponsiveLayout showBottomNav>
-      <div className="px-4 pt-24 space-y-6 pb-32">
+    <ResponsiveLayout showBottomNav mobileHeader={homeHeader} noBorder>
+      <div className="px-4 pt-6 space-y-6 pb-32">
         {/* Logo */}
         <img src={speedLogo} alt="Nexcharge" className="h-10" />
 
