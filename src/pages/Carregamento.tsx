@@ -269,7 +269,7 @@ export default function Carregamento() {
               <div
                 key={i}
                 className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${
-                  i < filledSegments ? "bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]" : "bg-white/10"
+                  i < filledSegments ? "bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]" : "bg-gray-200"
                 }`}
               />
             ))}
