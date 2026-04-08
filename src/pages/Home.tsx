@@ -120,10 +120,10 @@ export default function Home() {
             </div>
             {/* Banner promocional */}
             <div className="relative rounded-2xl bg-foreground p-5 overflow-visible min-h-[140px]">
-              <div className="relative z-10 max-w-[55%]">
+              <div className="relative z-10 max-w-[60%]">
                 <span className="text-primary text-xs font-medium">Nexcharge</span>
                 <h3 className="text-background text-lg font-bold leading-tight mt-1">
-                  Carregue seu Veículo Facilmente
+                  Carregue seu Veículo
                 </h3>
               </div>
               <img
