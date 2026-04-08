@@ -1,28 +1,47 @@
 
+## Busca e filtros flutuantes sobre o mapa
 
-## Cores apenas nos markers do mapa
+### Objetivo
+Mover a barra de busca e os filtros para fora do header fixo, posicionando-os como elementos flutuantes sobre o mapa. O header conterá apenas o logo.
 
-### Problema atual
-A classe `grayscale` está aplicada no container inteiro do mapa, o que remove as cores de tudo — incluindo os markers dos carregadores e o ponto de localização do usuário.
+### Mudanças
 
-### Solução
-Mover o filtro `grayscale` para afetar apenas o canvas do Mapbox (tiles/mapa base), mantendo os markers com suas cores originais. Isso será feito separando as camadas:
+**`src/pages/Estacoes.tsx`**:
+- O `header` passado ao `mobileHeader` conterá apenas o logo
+- A busca + filtros serão renderizados como um `div` flutuante com `absolute/fixed` positioning sobre o mapa (dentro do conteúdo, não no header)
+- Usar `z-10`, `top-X`, fundo semi-transparente com `backdrop-blur` para o container flutuante
 
-**`src/components/map/StationsMap.tsx`**:
-- Remover `grayscale` do `div` do mapa
-- Aplicar o grayscale via CSS apenas no canvas do Mapbox usando um seletor `.mapboxgl-canvas` no index.css
+**`src/pages/Estacoes.tsx`** — estrutura aproximada:
+```tsx
+// Header: apenas logo
+const header = (
+  <div className="p-4">
+    <img src={speedLogo} alt="Nexcharge" className="h-10" />
+  </div>
+);
 
-**`src/index.css`**:
-- Adicionar regra CSS:
-```css
-.mapboxgl-canvas {
-  filter: grayscale(100%);
-}
+// No return, envolver o mapa com os controles flutuantes:
+<div className="h-full flex flex-col relative">
+  {/* Floating search + filters */}
+  <div className="absolute top-4 left-4 right-4 z-10 space-y-2">
+    <div className="flex items-center gap-2">
+      <div className="relative flex-1">
+        <Search ... />
+        <Input ... className="pl-10 h-11 bg-white/90 backdrop-blur-sm shadow-lg border-0" />
+      </div>
+      <Button ... className="h-11 w-11 bg-white/90 backdrop-blur-sm shadow-lg border-0" />
+    </div>
+    <div className="flex gap-2 ...">
+      {/* filter chips com fundo semi-transparente */}
+    </div>
+  </div>
+  
+  {/* Map / loading / error states */}
+  <StationsMap ... />
+</div>
 ```
 
-Isso garante que apenas os tiles do mapa fiquem cinza, enquanto os markers (carregadores coloridos e ponto azul de localização) mantêm suas cores.
+Também passar `noBorder` ao layout para remover a borda inferior do header minimalista.
 
 ### Arquivos editados
-- `src/components/map/StationsMap.tsx`
-- `src/index.css`
-
+- `src/pages/Estacoes.tsx`
