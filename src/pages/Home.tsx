@@ -118,6 +118,20 @@ export default function Home() {
                 </Link>
               ))}
             </div>
+            {/* Banner promocional */}
+            <div className="relative rounded-2xl bg-foreground p-5 overflow-visible min-h-[140px]">
+              <div className="relative z-10 max-w-[55%]">
+                <span className="text-primary text-xs font-medium">Nexcharge</span>
+                <h3 className="text-background text-lg font-bold leading-tight mt-1">
+                  Carregue seu Veículo Facilmente Aqui
+                </h3>
+              </div>
+              <img
+                src={evCar3d}
+                alt=""
+                className="absolute right-[-10px] bottom-0 h-[130px] object-contain pointer-events-none"
+              />
+            </div>
           </div>
         )}
 
