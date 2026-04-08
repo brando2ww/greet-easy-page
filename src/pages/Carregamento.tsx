@@ -224,7 +224,7 @@ export default function Carregamento() {
 
           {/* Background ring */}
           <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 280 280">
-            <circle cx="140" cy="140" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+            <circle cx="140" cy="140" r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="10" />
             <circle
               cx="140" cy="140" r={radius}
               fill="none"
