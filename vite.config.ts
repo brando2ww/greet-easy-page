@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => ({
       "react-i18next",
       "i18next",
       "react-router-dom",
+      "framer-motion",
     ],
     exclude: ["@huggingface/transformers"],
   },
