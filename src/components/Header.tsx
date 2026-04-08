@@ -4,7 +4,12 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 export const Header = () => {
-  const location = useLocation();
+  let location;
+  try {
+    location = useLocation();
+  } catch {
+    return null;
+  }
   const { t } = useTranslation();
 
   const navItems = [
