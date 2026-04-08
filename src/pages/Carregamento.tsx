@@ -316,7 +316,7 @@ export default function Carregamento() {
       </div>
 
       <AlertDialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
-        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+        <AlertDialogContent className="bg-white border-gray-200 text-gray-900">
           <AlertDialogHeader>
             <AlertDialogTitle>Parar Carregamento?</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
