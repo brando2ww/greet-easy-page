@@ -200,7 +200,7 @@ export default function Carregamento() {
           <ArrowLeft className="h-5 w-5 text-gray-900" />
         </button>
         <div className="flex-1 text-center">
-          <p className="text-sm text-gray-500">Veículo Elétrico</p>
+          <p className="text-sm text-gray-500">Sessão de Carregamento</p>
           <h1 className="text-lg font-semibold">{chargerName}</h1>
         </div>
         <div className="w-9" />
