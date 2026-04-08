@@ -6,38 +6,34 @@ import { useToast } from "@/hooks/use-toast";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { formatCurrency } from "@/utils/formatters";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Zap, Clock, Battery, TrendingDown, PlugZap, WifiOff } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Zap, WifiOff, Square } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from "recharts";
 import type { ChargePoint, Transaction } from "@/types/charger";
+import carTopView from "@/assets/car-top-view.png";
 
-// OCPP status → label + indicator color
 function getOcppStatusInfo(ocppStatus: string | null | undefined): { label: string; color: string; pulse: boolean } {
   switch (ocppStatus) {
     case "Available":
-      return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
     case "Preparing":
-      return { label: "Aguardando plugue", color: "bg-yellow-500", pulse: true };
+      return { label: "Aguardando plugue", color: "text-yellow-500", pulse: true };
     case "Charging":
-      return { label: "Plugue Conectado", color: "bg-primary", pulse: true };
+      return { label: "Carregando", color: "text-primary", pulse: true };
     case "SuspendedEVSE":
-      return { label: "Pausado (Estação)", color: "bg-yellow-500", pulse: false };
+      return { label: "Pausado (Estação)", color: "text-yellow-500", pulse: false };
     case "SuspendedEV":
-      return { label: "Pausado (Veículo)", color: "bg-yellow-500", pulse: false };
+      return { label: "Pausado (Veículo)", color: "text-yellow-500", pulse: false };
     case "Finishing":
-      return { label: "Finalizando...", color: "bg-blue-500", pulse: false };
+      return { label: "Finalizando...", color: "text-blue-400", pulse: false };
     case "Faulted":
-      return { label: "Erro no carregador", color: "bg-destructive", pulse: false };
+      return { label: "Erro no carregador", color: "text-red-500", pulse: false };
     case "Unavailable":
-      return { label: "Indisponível", color: "bg-destructive", pulse: false };
+      return { label: "Indisponível", color: "text-red-500", pulse: false };
     default:
-      return { label: "Conectando...", color: "bg-muted-foreground", pulse: true };
+      return { label: "Conectando...", color: "text-gray-400", pulse: true };
   }
 }
 
@@ -56,7 +52,6 @@ export default function Carregamento() {
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
 
-  // Poll session data every 10s
   const { data: session } = useQuery({
     queryKey: ["charging-session", sessionId],
     queryFn: async () => {
@@ -88,7 +83,6 @@ export default function Carregamento() {
 
   const chargerId = chargerFromState?.id ?? session?.chargerId;
 
-  // Poll real OCPP status every 10s
   const { data: chargerStatusRes } = useQuery({
     queryKey: ["charger-ocpp-status", chargerId],
     queryFn: async () => {
@@ -102,12 +96,11 @@ export default function Carregamento() {
 
   const ocppStatus = chargerStatusRes?.ocppStatus;
   const statusInfo = isCompleted
-    ? { label: "Finalizado", color: "bg-muted-foreground", pulse: false }
+    ? { label: "Finalizado", color: "text-gray-400", pulse: false }
     : isAwaitingPlug
-    ? { label: "Aguardando conexão do plugue", color: "bg-yellow-500", pulse: true }
+    ? { label: "Aguardando conexão do plugue", color: "text-yellow-500", pulse: true }
     : getOcppStatusInfo(ocppStatus);
 
-  // Timer only runs while actively charging (not while waiting for plug)
   const activeStatuses = ["Charging", "SuspendedEV", "SuspendedEVSE", "Finishing"];
   const isActivelyCharging = !isCompleted && activeStatuses.includes(ocppStatus ?? "");
 
@@ -131,7 +124,6 @@ export default function Carregamento() {
     }
   }, [isActivelyCharging]);
 
-  // Auto-stop: insufficient balance
   useEffect(() => {
     if (balanceStopTriggeredRef.current || !isActivelyCharging) return;
     const margin = balance - estimatedCost;
@@ -142,7 +134,6 @@ export default function Carregamento() {
     }
   }, [balance, estimatedCost, isActivelyCharging]);
 
-  // Auto-stop: offline detection (15s timeout)
   useEffect(() => {
     const handleOffline = () => {
       setIsOffline(true);
@@ -154,40 +145,19 @@ export default function Carregamento() {
         }
       }, 15000);
     };
-
     const handleOnline = () => {
       setIsOffline(false);
-      if (offlineTimerRef.current) {
-        clearTimeout(offlineTimerRef.current);
-        offlineTimerRef.current = null;
-      }
+      if (offlineTimerRef.current) { clearTimeout(offlineTimerRef.current); offlineTimerRef.current = null; }
     };
-
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
-
-    // Check initial state
     if (!navigator.onLine) handleOffline();
-
     return () => {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
       if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
     };
   }, [isActivelyCharging]);
-
-  const { data: weeklyStats } = useQuery({
-    queryKey: ["weekly-stats"],
-    queryFn: async () => {
-      const res = await transactionsApi.weeklyStats();
-      return res.data ?? null;
-    },
-  });
-
-  const chartData = (weeklyStats?.dailyData ?? []).map(d => ({
-    name: d.dayLabel,
-    value: d.energy,
-  }));
 
   const handleStop = async () => {
     if (!session || !sessionId) return;
@@ -196,202 +166,178 @@ export default function Carregamento() {
       const res = await commandsApi.stopCharge(session.chargerId, session.transactionId ?? 0, sessionId);
       if (res.error || !res.data?.success) {
         toast({ title: "Erro ao parar", description: res.data?.message || res.error, variant: "destructive" });
-        // Fallback: trigger status check which auto-fixes stale in_use status
-        if (chargerId) {
-          try { await commandsApi.getStatus(chargerId); } catch {}
-        }
+        if (chargerId) { try { await commandsApi.getStatus(chargerId); } catch {} }
       } else {
         toast({ title: "Carregamento finalizado!", description: "Sessão encerrada com sucesso." });
         navigate("/");
       }
     } catch {
       toast({ title: "Erro inesperado", variant: "destructive" });
-      // Fallback: trigger status check which auto-fixes stale in_use status
-      if (chargerId) {
-        try { await commandsApi.getStatus(chargerId); } catch {}
-      }
+      if (chargerId) { try { await commandsApi.getStatus(chargerId); } catch {} }
     } finally {
       setIsStopping(false);
     }
   };
 
-  // Animated progress (pulses between 60-90 while charging)
-  const [progress, setProgress] = useState(65);
+  // Circular progress
+  const radius = 120;
+  const circumference = 2 * Math.PI * radius;
+  const [progressAngle, setProgressAngle] = useState(0);
+
   useEffect(() => {
-    if (isCompleted) { setProgress(100); return; }
+    if (isCompleted) { setProgressAngle(1); return; }
     const id = setInterval(() => {
-      setProgress((p) => (p >= 88 ? 62 : p + 0.5));
-    }, 200);
+      setProgressAngle((p) => (p >= 0.88 ? 0.55 : p + 0.003));
+    }, 100);
     return () => clearInterval(id);
   }, [isCompleted]);
 
+  const offset = circumference - progressAngle * circumference;
+
+  // Battery segments
+  const totalSegments = 10;
+  const filledSegments = isCompleted ? totalSegments : Math.max(1, Math.floor(progressAngle * totalSegments));
+
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-background">
+    <div className="flex flex-col min-h-[100dvh] bg-gray-950 text-white">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-6 pb-4">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-muted transition-colors">
-          <ArrowLeft className="h-5 w-5 text-foreground" />
+      <div className="flex items-center gap-3 px-4 pt-6 pb-2">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+          <ArrowLeft className="h-5 w-5 text-white" />
         </button>
-        <h1 className="text-lg font-semibold text-foreground">Modo de Carregamento</h1>
+        <div className="flex-1 text-center">
+          <p className="text-sm text-gray-400">Veículo Elétrico</p>
+          <h1 className="text-lg font-semibold">{chargerName}</h1>
+        </div>
+        <div className="w-9" />
       </div>
 
       {/* Offline banner */}
       {isOffline && (
-        <div className="mx-4 mb-2 px-4 py-2 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-2">
-          <WifiOff className="h-4 w-4 text-destructive" />
-          <span className="text-sm font-medium text-destructive">Sem conexão com a internet</span>
+        <div className="mx-4 mb-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+          <WifiOff className="h-4 w-4 text-red-400" />
+          <span className="text-sm font-medium text-red-400">Sem conexão com a internet</span>
         </div>
       )}
 
-      <div className="flex-1 px-4 space-y-4 pb-28 overflow-y-auto">
-        {/* Card 1 - Status */}
-        <Card className="border-0 shadow-[var(--shadow-soft)]">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {statusInfo.label}
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    {statusInfo.pulse && (
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusInfo.color} opacity-75`} />
-                    )}
-                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusInfo.color}`} />
-                  </span>
-                  <p className="text-sm font-medium text-foreground">
-                    {isCompleted ? "Finalizado" : statusInfo.label}
-                  </p>
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <PlugZap className="h-6 w-6 text-primary" />
-              </div>
-            </div>
+      <div className="flex-1 flex flex-col items-center px-4 pb-28 overflow-y-auto">
+        {/* Car + circular progress */}
+        <div className="relative flex items-center justify-center my-6" style={{ width: 280, height: 280 }}>
+          {/* Glow effect */}
+          <div className="absolute inset-0 rounded-full" style={{
+            background: `radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)`,
+          }} />
 
-            {/* Progress bar */}
-            <Progress value={progress} className="h-2 bg-muted" />
+          {/* Background ring */}
+          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 280 280">
+            <circle cx="140" cy="140" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+            <circle
+              cx="140" cy="140" r={radius}
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              className="transition-all duration-300"
+              style={{
+                filter: "drop-shadow(0 0 8px hsl(var(--primary) / 0.5))",
+              }}
+            />
+          </svg>
 
-            {/* Stats row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Battery className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {energyConsumed.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">kWh</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-secondary" />
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-foreground">
-                    {formatElapsed(elapsed)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Duração</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Car image */}
+          <img src={carTopView} alt="Veículo" className="w-36 h-auto relative z-10" />
+        </div>
 
-        {/* Card 2 - Usage */}
-        <Card className="border-0 shadow-[var(--shadow-soft)]">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Uso atual</p>
-                <p className="text-xl font-bold text-foreground">{energyConsumed.toFixed(2)} kWh</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Total gasto</p>
-                <p className="text-xl font-bold text-primary">{formatCurrency(estimatedCost)}</p>
-              </div>
-            </div>
-
-            {/* Bar chart */}
-            <div className="h-24">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} barCategoryGap="20%">
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {chartData.map((_, i) => (
-                      <Cell key={i} fill={i === chartData.length - 1 ? "hsl(var(--primary))" : "hsl(var(--muted))"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {weeklyStats && weeklyStats.previousPeriodTotal > 0 ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <TrendingDown className="h-3.5 w-3.5 text-primary" />
-                <span>
-                  Você está usando{" "}
-                  <strong className="text-foreground">
-                    {Math.abs(weeklyStats.changePercent)}% {weeklyStats.changePercent <= 0 ? "menos" : "mais"}
-                  </strong>{" "}
-                  energia que a semana passada
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">Sem dados anteriores para comparar</p>
+        {/* Status + timer */}
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            {statusInfo.pulse && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Charger info */}
-        <div className="flex items-center gap-3 px-1">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Zap className="h-5 w-5 text-primary" />
+            <span className={`text-sm font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{chargerName}</p>
-            <p className="text-xs text-muted-foreground">{chargerFromState?.location ?? session?.charger?.location ?? ""}</p>
+          <p className="text-3xl font-bold tracking-wider font-mono">{formatElapsed(elapsed)}</p>
+        </div>
+
+        {/* Battery segments */}
+        <div className="w-full max-w-xs mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Progresso</span>
+            <span className="text-xs font-semibold text-primary">{Math.round(progressAngle * 100)}%</span>
+          </div>
+          <div className="flex gap-1">
+            {Array.from({ length: totalSegments }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2.5 flex-1 rounded-full transition-all duration-300 ${
+                  i < filledSegments ? "bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]" : "bg-white/10"
+                }`}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Stop button */}
-        {!isCompleted && (
+        {/* Stats row */}
+        <div className="w-full max-w-xs grid grid-cols-3 gap-3 mb-8">
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <Clock className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+            <p className="text-lg font-bold">{Math.floor(elapsed / 60)}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Minutos</p>
+          </div>
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <DollarSign className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+            <p className="text-lg font-bold">{formatCurrency(estimatedCost)}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Custo</p>
+          </div>
+          <div className="bg-white/5 rounded-2xl p-4 text-center">
+            <Zap className="h-5 w-5 text-gray-400 mx-auto mb-2" />
+            <p className="text-lg font-bold">{energyConsumed.toFixed(1)}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">kWh</p>
+          </div>
+        </div>
+
+        {/* Stop / Back button */}
+        {!isCompleted ? (
           <Button
             onClick={() => setShowStopConfirm(true)}
             disabled={isStopping}
-            variant="destructive"
-            className="w-full h-14 text-base font-semibold rounded-2xl"
+            className="w-full max-w-xs h-14 text-base font-semibold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
           >
+            <Square className="h-4 w-4 mr-2 fill-current" />
             {isStopping ? "Parando..." : "Parar Carregamento"}
           </Button>
-        )}
-
-        <AlertDialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Parar Carregamento?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja encerrar esta sessão de carregamento? Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => { setShowStopConfirm(false); handleStop(); }}>
-                Sim, Parar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {isCompleted && (
+        ) : (
           <Button
             onClick={() => navigate("/")}
-            className="w-full h-14 text-base font-semibold rounded-2xl"
+            className="w-full max-w-xs h-14 text-base font-semibold rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             Voltar ao Início
           </Button>
         )}
       </div>
 
-      {/* Bottom Navigation */}
+      <AlertDialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Parar Carregamento?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Tem certeza que deseja encerrar esta sessão de carregamento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowStopConfirm(false); handleStop(); }} className="bg-primary text-primary-foreground">
+              Sim, Parar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="fixed bottom-0 left-0 right-0 z-50">
         <BottomNavigation />
       </div>
