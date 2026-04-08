@@ -1,13 +1,12 @@
 
 
-## Barra de pesquisa abaixo do header com bordas mais arredondadas
+## Mais arredondamento e menos margem superior na barra de pesquisa
 
 ### Mudanças
 
 **`src/pages/Estacoes.tsx`**:
-- Linha 87: Alterar `top-4` para `top-16` nos controles flutuantes, posicionando-os abaixo do header (que ocupa ~48px / `pt-12`)
-- Linha 96: Adicionar `rounded-2xl` ao Input da busca para bordas mais arredondadas
-- Linha 99: Adicionar `rounded-2xl` ao botão de filtros
+- Alterar `top-16` para `top-10` nos controles flutuantes, reduzindo a margem superior
+- Alterar `rounded-2xl` para `rounded-full` no Input, no botão de filtros e nos badges de filtro para máximo arredondamento
 
 ### Arquivo editado
 - `src/pages/Estacoes.tsx`
