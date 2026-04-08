@@ -3,73 +3,27 @@ import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
 import { StationsMap } from "@/components/map/StationsMap";
 import { useChargers } from "@/hooks/useChargers";
 import { MAPBOX_TOKEN } from "@/config/mapbox";
-import { cn } from "@/lib/utils";
 
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
   const { t } = useTranslation();
   const { data: chargers, isLoading, error, refetch } = useChargers();
 
-  // Debug logging
-  console.log('[Estacoes] Render state:', { 
-    isLoading, 
-    chargersCount: chargers?.length ?? 0,
-    error: error?.message,
-    hasMapboxToken: !!MAPBOX_TOKEN
-  });
-
-  const filterChips = [
-    { key: 'all', label: t('stations.all') },
-    { key: 'available', label: t('stations.available') },
-    { key: 'fast', label: t('stations.fast') },
-  ];
-
-  const toggleFilter = (filterKey: string) => {
-    setActiveFilters(prev =>
-      prev.includes(filterKey)
-        ? prev.filter(f => f !== filterKey)
-        : [...prev, filterKey]
-    );
-  };
-
-  // Filter chargers based on search and active filters
   const filteredChargers = useMemo(() => {
     if (!chargers) return [];
-
-    let filtered = chargers;
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (charger) =>
-          charger.name.toLowerCase().includes(query) ||
-          charger.location.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply status filters
-    if (activeFilters.length > 0 && !activeFilters.includes('all')) {
-      filtered = filtered.filter((charger) => {
-        if (activeFilters.includes('available')) {
-          return charger.status === 'available';
-        }
-        if (activeFilters.includes('fast')) {
-          return charger.power >= 50;
-        }
-        return true;
-      });
-    }
-
-    return filtered;
-  }, [chargers, searchQuery, activeFilters]);
+    if (!searchQuery) return chargers;
+    const query = searchQuery.toLowerCase();
+    return chargers.filter(
+      (charger) =>
+        charger.name.toLowerCase().includes(query) ||
+        charger.location.toLowerCase().includes(query)
+    );
+  }, [chargers, searchQuery]);
 
   const header = (
     <div className="px-4 pt-1 pb-1 overflow-hidden">
@@ -84,7 +38,7 @@ export default function Estacoes() {
   );
 
   const floatingControls = (
-    <div className="absolute top-10 left-4 right-4 z-10 space-y-2">
+    <div className="absolute top-10 left-4 right-4 z-10">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -99,24 +53,6 @@ export default function Estacoes() {
         <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full">
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
-      </div>
-      
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {filterChips.map((chip) => (
-          <Badge
-            key={chip.key}
-            variant={activeFilters.includes(chip.key) ? "default" : "outline"}
-            className={cn(
-              "cursor-pointer whitespace-nowrap px-4 py-2 transition-colors shadow-md",
-              activeFilters.includes(chip.key) 
-                ? "bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground border-primary" 
-                : "bg-background/90 backdrop-blur-sm hover:bg-primary/5 dark:hover:bg-primary/10"
-            )}
-            onClick={() => toggleFilter(chip.key)}
-          >
-            {chip.label}
-          </Badge>
-        ))}
       </div>
     </div>
   );
