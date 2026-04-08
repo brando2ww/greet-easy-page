@@ -1,25 +1,13 @@
 
 
-## Deixar o bottom menu escuro
+## Deixar ícones inativos do menu em branco
 
 ### Mudança
 
-**`src/components/BottomNavigation.tsx`** (linha 19):
+**`src/components/BottomNavigation.tsx`** (linha ~42):
 
-De:
-```tsx
-<div className="flex items-center gap-2 bg-background rounded-full px-4 py-3 shadow-lg border border-border/50">
-```
+De: `text-background/60`
+Para: `text-white`
 
-Para:
-```tsx
-<div className="flex items-center gap-2 bg-foreground rounded-full px-4 py-3 shadow-lg border border-transparent">
-```
-
-E ajustar a cor dos ícones inativos (linha 42):
-
-De: `text-foreground/40`
-Para: `text-background/60`
-
-Isso faz o fundo da pílula ficar escuro (usando `bg-foreground` que é escuro no light mode e claro no dark mode) e os ícones inativos ficam claros para contraste.
+Isso faz os ícones inativos ficarem brancos puros, com melhor contraste sobre o fundo escuro.
 
