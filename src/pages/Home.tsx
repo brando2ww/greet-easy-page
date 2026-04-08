@@ -43,9 +43,9 @@ export default function Home() {
                   )}
                   {card.key === "startCharging" && (
                     <img
-                      src={evChargerBg}
+                      src={evCarIcon}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+                      className="absolute top-8 left-4 h-20 object-contain pointer-events-none"
                     />
                   )}
                   <div className="flex flex-col h-full justify-end gap-3 relative z-10">
