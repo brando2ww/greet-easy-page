@@ -84,12 +84,6 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
         console.error('[StationsMap] Map error:', e);
       });
 
-      map.current.addControl(
-        new mapboxgl.NavigationControl({
-          visualizePitch: true,
-        }),
-        'top-right'
-      );
     } catch (error) {
       console.error('[StationsMap] Failed to initialize map:', error);
     }
