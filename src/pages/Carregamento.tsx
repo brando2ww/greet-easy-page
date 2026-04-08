@@ -324,7 +324,7 @@ export default function Carregamento() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="bg-gray-100 border-gray-200 text-gray-900 hover:bg-gray-200">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setShowStopConfirm(false); handleStop(); }} className="bg-primary text-primary-foreground">
               Sim, Parar
             </AlertDialogAction>
