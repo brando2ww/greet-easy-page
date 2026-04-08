@@ -75,49 +75,47 @@ export default function Home() {
   return (
     <ResponsiveLayout showBottomNav mobileHeader={homeHeader} noBorder>
       <div className="px-4 pt-6 space-y-6 pb-32">
-        {/* Logo */}
-        <img src={speedLogo} alt="Nexcharge" className="h-10" />
-
         {/* Preload images (hidden) */}
         <img src={chargerStation} alt="" className="hidden" onLoad={handleImageLoad} />
         <img src={evCarIcon} alt="" className="hidden" onLoad={handleImageLoad} />
 
-        {/* Action Cards Grid */}
         {!ready ? (
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="min-h-[200px] rounded-xl" />
-            <Skeleton className="min-h-[200px] rounded-xl" />
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-40 rounded-md" />
+            <div className="grid grid-cols-2 gap-3">
+              <Skeleton className="min-h-[200px] rounded-xl" />
+              <Skeleton className="min-h-[200px] rounded-xl" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-32 rounded-md" />
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-16 rounded-xl" />
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 animate-fade-in">
-            {actionCards.map((card) => (
-              <Link key={card.key} to={card.path}>
-                <Card className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]">
-                  {card.key === "stations" && (
-                    <img
-                      src={chargerStation}
-                      alt=""
-                      className="absolute top-8 left-4 h-20 object-contain pointer-events-none"
-                    />
-                  )}
-                  {card.key === "startCharging" && (
-                    <img
-                      src={evCarIcon}
-                      alt=""
-                      className="absolute top-8 left-4 h-20 object-contain pointer-events-none"
-                    />
-                  )}
-                  <div className="flex flex-col h-full justify-end gap-3 relative z-10">
-                    <span className="font-semibold text-base text-foreground">
-                      {t(`home.${card.key}`)}
-                    </span>
-                    <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-                      <ArrowRight className="w-4 h-4 text-background" />
+          <div className="space-y-6 animate-fade-in">
+            <img src={speedLogo} alt="Nexcharge" className="h-10" />
+            <div className="grid grid-cols-2 gap-3">
+              {actionCards.map((card) => (
+                <Link key={card.key} to={card.path}>
+                  <Card className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]">
+                    {card.key === "stations" && (
+                      <img src={chargerStation} alt="" className="absolute top-8 left-4 h-20 object-contain pointer-events-none" />
+                    )}
+                    {card.key === "startCharging" && (
+                      <img src={evCarIcon} alt="" className="absolute top-8 left-4 h-20 object-contain pointer-events-none" />
+                    )}
+                    <div className="flex flex-col h-full justify-end gap-3 relative z-10">
+                      <span className="font-semibold text-base text-foreground">{t(`home.${card.key}`)}</span>
+                      <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
+                        <ArrowRight className="w-4 h-4 text-background" />
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
