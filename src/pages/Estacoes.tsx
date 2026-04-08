@@ -3,27 +3,44 @@ import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
 import { ResponsiveLayout } from "@/components/ResponsiveLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import speedLogo from "@/assets/nexcharge-logo-new.png";
 import { StationsMap } from "@/components/map/StationsMap";
 import { useChargers } from "@/hooks/useChargers";
 import { MAPBOX_TOKEN } from "@/config/mapbox";
 
+const statusFilters = [
+  { value: "all", label: "Todos", color: "bg-muted text-muted-foreground" },
+  { value: "available", label: "Disponível", color: "bg-primary/10 text-primary" },
+  { value: "in_use", label: "Em Uso", color: "bg-blue-100 text-blue-700" },
+  { value: "maintenance", label: "Manutenção", color: "bg-yellow-100 text-yellow-700" },
+  { value: "offline", label: "Offline", color: "bg-destructive/10 text-destructive" },
+];
+
 export default function Estacoes() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
   const { t } = useTranslation();
   const { data: chargers, isLoading, error, refetch } = useChargers();
 
   const filteredChargers = useMemo(() => {
     if (!chargers) return [];
-    if (!searchQuery) return chargers;
-    const query = searchQuery.toLowerCase();
-    return chargers.filter(
-      (charger) =>
-        charger.name.toLowerCase().includes(query) ||
-        charger.location.toLowerCase().includes(query)
-    );
-  }, [chargers, searchQuery]);
+    let result = chargers;
+    if (statusFilter !== "all") {
+      result = result.filter((c) => c.status === statusFilter);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (charger) =>
+          charger.name.toLowerCase().includes(query) ||
+          charger.location.toLowerCase().includes(query)
+      );
+    }
+    return result;
+  }, [chargers, searchQuery, statusFilter]);
 
   const header = (
     <div className="px-4 pt-1 pb-1 overflow-hidden">
@@ -50,9 +67,36 @@ export default function Estacoes() {
             className="pl-10 h-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full"
           />
         </div>
-        <Button size="icon" variant="outline" className="h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full">
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => setShowFilters(!showFilters)}
+          className={`h-11 w-11 bg-background/90 backdrop-blur-sm shadow-lg border-0 rounded-full hover:bg-background/90 ${showFilters ? 'text-primary' : ''}`}
+        >
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
+      </div>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-out ${
+          showFilters ? "max-h-20 opacity-100 mt-2" : "max-h-0 opacity-0 mt-0"
+        }`}
+      >
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+          {statusFilters.map((opt) => (
+            <Badge
+              key={opt.value}
+              variant={statusFilter === opt.value ? "default" : "outline"}
+              className={`cursor-pointer text-xs px-3 py-1 shrink-0 rounded-full transition-colors ${
+                statusFilter === opt.value
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : `${opt.color} bg-background/90 backdrop-blur-sm shadow-sm`
+              }`}
+              onClick={() => setStatusFilter(opt.value)}
+            >
+              {opt.label}
+            </Badge>
+          ))}
+        </div>
       </div>
     </div>
   );
