@@ -1,21 +1,16 @@
 
 
-## Adicionar animação de clique nos cards da Home
+## Trocar imagem do card "Iniciar Carga"
 
-### Mudança
+### Mudanças
 
-**`src/pages/Home.tsx`** (linha 36, classe do `Card`):
-- Adicionar classes de transição e efeito `active:scale-95` para feedback visual ao toque/clique.
+**Copiar asset**: `user-uploads://image-20.png` → `src/assets/ev-car-icon.png`
 
-De:
-```tsx
-className="p-4 hover:shadow-md transition-shadow cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden"
-```
+**`src/pages/Home.tsx`**:
+- Importar o novo asset `ev-car-icon.png`
+- No card `startCharging`: remover a imagem de fundo (`evChargerBg` com `inset-0 object-cover opacity-20`) e substituir por `ev-car-icon.png` com o mesmo posicionamento do carregador no outro card (`absolute top-8 left-4 h-20 object-contain pointer-events-none`)
+- Remover o import de `evChargerBg` se não for mais usado em nenhum lugar
 
-Para:
-```tsx
-className="p-4 hover:shadow-md transition-all duration-200 cursor-pointer h-full border-border/50 min-h-[200px] relative overflow-hidden active:scale-[0.97]"
-```
-
-Isso aplica um leve "encolhimento" ao pressionar o card, dando feedback tátil imediato. Um arquivo, uma linha.
+### Resultado
+O card "Iniciar Carga" terá o carro elétrico posicionado no canto superior esquerdo, igual ao carregador no card "Estações", sem imagem de fundo transparente.
 
