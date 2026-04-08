@@ -224,10 +224,10 @@ export const StationsMap = ({ chargers, mapboxToken }: StationsMapProps) => {
         <Button
           onClick={centerOnUserLocation}
           size="icon"
-          className="absolute bottom-24 right-4 bg-white hover:bg-gray-100 text-gray-900 shadow-lg z-10"
+          className="absolute bottom-24 right-4 h-14 w-14 rounded-full bg-gray-900 hover:bg-gray-800 text-white shadow-lg z-10"
           title={t('stations.centerOnMyLocation')}
         >
-          <LocateFixed className="h-5 w-5" />
+          <LocateFixed className="h-6 w-6" />
         </Button>
       )}
 
