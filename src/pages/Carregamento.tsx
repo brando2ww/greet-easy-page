@@ -261,7 +261,7 @@ export default function Carregamento() {
         {/* Battery segments */}
         <div className="w-full max-w-xs mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Progresso</span>
+            <span className="text-xs text-gray-400 uppercase tracking-wide">Progresso</span>
             <span className="text-xs font-semibold text-primary">{hasSoC ? `${socValue}%` : '--%'}</span>
           </div>
           <div className="flex gap-1">
