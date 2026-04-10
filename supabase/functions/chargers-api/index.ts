@@ -97,29 +97,39 @@ Deno.serve(async (req) => {
   try {
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Get authorization header for user context
-    const authHeader = req.headers.get('Authorization');
     let userId: string | null = null;
     let isAdmin = false;
 
-    if (authHeader) {
-      const supabaseUser = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
-        global: { headers: { Authorization: authHeader } }
-      });
-      
-      const { data: { user } } = await supabaseUser.auth.getUser();
-      if (user) {
-        userId = user.id;
+    // Check for internal API key (cross-project auth)
+    const internalKey = req.headers.get('x-internal-key');
+    const expectedKey = Deno.env.get('RAILWAY_INTERNAL_KEY');
+
+    if (internalKey && expectedKey && internalKey === expectedKey) {
+      isAdmin = true;
+      userId = 'internal-admin';
+      console.log('[chargers-api] Authenticated via internal API key');
+    } else {
+      // Standard JWT auth flow
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const supabaseUser = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
+          global: { headers: { Authorization: authHeader } }
+        });
         
-        // Check if user is admin
-        const { data: roleData } = await supabaseAdmin
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        
-        isAdmin = !!roleData;
+        const { data: { user } } = await supabaseUser.auth.getUser();
+        if (user) {
+          userId = user.id;
+          
+          // Check if user is admin
+          const { data: roleData } = await supabaseAdmin
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+          
+          isAdmin = !!roleData;
+        }
       }
     }
 
