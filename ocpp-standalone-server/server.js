@@ -870,15 +870,23 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
     const transactionId = payload.transactionId;
     const connectorId = payload.connectorId;
 
-    // Find session by transaction_id
+    // Find session by transaction_id; if found in awaiting_plug, activate it (real telemetry = real charge)
     let sessionId = null;
     if (transactionId) {
       const { data: session } = await supabase
         .from('charging_sessions')
-        .select('id')
+        .select('id, status')
         .eq('transaction_id', transactionId)
         .maybeSingle();
       sessionId = session?.id || null;
+
+      if (session && session.status === 'awaiting_plug') {
+        await supabase
+          .from('charging_sessions')
+          .update({ status: 'in_progress', started_at: new Date().toISOString() })
+          .eq('id', session.id);
+        console.log(`[MeterValues] Activated awaiting_plug session ${session.id} via real telemetry`);
+      }
     }
 
     // OCPP 1.6: meterValue is an array of { timestamp, sampledValue: [{ value, measurand, unit, phase, context }] }
