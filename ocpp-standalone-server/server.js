@@ -420,10 +420,71 @@ server.on('upgrade', (request, socket, head) => {
   });
 });
 
+// =====================================================================
+// WEBSOCKET ZOMBIE DETECTION (ping/pong every 30s)
+// Detects silently-dropped TCP sockets so we can mark chargers offline
+// quickly instead of waiting ~2h for kernel TCP keepalive.
+// =====================================================================
+const PING_INTERVAL_MS = 30_000;
+const STALE_HEARTBEAT_MS = 3 * 60_000; // 3 minutes
+
+const wsPingInterval = setInterval(() => {
+  for (const [cpId, ws] of activeConnections.entries()) {
+    if (ws.isAlive === false) {
+      console.warn(`[OCPP] Terminated zombie connection: ${cpId}`);
+      try { ws.terminate(); } catch {}
+      activeConnections.delete(cpId);
+      // Mark offline in DB; do not change operational status.
+      supabase
+        .from('chargers')
+        .update({ ocpp_protocol_status: 'Offline' })
+        .eq('ocpp_charge_point_id', cpId)
+        .then(() => {}, (e) => console.error('[OCPP] Failed to mark zombie offline:', e?.message));
+      continue;
+    }
+    ws.isAlive = false;
+    try { ws.ping(); } catch (e) {
+      console.error(`[OCPP] Ping failed for ${cpId}:`, e?.message);
+    }
+  }
+}, PING_INTERVAL_MS);
+
+// Defense-in-depth sweep: every 60s mark chargers as Offline if their
+// last_heartbeat is older than 3 minutes. Catches cases where ping/pong
+// somehow misses or the connection was lost before a pong was due.
+const staleHeartbeatSweep = setInterval(async () => {
+  try {
+    const cutoff = new Date(Date.now() - STALE_HEARTBEAT_MS).toISOString();
+    const { data, error } = await supabase
+      .from('chargers')
+      .update({ ocpp_protocol_status: 'Offline' })
+      .neq('ocpp_protocol_status', 'Offline')
+      .lt('last_heartbeat', cutoff)
+      .select('id, ocpp_charge_point_id');
+    if (error) {
+      console.error('[OCPP] Stale heartbeat sweep error:', error.message);
+    } else if (data && data.length > 0) {
+      console.warn(`[OCPP] Stale-heartbeat sweep marked ${data.length} charger(s) Offline:`,
+        data.map((c) => c.ocpp_charge_point_id).join(', '));
+    }
+  } catch (e) {
+    console.error('[OCPP] Stale heartbeat sweep crash:', e?.message);
+  }
+}, 60_000);
+
+wss.on('close', () => {
+  clearInterval(wsPingInterval);
+  clearInterval(staleHeartbeatSweep);
+});
+
 wss.on('connection', async (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathParts = url.pathname.split('/').filter(part => part.length > 0);
   const chargePointId = pathParts[pathParts.length - 1];
+
+  // Mark socket alive; pong handler resets the flag each ping cycle.
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
   
   console.log(`[OCPP Server] New connection attempt from Charge Point ID: ${chargePointId}`);
   console.log(`[OCPP Server] Full URL: ${req.url}`);
