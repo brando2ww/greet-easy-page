@@ -21,8 +21,9 @@ import carTopView from "@/assets/car-top-view.png";
 function getOcppStatusInfo(ocppStatus: string | null | undefined): { label: string; color: string; pulse: boolean } {
   switch (ocppStatus) {
     case "Available":
-    case "Preparing":
       return { label: "Aguardando plugue", color: "text-yellow-500", pulse: true };
+    case "Preparing":
+      return { label: "Plugue detectado — aguardando autorização", color: "text-blue-500", pulse: true };
     case "Charging":
       return { label: "Carregando", color: "text-primary", pulse: true };
     case "SuspendedEVSE":
