@@ -343,6 +343,42 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/reset  body: { chargePointId, type?: 'Soft' | 'Hard' }
+  if (req.method === 'POST' && url.pathname === '/api/reset') {
+    if (!checkInternalKey()) return;
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', async () => {
+      try {
+        const { chargePointId, type = 'Soft' } = JSON.parse(body);
+        const ws = activeConnections.get(chargePointId);
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+        const messageId = `reset-${Date.now()}`;
+        const payload = { type: type === 'Hard' ? 'Hard' : 'Soft' };
+        const message = [2, messageId, 'Reset', payload];
+        const waitPromise = awaitCallResult(messageId, 8000);
+        ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'Reset', payload);
+        try {
+          const result = await waitPromise;
+          res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, result }));
+        } catch (waitErr) {
+          res.writeHead(504, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: waitErr.message }));
+        }
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
   // 404 for other routes
   res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'Not Found' }));
