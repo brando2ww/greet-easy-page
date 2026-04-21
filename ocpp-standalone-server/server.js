@@ -1056,13 +1056,15 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
     const connectorId = payload.connectorId;
 
     let sessionId = null;
+    let sessionRow = null;
     if (transactionId) {
       const { data: session } = await supabase
         .from('charging_sessions')
-        .select('id, status')
+        .select('id, status, meter_start, started_at')
         .eq('transaction_id', transactionId)
         .maybeSingle();
       sessionId = session?.id || null;
+      sessionRow = session || null;
 
       // MeterValues com transactionId real = carregamento ativo; ativa sessão se ainda awaiting
       if (session && session.status === 'awaiting_plug') {
