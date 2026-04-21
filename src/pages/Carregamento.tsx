@@ -314,6 +314,13 @@ export default function Carregamento() {
         </div>
       )}
 
+      {/* Admin diagnostics panel — only when admin AND session not completed */}
+      {isAdmin && !isCompleted && (
+        <div className="mx-4 mb-2">
+          <AdminDiagnosticsPanel chargePointId={ocppChargePointId} />
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col items-center px-4 pb-28 overflow-y-auto">
         {/* Car + circular progress */}
         <div className="relative flex items-center justify-center my-6" style={{ width: 280, height: 280 }}>
