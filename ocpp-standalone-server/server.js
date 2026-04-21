@@ -318,9 +318,18 @@ wss.on('connection', async (ws, req) => {
     try {
       const raw = data.toString();
       console.log(`[OCPP Server] Raw message from ${chargePointId}:`, raw);
+      lastActivity.set(chargePointId, Date.now());
       const message = JSON.parse(raw);
 
       const [messageType, messageId, action, payload] = message;
+
+      // Registra TODA mensagem recebida no buffer de diagnóstico
+      recordMessage(
+        chargePointId,
+        'in',
+        messageType === 2 ? action : (messageType === 3 ? 'CALLRESULT' : (messageType === 4 ? 'CALLERROR' : `type:${messageType}`)),
+        messageType === 2 ? payload : message.slice(2),
+      );
 
       if (messageType === 2) { // CALL
         switch (action) {
