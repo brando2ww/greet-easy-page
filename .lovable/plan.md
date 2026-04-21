@@ -1,27 +1,137 @@
 
+## Correção do erro 403 no painel admin
 
-## Atualizar `RAILWAY_INTERNAL_KEY` com o novo valor
+O erro continua porque o proxy do projeto **NEXCHARGE ADMIN** ainda está chamando a função `chargers-api` com os headers errados.
 
-Você gerou uma nova chave. Para sincronizar os dois projetos, vou atualizar o secret `RAILWAY_INTERNAL_KEY` aqui no Nexcharge com o valor que você fornecer.
+Hoje ele envia:
 
-## Passos
+```ts
+Authorization: Bearer ${railwayKey}
+apikey: railwayKey
+```
 
-1. **Você cola o novo valor no chat** (apenas o valor, ex: `a1b2c3d4...`)
-2. **Eu atualizo o secret `RAILWAY_INTERNAL_KEY`** neste projeto via ferramenta de secrets — o valor fica encriptado, não aparece em código nem em logs
-3. **Você cola o mesmo valor no painel admin externo** no campo correspondente (`NEXCHARGE_SERVICE_ROLE_KEY` ou similar)
-4. **Testa** criando um carregador pelo painel admin — o erro 403 deve sumir
+Mas a função `chargers-api` do Nexcharge espera a chave interna neste header:
 
-## Segurança da chave no chat
+```ts
+x-internal-key: <RAILWAY_INTERNAL_KEY>
+```
 
-Colar o valor no chat é seguro neste fluxo: ele vai direto para o secret encriptado do Supabase e não fica em nenhum arquivo do código. Mesmo assim, depois de configurado dos dois lados, você pode rotacionar novamente se preferir.
+Por isso o log do Nexcharge continua mostrando:
 
-## O que NÃO muda
+```text
+Action: create, User: null, Admin: false
+```
 
-- Nenhum arquivo de código (`chargers-api` já está pronto desde a mudança anterior)
-- Nenhuma tabela ou migração
-- Nenhuma configuração de RLS
+Ou seja: a requisição chega, mas não é reconhecida como admin interno.
 
-## Próxima ação
+## Plano de correção
 
-Cole no chat o novo valor da chave que você gerou. Assim que receber, atualizo o secret e confirmo.
+### 1. Corrigir o proxy no projeto NEXCHARGE ADMIN
 
+No arquivo:
+
+```text
+supabase/functions/chargers-proxy/index.ts
+```
+
+Trocar o `fetch` para enviar a chave assim:
+
+```ts
+const railwayKey = Deno.env.get('RAILWAY_INTERNAL_KEY');
+const nexchargeAnonKey = Deno.env.get('NEXCHARGE_ANON_KEY');
+
+if (!railwayKey) {
+  return new Response(JSON.stringify({ error: 'RAILWAY_INTERNAL_KEY not configured' }), {
+    status: 500,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+if (!nexchargeAnonKey) {
+  return new Response(JSON.stringify({ error: 'NEXCHARGE_ANON_KEY not configured' }), {
+    status: 500,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+const externalRes = await fetch(EXTERNAL_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'apikey': nexchargeAnonKey,
+    'x-internal-key': railwayKey,
+  },
+  body: JSON.stringify(body),
+});
+```
+
+### 2. Adicionar o secret `NEXCHARGE_ANON_KEY` no projeto admin
+
+No projeto **NEXCHARGE ADMIN**, configurar:
+
+```text
+NEXCHARGE_ANON_KEY=<anon key do projeto Nexcharge fgvjvtglcmxzadetmmoi>
+```
+
+Esse valor é público/anon e pode ser o mesmo que já aparece no código do admin em `src/lib/nexchargeApi.ts`.
+
+### 3. Manter o mesmo `RAILWAY_INTERNAL_KEY` nos dois projetos
+
+Confirmar que:
+
+```text
+Nexcharge atual:
+RAILWAY_INTERNAL_KEY = nova chave gerada
+
+NEXCHARGE ADMIN:
+RAILWAY_INTERNAL_KEY = exatamente a mesma chave
+```
+
+### 4. Melhorar o log de diagnóstico temporário
+
+Adicionar um log seguro no proxy, sem imprimir a chave inteira:
+
+```ts
+console.log('[chargers-proxy] internal key present:', Boolean(railwayKey), 'length:', railwayKey?.length);
+```
+
+Assim conseguimos confirmar se o runtime do Supabase está lendo o secret corretamente.
+
+### 5. Ajuste opcional no Nexcharge atual
+
+No `chargers-api`, atualizar CORS para incluir `x-internal-key`:
+
+```ts
+'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-key',
+```
+
+Isso melhora compatibilidade para testes diretos e evita problemas se algum cliente chamar a função via browser.
+
+### 6. Deploy e teste
+
+Depois das alterações:
+
+1. Deploy da função `chargers-proxy` no projeto **NEXCHARGE ADMIN**
+2. Se alterarmos CORS, deploy da função `chargers-api` neste projeto
+3. Testar criar carregador novamente
+4. Conferir se o log do Nexcharge passa a mostrar:
+
+```text
+[chargers-api] Authenticated via internal API key
+[chargers-api] Action: create, User: internal-admin, Admin: true
+```
+
+## Resultado esperado
+
+O botão **Criar Carregador** no painel admin deve parar de retornar:
+
+```text
+Edge Function returned a non-2xx status code
+Admin access required
+```
+
+e a criação deve funcionar normalmente.
+
+<lov-actions>
+<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
+</lov-actions>
