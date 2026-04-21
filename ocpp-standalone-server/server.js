@@ -573,8 +573,10 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
 
-  // Activate awaiting_plug sessions when charger starts charging
-  if (payload.status === 'Charging') {
+  // Activate awaiting_plug sessions when charger detects plug (Preparing) or starts charging.
+  // XIRU/ZETAUNO firmware transitions to "Preparing" on plug-in but may never reach "Charging"
+  // until StartTransaction is accepted, so we activate on either trigger (idempotent — first wins).
+  if (payload.status === 'Preparing' || payload.status === 'Charging') {
     try {
       const { data: charger } = await supabase
         .from('chargers')
@@ -583,18 +585,19 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
         .maybeSingle();
 
       if (charger) {
+        // Idempotency guard: only update sessions still in awaiting_plug.
+        // Once activated (status=in_progress), subsequent Preparing/Charging events are no-ops.
         const { data: activated, error: activateErr } = await supabase
           .from('charging_sessions')
           .update({ status: 'in_progress', started_at: new Date().toISOString() })
           .eq('charger_id', charger.id)
           .eq('status', 'awaiting_plug')
-          .is('started_at', null)
           .select('id');
 
         if (activateErr) {
           console.error('[StatusNotification] Error activating awaiting_plug session:', activateErr);
         } else if (activated && activated.length > 0) {
-          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on Charging status`);
+          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on ${payload.status} status`);
         }
       }
     } catch (err) {
