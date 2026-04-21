@@ -71,8 +71,6 @@ export default function Carregamento() {
     enabled: !!sessionId,
   });
 
-  const accumulatedRef = useRef(0);
-  const chargingStartRef = useRef<number | null>(null);
 
   const formatElapsed = (s: number) => {
     const h = Math.floor(s / 3600);
