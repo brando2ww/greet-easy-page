@@ -163,6 +163,48 @@ export default function Carregamento() {
     };
   }, [isActivelyCharging]);
 
+  // Timeout de 90s em awaiting_plug sem progresso
+  useEffect(() => {
+    if (!isAwaitingPlug || isCompleted) {
+      awaitingPlugStartRef.current = null;
+      setAwaitingPlugTimeout(false);
+      return;
+    }
+    if (!awaitingPlugStartRef.current) {
+      awaitingPlugStartRef.current = Date.now();
+    }
+    const check = () => {
+      if (awaitingPlugStartRef.current && Date.now() - awaitingPlugStartRef.current >= 90000) {
+        setAwaitingPlugTimeout(true);
+      }
+    };
+    check();
+    const id = setInterval(check, 5000);
+    return () => clearInterval(id);
+  }, [isAwaitingPlug, isCompleted]);
+
+  const handleTriggerStatus = async () => {
+    if (!chargerId || isTriggering) return;
+    setIsTriggering(true);
+    try {
+      const res = await commandsApi.triggerStatus(chargerId, "StatusNotification", 1);
+      if (res.error) {
+        toast({ title: "Falha ao consultar carregador", description: res.error, variant: "destructive" });
+      } else if ((res.data as any)?.success === false) {
+        toast({ title: "Carregador não respondeu", description: (res.data as any)?.message || "Tente novamente em alguns segundos.", variant: "destructive" });
+      } else {
+        toast({ title: "Verificação enviada", description: "Aguardando resposta do carregador..." });
+        // reset timeout para dar nova chance
+        awaitingPlugStartRef.current = Date.now();
+        setAwaitingPlugTimeout(false);
+      }
+    } catch {
+      toast({ title: "Erro inesperado", variant: "destructive" });
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
   const handleStop = async () => {
     if (!session || !sessionId) return;
     setIsStopping(true);
