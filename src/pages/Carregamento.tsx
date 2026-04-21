@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { transactionsApi, commandsApi } from "@/services/api";
+import { transactionsApi, commandsApi, chargersApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
+import { useUserRole } from "@/hooks/useUserRole";
 import { formatCurrency } from "@/utils/formatters";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AdminDiagnosticsPanel } from "@/components/charging/AdminDiagnosticsPanel";
 import type { ChargePoint, Transaction } from "@/types/charger";
 import carTopView from "@/assets/car-top-view.png";
 
@@ -44,6 +46,7 @@ export default function Carregamento() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance } = useWalletBalance();
+  const { isAdmin } = useUserRole();
   const [isStopping, setIsStopping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
@@ -97,6 +100,23 @@ export default function Carregamento() {
     refetchInterval: 10000,
     enabled: !!chargerId && !isCompleted,
   });
+
+  // Fetch full charger (only for admin) to get ocpp_charge_point_id for diagnostics
+  const { data: chargerFull } = useQuery({
+    queryKey: ["charger-full-admin", chargerId],
+    queryFn: async () => {
+      if (!chargerId) return null;
+      const res = await chargersApi.get(chargerId);
+      return res.data ?? null;
+    },
+    enabled: !!chargerId && isAdmin,
+  });
+
+  const ocppChargePointId =
+    chargerFromState?.chargePointId ??
+    chargerStatusRes?.chargePointId ??
+    chargerFull?.chargePointId ??
+    null;
 
   const ocppStatus = chargerStatusRes?.ocppStatus;
   const statusInfo = isCompleted
@@ -291,6 +311,13 @@ export default function Carregamento() {
               </Button>
             </div>
           </Alert>
+        </div>
+      )}
+
+      {/* Admin diagnostics panel — only when admin AND session not completed */}
+      {isAdmin && !isCompleted && (
+        <div className="mx-4 mb-2">
+          <AdminDiagnosticsPanel chargePointId={ocppChargePointId} />
         </div>
       )}
 
