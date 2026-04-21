@@ -24,6 +24,8 @@ const messageBuffer = new Map();
 const MESSAGE_BUFFER_SIZE = 500;
 // Pending CALLs aguardando CALLRESULT/CALLERROR do CP (messageId -> { resolve, reject, timer })
 const pendingCalls = new Map();
+// Flag em memória: sessões que já tiveram started_at realinhado neste processo
+const firstMeterRealigned = new Set();
 
 function awaitCallResult(messageId, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
