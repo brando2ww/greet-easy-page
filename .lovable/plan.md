@@ -1,137 +1,98 @@
 
-## Correção do erro 403 no painel admin
 
-O erro continua porque o proxy do projeto **NEXCHARGE ADMIN** ainda está chamando a função `chargers-api` com os headers errados.
+## Plano: investigar por que XIRU não envia `StartTransaction` mesmo com cabo plugado
 
-Hoje ele envia:
+## Estado confirmado
 
-```ts
-Authorization: Bearer ${railwayKey}
-apikey: railwayKey
-```
+- Cabo plugado no carro **agora**.
+- Servidor recebeu `RemoteStartTransaction` e respondeu `success: true` (logs Edge Function 16:36:20).
+- Sessão `58986af6...` continua `awaiting_plug`, `transaction_id` NULL.
+- Zero `meter_values`. Zero `StartTransaction`. Zero `StatusNotification(Preparing/Charging)` chegou ao servidor desde o RemoteStart.
+- `ocpp_protocol_status` ainda `Available` — o XIRU **não está reportando que detectou o plug**.
 
-Mas a função `chargers-api` do Nexcharge espera a chave interna neste header:
+Isto não é problema de software nosso — o XIRU está silencioso após o RemoteStart. Precisamos de visibilidade direta no que ele envia (ou não envia) via WebSocket para diagnosticar.
 
-```ts
-x-internal-key: <RAILWAY_INTERNAL_KEY>
-```
+## O que fazer (modo default)
 
-Por isso o log do Nexcharge continua mostrando:
+### 1. Adicionar logging detalhado e endpoints de diagnóstico no servidor OCPP
 
-```text
-Action: create, User: null, Admin: false
-```
+Em `ocpp-standalone-server/server.js`:
 
-Ou seja: a requisição chega, mas não é reconhecida como admin interno.
+- **Buffer em memória** com últimas 500 mensagens OCPP por charge point: `{ timestamp, direction (in/out), action, payload }`.
+- Logar **toda** mensagem que chega de cada CP, antes de qualquer handler — assim vemos se XIRU sequer envia algo.
+- **Endpoint `GET /admin/messages?cp=140515&limit=100`** protegido por header `x-internal-key`.
+- **Endpoint `GET /admin/active-connections`** mostrando CPs conectados e tempo do último frame recebido.
 
-## Plano de correção
+### 2. Adicionar endpoint `TriggerMessage` para forçar XIRU a falar
 
-### 1. Corrigir o proxy no projeto NEXCHARGE ADMIN
+Carregadores OCPP 1.6 suportam o comando `TriggerMessage` que força o CP a reenviar `StatusNotification`, `MeterValues` ou `Heartbeat`. Útil para destravar firmwares preguiçosos.
 
-No arquivo:
+- Em `server.js`: novo endpoint `POST /api/trigger-message` recebendo `{ chargePointId, requestedMessage, connectorId }`.
+- Suportar `requestedMessage`: `StatusNotification`, `MeterValues`, `BootNotification`.
 
-```text
-supabase/functions/chargers-proxy/index.ts
-```
+### 3. Edge Function `ocpp-diagnostics`
 
-Trocar o `fetch` para enviar a chave assim:
+Nova `supabase/functions/ocpp-diagnostics/index.ts`:
 
-```ts
-const railwayKey = Deno.env.get('RAILWAY_INTERNAL_KEY');
-const nexchargeAnonKey = Deno.env.get('NEXCHARGE_ANON_KEY');
+- Valida JWT + role admin via `has_role`.
+- Faz proxy para os endpoints do servidor OCPP usando `OCPP_INTERNAL_KEY`.
+- Actions suportadas: `messages`, `connections`, `trigger`.
+- Registrar em `supabase/config.toml` com `verify_jwt = false` (validação manual interna).
 
-if (!railwayKey) {
-  return new Response(JSON.stringify({ error: 'RAILWAY_INTERNAL_KEY not configured' }), {
-    status: 500,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
+### 4. Aplicar `TriggerMessage(StatusNotification)` agora no XIRU
 
-if (!nexchargeAnonKey) {
-  return new Response(JSON.stringify({ error: 'NEXCHARGE_ANON_KEY not configured' }), {
-    status: 500,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
+Após deploy, eu chamo `ocpp-diagnostics` com action `trigger` para forçar o XIRU a enviar o status atual do conector. Cenários:
 
-const externalRes = await fetch(EXTERNAL_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'apikey': nexchargeAnonKey,
-    'x-internal-key': railwayKey,
-  },
-  body: JSON.stringify(body),
-});
-```
+| Resposta XIRU | Significado | Ação |
+|---|---|---|
+| `Available` | Cabo plugado mas firmware não detectou | Bug do firmware; testar `connectorId: 0` no RemoteStart |
+| `Preparing` | Cabo detectado, esperando autorização | Reenviar `Authorize` ou ajustar `idTag` |
+| `Charging` | Já está carregando, só não notificou | Bug servidor — não processou `StatusNotification` anterior |
+| `Faulted` + errorCode | Falha física | Mostrar erro ao usuário no app |
+| Sem resposta | XIRU travado ou WebSocket morto silenciosamente | Reiniciar fisicamente o XIRU |
 
-### 2. Adicionar o secret `NEXCHARGE_ANON_KEY` no projeto admin
+### 5. Ajustar UI para timeout em `awaiting_plug`
 
-No projeto **NEXCHARGE ADMIN**, configurar:
+Em `src/pages/Carregamento.tsx`:
+
+- Após **90 segundos** em `awaiting_plug` sem progresso, mostrar alerta: "Carregador não detectou o plug. Verifique o cabo ou cancele a sessão."
+- Botão "Cancelar e tentar novamente" que chama `commandsApi.stopCharge` e volta para Estações.
+- Botão "Forçar verificação" que chama nova action `triggerStatus` na Edge Function `charger-commands` (usa o `ocpp-diagnostics`).
+
+### 6. Documentar deploy manual no Droplet
+
+Após o código ser commitado, **você precisa rodar no servidor**:
 
 ```text
-NEXCHARGE_ANON_KEY=<anon key do projeto Nexcharge fgvjvtglcmxzadetmmoi>
+ssh root@68.183.152.189
+cd /opt/ocpp-server && git pull
+systemctl restart ocpp-server
+journalctl -u ocpp-server -f
 ```
 
-Esse valor é público/anon e pode ser o mesmo que já aparece no código do admin em `src/lib/nexchargeApi.ts`.
+A Edge Function deploya sozinha.
 
-### 3. Manter o mesmo `RAILWAY_INTERNAL_KEY` nos dois projetos
+## Arquivos afetados
 
-Confirmar que:
+| Arquivo | Mudança |
+|---|---|
+| `ocpp-standalone-server/server.js` | + buffer de mensagens, endpoints `/admin/messages`, `/admin/active-connections`, `/api/trigger-message` |
+| `supabase/functions/ocpp-diagnostics/index.ts` | nova função (proxy + auth admin) |
+| `supabase/functions/charger-commands/index.ts` | + action `triggerStatus` |
+| `supabase/config.toml` | + entrada `[functions.ocpp-diagnostics]` |
+| `src/services/api.ts` | + `commandsApi.triggerStatus()` |
+| `src/pages/Carregamento.tsx` | + timeout 90s, alerta, botões cancelar/forçar |
 
-```text
-Nexcharge atual:
-RAILWAY_INTERNAL_KEY = nova chave gerada
+## O que não vou mexer agora
 
-NEXCHARGE ADMIN:
-RAILWAY_INTERNAL_KEY = exatamente a mesma chave
-```
+- Lógica do `ZETA UNO` (que funciona) — todas as adições são novas/aditivas, sem alterar handlers existentes.
+- RLS, banco, secrets — todos já configurados.
+- Subprotocolo OCPP — XIRU já conecta, problema é pós-conexão.
 
-### 4. Melhorar o log de diagnóstico temporário
+## Próximos passos após implementação
 
-Adicionar um log seguro no proxy, sem imprimir a chave inteira:
+1. Você roda `git pull` + `systemctl restart` no Droplet.
+2. Eu chamo `ocpp-diagnostics?action=messages&cp=140515` e mostro tudo que XIRU enviou nos últimos minutos.
+3. Eu chamo `trigger` para forçar `StatusNotification` e vemos a resposta real.
+4. Conforme resultado da tabela acima, aplicamos correção específica (provavelmente `connectorId: 0` ou reset físico).
 
-```ts
-console.log('[chargers-proxy] internal key present:', Boolean(railwayKey), 'length:', railwayKey?.length);
-```
-
-Assim conseguimos confirmar se o runtime do Supabase está lendo o secret corretamente.
-
-### 5. Ajuste opcional no Nexcharge atual
-
-No `chargers-api`, atualizar CORS para incluir `x-internal-key`:
-
-```ts
-'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-key',
-```
-
-Isso melhora compatibilidade para testes diretos e evita problemas se algum cliente chamar a função via browser.
-
-### 6. Deploy e teste
-
-Depois das alterações:
-
-1. Deploy da função `chargers-proxy` no projeto **NEXCHARGE ADMIN**
-2. Se alterarmos CORS, deploy da função `chargers-api` neste projeto
-3. Testar criar carregador novamente
-4. Conferir se o log do Nexcharge passa a mostrar:
-
-```text
-[chargers-api] Authenticated via internal API key
-[chargers-api] Action: create, User: internal-admin, Admin: true
-```
-
-## Resultado esperado
-
-O botão **Criar Carregador** no painel admin deve parar de retornar:
-
-```text
-Edge Function returned a non-2xx status code
-Admin access required
-```
-
-e a criação deve funcionar normalmente.
-
-<lov-actions>
-<lov-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</lov-link>
-</lov-actions>
