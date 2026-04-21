@@ -171,6 +171,12 @@ Deno.serve(async (req) => {
         // Call Railway OCPP server to send RemoteStartTransaction
         if (OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
           try {
+            // OCPP 1.6 spec: idTag (IdToken) MUST be ≤ 20 chars (CiString20Type).
+            // UUIDs are 36 chars and may be silently rejected by strict firmwares (e.g. XIRU).
+            // Strategy: use first 20 chars of UUID (sufficiently unique and deterministic per user).
+            const rawIdTag = idTag || userId;
+            const safeIdTag = String(rawIdTag).replace(/-/g, '').slice(0, 20);
+
             const remoteStartResponse = await fetch(`${OCPP_SERVER_URL}/api/remote-start`, {
               method: 'POST',
               headers: {
@@ -179,13 +185,13 @@ Deno.serve(async (req) => {
               },
               body: JSON.stringify({
                 chargePointId: charger.ocpp_charge_point_id,
-                idTag: idTag || userId,
+                idTag: safeIdTag,
                 connectorId: 1,
               }),
             });
 
             const remoteResult = await remoteStartResponse.json();
-            console.log('[charger-commands] Remote start result:', remoteResult);
+            console.log('[charger-commands] Remote start result:', remoteResult, 'idTag used:', safeIdTag);
 
             if (!remoteResult.success) {
               // Rollback session if remote start failed

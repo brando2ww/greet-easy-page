@@ -168,6 +168,78 @@ export const commandsApi = {
   },
 };
 
+// ============ OCPP Diagnostics API (admin only) ============
+
+export const diagnosticsApi = {
+  /**
+   * Get the last N OCPP messages exchanged with a Charge Point (admin only).
+   */
+  getMessages: async (
+    chargePointId: string,
+    limit: number = 100,
+  ): Promise<ApiResponse<{ chargePointId: string; total: number; returned: number; messages: Array<{ timestamp: string; direction: 'in' | 'out'; action: string; payload: unknown }> }>> => {
+    return invokeFunction('ocpp-diagnostics', {
+      action: 'messages',
+      chargePointId,
+      limit,
+    });
+  },
+
+  /**
+   * List active WebSocket connections on the OCPP server (admin only).
+   */
+  getConnections: async (): Promise<ApiResponse<{ count: number; connections: Array<{ chargePointId: string; lastActivityMs: number | null; lastActivityAt: string | null; readyState: number }> }>> => {
+    return invokeFunction('ocpp-diagnostics', { action: 'connections' });
+  },
+
+  /**
+   * Send OCPP TriggerMessage directly via diagnostics (admin only, bypasses charger-commands validations).
+   */
+  trigger: async (
+    chargePointId: string,
+    requestedMessage: string,
+    connectorId?: number,
+  ): Promise<ApiResponse<{ success: boolean; message?: string }>> => {
+    return invokeFunction('ocpp-diagnostics', {
+      action: 'trigger',
+      chargePointId,
+      requestedMessage,
+      connectorId,
+    });
+  },
+
+  /**
+   * Read OCPP configuration keys from the charger (admin only).
+   * Pass undefined or empty array for `key` to retrieve all keys.
+   */
+  getConfig: async (
+    chargePointId: string,
+    key?: string[],
+  ): Promise<ApiResponse<{ success: boolean; result?: { configurationKey?: Array<{ key: string; readonly: boolean; value?: string }>; unknownKey?: string[] }; message?: string }>> => {
+    return invokeFunction('ocpp-diagnostics', {
+      action: 'getConfig',
+      chargePointId,
+      key,
+    });
+  },
+
+  /**
+   * Change a single OCPP configuration key on the charger (admin only).
+   */
+  changeConfig: async (
+    chargePointId: string,
+    key: string,
+    value: string,
+  ): Promise<ApiResponse<{ success: boolean; result?: { status: 'Accepted' | 'Rejected' | 'RebootRequired' | 'NotSupported' }; message?: string }>> => {
+    return invokeFunction('ocpp-diagnostics', {
+      action: 'changeConfig',
+      chargePointId,
+      key,
+      value,
+    });
+  },
+};
+
 // ============ Transactions API ============
 
 export const transactionsApi = {
