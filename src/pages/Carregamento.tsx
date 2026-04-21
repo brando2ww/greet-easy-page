@@ -123,7 +123,9 @@ export default function Carregamento() {
   const statusInfo = isCompleted
     ? { label: "Finalizado", color: "text-gray-400", pulse: false }
     : isAwaitingPlug
-    ? { label: "Aguardando conexão do plugue", color: "text-yellow-500", pulse: true }
+    ? (ocppStatus === "Preparing"
+        ? { label: "Plugue detectado — aguardando autorização", color: "text-blue-500", pulse: true }
+        : { label: "Aguardando conexão do plugue", color: "text-yellow-500", pulse: true })
     : getOcppStatusInfo(ocppStatus);
 
   const activeStatuses = ["Charging", "SuspendedEV", "SuspendedEVSE", "Finishing"];
