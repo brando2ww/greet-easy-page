@@ -99,15 +99,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API: Remote Start Transaction
+  // API: Remote Start Transaction (sync — waits for CP CALLRESULT to know real Accepted/Rejected)
   if (req.method === 'POST' && url.pathname === '/api/remote-start') {
     let body = '';
     req.on('data', chunk => body += chunk);
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { chargePointId, idTag, connectorId = 1 } = JSON.parse(body);
         const ws = activeConnections.get(chargePointId);
-        
+
         if (!ws) {
           res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
@@ -117,11 +117,31 @@ const server = http.createServer(async (req, res) => {
         const messageId = `remote-start-${Date.now()}`;
         const payload = { connectorId, idTag: idTag || 'REMOTE' };
         const message = [2, messageId, 'RemoteStartTransaction', payload];
+        const waitPromise = awaitCallResult(messageId, 12000);
         ws.send(JSON.stringify(message));
         recordMessage(chargePointId, 'out', 'RemoteStartTransaction', payload);
 
-        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'RemoteStartTransaction sent' }));
+        try {
+          const result = await waitPromise;
+          // OCPP 1.6: { status: 'Accepted' | 'Rejected' }
+          const status = result?.status || 'Unknown';
+          const accepted = status === 'Accepted';
+          res.writeHead(accepted ? 200 : 200, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: accepted,
+            status,
+            message: accepted
+              ? 'RemoteStartTransaction accepted by charger'
+              : `RemoteStartTransaction ${status} by charger`,
+          }));
+        } catch (waitErr) {
+          res.writeHead(504, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: false,
+            status: 'Timeout',
+            message: 'Charger did not respond to RemoteStartTransaction in time',
+          }));
+        }
       } catch (err) {
         res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, message: err.message }));
@@ -573,10 +593,12 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
 
-  // Activate awaiting_plug sessions when charger detects plug (Preparing) or starts charging.
-  // XIRU/ZETAUNO firmware transitions to "Preparing" on plug-in but may never reach "Charging"
-  // until StartTransaction is accepted, so we activate on either trigger (idempotent — first wins).
-  if (payload.status === 'Preparing' || payload.status === 'Charging') {
+  // IMPORTANT: 'Preparing' means the plug was detected — NOT that energy is flowing.
+  // We do NOT transition awaiting_plug → in_progress on Preparing (no timer, no billing).
+  // The session only becomes in_progress when StartTransaction arrives (real authorization)
+  // or MeterValues with a transactionId (real telemetry). 'Charging' alone is also accepted
+  // as a fallback when the firmware skips StartTransaction notification timing.
+  if (payload.status === 'Charging') {
     try {
       const { data: charger } = await supabase
         .from('chargers')
@@ -585,19 +607,20 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
         .maybeSingle();
 
       if (charger) {
-        // Idempotency guard: only update sessions still in awaiting_plug.
-        // Once activated (status=in_progress), subsequent Preparing/Charging events are no-ops.
+        // Only activate if session has a transaction_id already (proves StartTransaction happened).
+        // This avoids reacting to stale 'Charging' status without a real OCPP transaction.
         const { data: activated, error: activateErr } = await supabase
           .from('charging_sessions')
           .update({ status: 'in_progress', started_at: new Date().toISOString() })
           .eq('charger_id', charger.id)
           .eq('status', 'awaiting_plug')
+          .not('transaction_id', 'is', null)
           .select('id');
 
         if (activateErr) {
           console.error('[StatusNotification] Error activating awaiting_plug session:', activateErr);
         } else if (activated && activated.length > 0) {
-          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on ${payload.status} status`);
+          console.log(`[StatusNotification] Activated session ${activated[0].id} on Charging status (had transaction_id)`);
         }
       }
     } catch (err) {
