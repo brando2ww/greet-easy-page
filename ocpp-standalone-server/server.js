@@ -24,6 +24,8 @@ const messageBuffer = new Map();
 const MESSAGE_BUFFER_SIZE = 500;
 // Pending CALLs aguardando CALLRESULT/CALLERROR do CP (messageId -> { resolve, reject, timer })
 const pendingCalls = new Map();
+// Flag em memória: sessões que já tiveram started_at realinhado neste processo
+const firstMeterRealigned = new Set();
 
 function awaitCallResult(messageId, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
@@ -1038,6 +1040,11 @@ async function handleStopTransaction(ws, messageId, payload, chargePointId) {
 
     await updateChargerStatus(chargePointId, 'available', 'Available');
 
+    // Limpa flag de realinhamento para este session.id
+    if (session?.id) {
+      firstMeterRealigned.delete(session.id);
+    }
+
     console.log(`[StopTransaction] ✓ Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
   } catch (err) {
     console.error('[StopTransaction] Unexpected error:', err);
@@ -1054,13 +1061,15 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
     const connectorId = payload.connectorId;
 
     let sessionId = null;
+    let sessionRow = null;
     if (transactionId) {
       const { data: session } = await supabase
         .from('charging_sessions')
-        .select('id, status')
+        .select('id, status, meter_start, started_at')
         .eq('transaction_id', transactionId)
         .maybeSingle();
       sessionId = session?.id || null;
+      sessionRow = session || null;
 
       // MeterValues com transactionId real = carregamento ativo; ativa sessão se ainda awaiting
       if (session && session.status === 'awaiting_plug') {
@@ -1124,6 +1133,24 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
       } else {
         console.log(`[MeterValues] Saved ${rows.length} readings for transaction ${transactionId}`);
       }
+    }
+
+    // Realinha started_at para o timestamp real do primeiro MeterValues
+    // Gate: meter_start !== null (prova que StartTransaction chegou)
+    if (
+      sessionId &&
+      sessionRow &&
+      sessionRow.status === 'in_progress' &&
+      sessionRow.meter_start !== null &&
+      !firstMeterRealigned.has(sessionId)
+    ) {
+      const firstMeterTs = rows[0]?.timestamp ?? new Date().toISOString();
+      await supabase
+        .from('charging_sessions')
+        .update({ started_at: firstMeterTs })
+        .eq('id', sessionId);
+      firstMeterRealigned.add(sessionId);
+      console.log(`[OCPP] Realigned started_at for session ${sessionId} → ${firstMeterTs}`);
     }
 
     if (latestEnergyWh !== null && sessionId) {
