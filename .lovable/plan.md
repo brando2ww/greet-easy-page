@@ -1,53 +1,27 @@
 
 
-## Problema
+## Atualizar `RAILWAY_INTERNAL_KEY` com o novo valor
 
-A Edge Function `chargers-api` valida o JWT usando `supabaseUser.auth.getUser()` que só reconhece usuários do projeto **local** (`fgvjvtglcmxzadetmmoi`). Quando o sistema externo (`nfhzdeccebjmctjzgwis`) envia um JWT, o `getUser()` falha ou retorna um user que não existe na tabela `user_roles` local, resultando em 403.
+Você gerou uma nova chave. Para sincronizar os dois projetos, vou atualizar o secret `RAILWAY_INTERNAL_KEY` aqui no Nexcharge com o valor que você fornecer.
 
-## Solução
+## Passos
 
-Adicionar um mecanismo de **API Key interna** para autenticação cross-project. O sistema externo enviará um header `x-internal-key` com um secret compartilhado (`RAILWAY_INTERNAL_KEY`, já configurado). Quando presente e válido, a função concede acesso admin sem verificar JWT/user_roles.
+1. **Você cola o novo valor no chat** (apenas o valor, ex: `a1b2c3d4...`)
+2. **Eu atualizo o secret `RAILWAY_INTERNAL_KEY`** neste projeto via ferramenta de secrets — o valor fica encriptado, não aparece em código nem em logs
+3. **Você cola o mesmo valor no painel admin externo** no campo correspondente (`NEXCHARGE_SERVICE_ROLE_KEY` ou similar)
+4. **Testa** criando um carregador pelo painel admin — o erro 403 deve sumir
 
-## Mudança
+## Segurança da chave no chat
 
-**`supabase/functions/chargers-api/index.ts`** (linhas ~100-125):
+Colar o valor no chat é seguro neste fluxo: ele vai direto para o secret encriptado do Supabase e não fica em nenhum arquivo do código. Mesmo assim, depois de configurado dos dois lados, você pode rotacionar novamente se preferir.
 
-Antes da verificação de JWT, adicionar:
+## O que NÃO muda
 
-```typescript
-// Check for internal API key (cross-project auth)
-const internalKey = req.headers.get('x-internal-key');
-const expectedKey = Deno.env.get('RAILWAY_INTERNAL_KEY');
+- Nenhum arquivo de código (`chargers-api` já está pronto desde a mudança anterior)
+- Nenhuma tabela ou migração
+- Nenhuma configuração de RLS
 
-if (internalKey && expectedKey && internalKey === expectedKey) {
-  isAdmin = true;
-  userId = 'internal-admin';
-  console.log('[chargers-api] Authenticated via internal API key');
-}
-```
+## Próxima ação
 
-Se `isAdmin` já for `true` (via internal key), pular a verificação de JWT. Caso contrário, manter o fluxo atual.
-
-## Arquivo editado
-- `supabase/functions/chargers-api/index.ts`
-
-## Como o sistema externo deve chamar
-
-```typescript
-// No outro projeto, ao chamar chargers-api:
-const response = await fetch(
-  'https://fgvjvtglcmxzadetmmoi.supabase.co/functions/v1/chargers-api',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': '<ANON_KEY>',
-      'x-internal-key': '<RAILWAY_INTERNAL_KEY>'
-    },
-    body: JSON.stringify({ action: 'create', name: '...', ... })
-  }
-);
-```
-
-O secret `RAILWAY_INTERNAL_KEY` já existe nas secrets do Supabase. O sistema externo precisa apenas configurar o mesmo valor.
+Cole no chat o novo valor da chave que você gerou. Assim que receber, atualizo o secret e confirmo.
 
