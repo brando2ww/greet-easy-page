@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { diagnosticsApi } from "@/services/api";
-import { Bug, FileText, Settings, ToggleLeft, RefreshCw } from "lucide-react";
+import { Bug, FileText, Settings, ToggleLeft, RefreshCw, Activity, RotateCw } from "lucide-react";
 
 interface AdminDiagnosticsPanelProps {
   chargePointId: string | null | undefined;
@@ -30,6 +30,8 @@ export function AdminDiagnosticsPanel({ chargePointId }: AdminDiagnosticsPanelPr
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [togglingAuth, setTogglingAuth] = useState(false);
+  const [triggeringMeter, setTriggeringMeter] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [messages, setMessages] = useState<Array<{ timestamp: string; direction: string; action: string; payload: unknown }>>([]);
   const [configRows, setConfigRows] = useState<Array<{ key: string; readonly: boolean; value?: string }>>([]);
   const [unknownKeys, setUnknownKeys] = useState<string[]>([]);
@@ -105,6 +107,48 @@ export function AdminDiagnosticsPanel({ chargePointId }: AdminDiagnosticsPanelPr
     }
   };
 
+  const triggerMeterValues = async () => {
+    setTriggeringMeter(true);
+    try {
+      const res = await diagnosticsApi.trigger(chargePointId, "MeterValues", 1);
+      if (res.error || res.data?.success === false) {
+        toast({
+          title: "Falha ao solicitar MeterValues",
+          description: res.error || res.data?.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "TriggerMessage MeterValues enviado", description: "Aguardando resposta do carregador." });
+      }
+    } finally {
+      setTriggeringMeter(false);
+    }
+  };
+
+  const softReset = async () => {
+    setResetting(true);
+    try {
+      const res = await diagnosticsApi.reset(chargePointId, "Soft");
+      if (res.error || res.data?.success === false) {
+        toast({
+          title: "Falha no Soft Reset",
+          description: res.error || res.data?.message,
+          variant: "destructive",
+        });
+      } else {
+        const status = res.data?.result?.status;
+        toast({
+          title: `Reset: ${status || "enviado"}`,
+          description: status === "Accepted"
+            ? "O carregador vai reiniciar. Aguarde a reconexão."
+            : "Carregador respondeu, verifique buffer.",
+        });
+      }
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <>
       <div className="rounded-xl border border-orange-300 bg-orange-50 p-3">
@@ -144,6 +188,26 @@ export function AdminDiagnosticsPanel({ chargePointId }: AdminDiagnosticsPanelPr
           >
             <ToggleLeft className={`h-3.5 w-3.5 mr-1.5 ${togglingAuth ? "animate-pulse" : ""}`} />
             {togglingAuth ? "Aplicando..." : "AuthRemoteTx=false"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={triggerMeterValues}
+            disabled={triggeringMeter}
+            className="border-orange-300 bg-white hover:bg-orange-100 text-orange-900 justify-start"
+          >
+            <Activity className={`h-3.5 w-3.5 mr-1.5 ${triggeringMeter ? "animate-pulse" : ""}`} />
+            {triggeringMeter ? "Enviando..." : "Trigger MeterValues"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={softReset}
+            disabled={resetting}
+            className="border-orange-300 bg-white hover:bg-orange-100 text-orange-900 justify-start"
+          >
+            <RotateCw className={`h-3.5 w-3.5 mr-1.5 ${resetting ? "animate-spin" : ""}`} />
+            {resetting ? "Reiniciando..." : "Soft Reset"}
           </Button>
         </div>
       </div>

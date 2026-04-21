@@ -168,12 +168,11 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Call Railway OCPP server to send RemoteStartTransaction
+        // Call OCPP server to send RemoteStartTransaction (sync — waits for CP response)
         if (OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
           try {
             // OCPP 1.6 spec: idTag (IdToken) MUST be ≤ 20 chars (CiString20Type).
             // UUIDs are 36 chars and may be silently rejected by strict firmwares (e.g. XIRU).
-            // Strategy: use first 20 chars of UUID (sufficiently unique and deterministic per user).
             const rawIdTag = idTag || userId;
             const safeIdTag = String(rawIdTag).replace(/-/g, '').slice(0, 20);
 
@@ -193,32 +192,53 @@ Deno.serve(async (req) => {
             const remoteResult = await remoteStartResponse.json();
             console.log('[charger-commands] Remote start result:', remoteResult, 'idTag used:', safeIdTag);
 
+            // Hard rollback: if charger explicitly rejected or timed out, delete the session
+            // and reset charger so the user can retry without a stuck state.
             if (!remoteResult.success) {
-              // Rollback session if remote start failed
               await supabaseAdmin
                 .from('charging_sessions')
                 .delete()
                 .eq('id', session.id);
 
-              return new Response(JSON.stringify({ 
+              await supabaseAdmin
+                .from('chargers')
+                .update({ status: 'available' })
+                .eq('id', chargerId);
+
+              const status = remoteResult.status || 'Unknown';
+              const friendlyMessage =
+                status === 'Rejected'
+                  ? 'O carregador rejeitou o início remoto. Possível causa: autorização local/RFID exigida ou AuthorizeRemoteTxRequests=true.'
+                  : status === 'Timeout'
+                  ? 'O carregador não respondeu a tempo. Verifique a conexão e tente novamente.'
+                  : remoteResult.message || 'Não foi possível iniciar o carregamento remotamente.';
+
+              return new Response(JSON.stringify({
                 error: 'Remote start failed',
-                message: remoteResult.message || 'Could not start charging remotely'
+                status,
+                message: friendlyMessage,
               }), {
-                status: 500,
+                status: 400,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               });
             }
-
-            // Update session with transaction ID from OCPP
-            if (remoteResult.transactionId) {
-              await supabaseAdmin
-                .from('charging_sessions')
-                .update({ transaction_id: remoteResult.transactionId })
-                .eq('id', session.id);
-            }
+            // Accepted: keep session as awaiting_plug. It will only become in_progress
+            // when StartTransaction or real MeterValues arrives.
           } catch (fetchError) {
             console.error('[charger-commands] OCPP API error:', fetchError);
-            // Continue anyway - charger might start locally
+            // Network failure to OCPP server — rollback to avoid orphan session
+            await supabaseAdmin
+              .from('charging_sessions')
+              .delete()
+              .eq('id', session.id);
+
+            return new Response(JSON.stringify({
+              error: 'OCPP server unreachable',
+              message: 'Não foi possível conectar ao servidor de carregamento. Tente novamente.',
+            }), {
+              status: 502,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
           }
         }
 
