@@ -1,75 +1,173 @@
 
 
-## Plano: ativar sessão `awaiting_plug` quando XIRU envia `Preparing`
+## Plano: corrigir falso “carregando” e destravar carga real no XIRU
 
-Sua análise está correta. O servidor OCPP só transita `awaiting_plug → in_progress` no `StatusNotification = Charging`, mas o XIRU envia `Preparing` ao detectar o plug e nunca chega em `Charging` sem `StartTransaction` ter sido aceito antes — ou seja, está esperando um evento que nunca virá nesse modelo.
+O cronômetro começou porque a última correção ativou a sessão quando o XIRU enviou `Preparing`. Isso confirmou que o plugue foi detectado, mas **`Preparing` não significa que energia está fluindo**. Em OCPP 1.6J, carga real só deve começar quando houver `StartTransaction`, `Charging` real, ou telemetria com energia/potência.
 
-## Correção
+Pelos dados atuais:
+- Sessão `1c4a228a...` terminou `completed`, mas com `transaction_id = null`.
+- Não há nenhum `meter_values` para a sessão.
+- O carregador está com `ocpp_protocol_status = Charging`, mas `last_heartbeat` está antigo.
+- Isso indica estado inconsistente/zumbi: a UI entrou em modo ativo, mas o carregador não confirmou transação nem enviou medição.
 
-### 1. `ocpp-standalone-server/server.js` — `handleStatusNotification`
+## O que vou fazer
 
-Expandir o gatilho de ativação:
+### 1. Reverter o falso início em `Preparing`
+
+Em `ocpp-standalone-server/server.js`, ajustar `handleStatusNotification`:
+
+- `Preparing` não vai mais mudar `charging_sessions.status` para `in_progress`.
+- `Preparing` vai apenas marcar que o plugue foi detectado no carregador.
+- A sessão continua em `awaiting_plug` até chegar confirmação real.
+
+Novo comportamento:
 
 ```text
-if (payload.status === 'Preparing' || payload.status === 'Charging') {
-  // procurar sessão awaiting_plug deste charger
-  // marcar como in_progress
-  // started_at = now() (reset para começar billing real agora)
-  // disparar RemoteStartTransaction se ainda não foi enviado
-}
+StatusNotification(Preparing)
+→ plugue detectado
+→ manter sessão awaiting_plug
+→ não iniciar cronômetro
+→ não iniciar cobrança
+```
+
+### 2. Iniciar sessão somente com evento real de carga
+
+A sessão só vira `in_progress` quando acontecer pelo menos um destes eventos:
+
+```text
+StartTransaction
+ou
+StatusNotification(Charging)
+ou
+MeterValues com transactionId válido
 ```
 
 Detalhes:
-- Buscar `charging_sessions` com `charger_id = (lookup por ocpp_charge_point_id)` e `status = 'awaiting_plug'`, ordem `created_at desc`, `limit 1`.
-- Se encontrada: `update status='in_progress', started_at=now()`. Billing real começa agora (não no momento do RemoteStart).
-- Se não encontrada: comportamento atual (apenas atualiza `ocpp_protocol_status`).
-- Manter o caminho `Charging` também — alguns chargers pulam direto para `Charging`.
+- `handleStartTransaction` continua respondendo imediatamente `Accepted`.
+- Se existir sessão `awaiting_plug`, vincula `transaction_id`, `meter_start` e muda para `in_progress`.
+- Se vier `Charging` sem `StartTransaction`, só ativa se já houver `transaction_id` ou telemetria confiável.
+- Se vier `MeterValues` com `transactionId`, vincula/atualiza a sessão e confirma carga real.
 
-### 2. `ocpp-standalone-server/server.js` — `handleStartTransaction` (race condition)
+### 3. Corrigir o estado visual da tela de carregamento
 
-Hoje o handler procura sessão por `id_tag` ou cria órfã. Adicionar fallback robusto:
+Em `src/pages/Carregamento.tsx`:
 
-- Se `id_tag` não bate, procurar por `charger_id + status IN ('awaiting_plug', 'in_progress') ORDER BY created_at DESC LIMIT 1` antes de criar sessão órfã.
-- Vincular `transaction_id` retornado à sessão encontrada.
-- Garantir resposta OCPP `[3, msgId, { transactionId, idTagInfo: { status: 'Accepted' } }]` enviada **antes** do update no banco (padrão BootNotification, já documentado em `mem://decisoes-tecnicas/garantia-resposta-bootnotification`).
+- Quando a sessão estiver `awaiting_plug` e o OCPP estiver `Preparing`, mostrar:
 
-### 3. `ocpp-standalone-server/server.js` — guard contra dupla ativação
+```text
+Plugue detectado
+Aguardando o carregador liberar energia...
+```
 
-Adicionar idempotência: se sessão já está `in_progress`, não resetar `started_at`. Apenas o **primeiro** evento entre `Preparing`/`Charging`/`StartTransaction` ativa a sessão.
+- O cronômetro de carga não roda nesse estado.
+- Custo e kWh permanecem zerados.
+- A barra/progresso não simula carga sem SoC ou meter values.
 
-### 4. UI — sem mudanças necessárias
+Estados esperados na UI:
 
-O frontend já reage a `status: 'in_progress'` via realtime do Supabase em `src/pages/Carregamento.tsx`. Assim que o servidor fizer o update, a tela transita automaticamente de "Aguardando plugue" para o cronômetro de carga ativa.
+```text
+awaiting_plug + Available/Preparing
+→ aguardando / plugue detectado
 
-## Arquivo afetado
+in_progress + StartTransaction/MeterValues
+→ cronômetro rodando / carregando
+
+completed/cancelled
+→ finalizado
+```
+
+### 4. Fazer `RemoteStartTransaction` retornar `Accepted` ou `Rejected` real
+
+Hoje `/api/remote-start` só responde “enviei”, sem esperar o carregador responder. Vou mudar o servidor OCPP para:
+
+- Registrar o `messageId` em `pendingCalls`.
+- Enviar `RemoteStartTransaction`.
+- Esperar `CALLRESULT`.
+- Retornar ao Edge Function:
+
+```json
+{
+  "success": true,
+  "status": "Accepted"
+}
+```
+
+ou
+
+```json
+{
+  "success": false,
+  "status": "Rejected"
+}
+```
+
+Assim saberemos se o XIRU realmente aceitou iniciar ou se apenas recebeu a mensagem.
+
+### 5. Corrigir `charger-commands` para lidar com rejeição real
+
+Em `supabase/functions/charger-commands/index.ts`:
+
+- Se `RemoteStartTransaction` voltar `Rejected`, cancelar a sessão recém-criada.
+- Mostrar mensagem clara ao usuário/admin:
+
+```text
+O carregador rejeitou o início remoto.
+Possível causa: autorização local/RFID ou configuração AuthorizeRemoteTxRequests.
+```
+
+- Se voltar `Accepted`, manter `awaiting_plug` até `StartTransaction` ou carga real.
+
+### 6. Adicionar botão admin para ação de desbloqueio imediato
+
+No `AdminDiagnosticsPanel`, adicionar ações úteis para o XIRU:
+
+- `Ler config`
+- `AuthRemoteTx=false`
+- `Trigger StatusNotification`
+- `Trigger MeterValues`
+- `Soft Reset`
+
+Se o XIRU aceitou `RemoteStart` mas não envia `StartTransaction`, o próximo passo será:
+1. Ler `AuthorizeRemoteTxRequests`.
+2. Se estiver `true`, mudar para `false`.
+3. Se retornar `RebootRequired`, enviar `Soft Reset`.
+4. Tentar iniciar novamente.
+
+### 7. Ajustar limpeza de estado inconsistente
+
+No servidor e na Edge Function:
+
+- Se a sessão for parada/cancelada sem `transaction_id`, resetar o charger para:
+  - `status = available`
+  - manter `ocpp_protocol_status` conforme último status real, mas sem considerar isso uma sessão ativa.
+- Evitar que o app veja `Charging` antigo/stale como carga real se o heartbeat estiver velho.
+
+## Arquivos afetados
 
 | Arquivo | Mudança |
 |---|---|
-| `ocpp-standalone-server/server.js` | `handleStatusNotification` aceita `Preparing` como gatilho; `handleStartTransaction` com fallback por charger; guard de idempotência |
+| `ocpp-standalone-server/server.js` | Não ativar `in_progress` em `Preparing`; iniciar só com `StartTransaction`/carga real; `remote-start` com resposta real |
+| `supabase/functions/charger-commands/index.ts` | Cancelar sessão se RemoteStart for rejeitado; mensagens claras |
+| `src/pages/Carregamento.tsx` | Mostrar “Plugue detectado” sem rodar cronômetro até carga real |
+| `src/components/charging/AdminDiagnosticsPanel.tsx` | Botões de Trigger MeterValues, Soft Reset e config para desbloqueio |
+| `src/services/api.ts` | Tipos/actions para novos comandos de diagnóstico se necessário |
 
 ## O que NÃO vou fazer
 
-- Não vou tocar em `handleBootNotification`, `handleMeterValues`, negociação de subprotocolo, nem nas Edge Functions.
-- Não vou adicionar hardening (heartbeat ping/pong, basic auth, persistência de counter) — fora do escopo.
-- Não vou criar UI nova — a tela já reage corretamente.
+- Não vou cobrar nem iniciar cronômetro apenas por `Preparing`.
+- Não vou depender de status OCPP stale com heartbeat antigo.
+- Não vou esconder o problema com UI; a tela vai diferenciar plugue conectado de carga real.
 
-## Deploy manual
+## Resultado esperado
 
-Após o commit:
+Na próxima tentativa:
 
-```text
-ssh root@68.183.152.189
-cd /opt/ocpp-server && git pull
-systemctl restart ocpp-server
-journalctl -u ocpp-server -f
-```
-
-## Validação esperada
-
-Próxima tentativa com o XIRU:
-1. Você inicia pelo app → sessão criada `awaiting_plug` + RemoteStart enviado.
-2. Você pluga o cabo → XIRU envia `StatusNotification(Preparing)`.
-3. Servidor agora transita sessão para `in_progress`, `started_at = now()`.
-4. UI sai de "Aguardando plugue" e entra no cronômetro.
-5. Quando XIRU eventualmente envia `StartTransaction`, vinculamos `transaction_id` à sessão existente (sem criar órfã).
+1. Usuário inicia pelo app.
+2. XIRU recebe `RemoteStartTransaction`.
+3. Se rejeitar, o app mostra erro real.
+4. Se aceitar e plugue estiver conectado:
+   - `Preparing` mostra “Plugue detectado”.
+   - Cronômetro ainda não roda.
+5. Quando o XIRU enviar `StartTransaction` ou `MeterValues`, a sessão vira `in_progress`.
+6. Só então cronômetro, custo e kWh começam.
 
