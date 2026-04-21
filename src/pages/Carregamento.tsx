@@ -101,6 +101,23 @@ export default function Carregamento() {
     enabled: !!chargerId && !isCompleted,
   });
 
+  // Fetch full charger (only for admin) to get ocpp_charge_point_id for diagnostics
+  const { data: chargerFull } = useQuery({
+    queryKey: ["charger-full-admin", chargerId],
+    queryFn: async () => {
+      if (!chargerId) return null;
+      const res = await chargersApi.get(chargerId);
+      return res.data ?? null;
+    },
+    enabled: !!chargerId && isAdmin,
+  });
+
+  const ocppChargePointId =
+    chargerFromState?.ocppChargePointId ??
+    chargerStatusRes?.chargePointId ??
+    chargerFull?.ocppChargePointId ??
+    null;
+
   const ocppStatus = chargerStatusRes?.ocppStatus;
   const statusInfo = isCompleted
     ? { label: "Finalizado", color: "text-gray-400", pulse: false }
