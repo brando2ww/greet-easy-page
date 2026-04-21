@@ -145,6 +145,90 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ============ Diagnóstico interno (protegido por x-internal-key) ============
+  function checkInternalKey() {
+    const key = req.headers['x-internal-key'];
+    if (!OCPP_INTERNAL_KEY || key !== OCPP_INTERNAL_KEY) {
+      res.writeHead(401, { ...corsHeaders, 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return false;
+    }
+    return true;
+  }
+
+  // GET /admin/messages?cp=140515&limit=100
+  if (req.method === 'GET' && url.pathname === '/admin/messages') {
+    if (!checkInternalKey()) return;
+    const cp = url.searchParams.get('cp');
+    const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+    if (!cp) {
+      res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'cp param required' }));
+      return;
+    }
+    const buf = messageBuffer.get(cp) || [];
+    const slice = buf.slice(-limit);
+    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      chargePointId: cp,
+      total: buf.length,
+      returned: slice.length,
+      messages: slice,
+    }));
+    return;
+  }
+
+  // GET /admin/active-connections
+  if (req.method === 'GET' && url.pathname === '/admin/active-connections') {
+    if (!checkInternalKey()) return;
+    const now = Date.now();
+    const conns = Array.from(activeConnections.keys()).map((cp) => ({
+      chargePointId: cp,
+      lastActivityMs: lastActivity.get(cp) ? now - lastActivity.get(cp) : null,
+      lastActivityAt: lastActivity.get(cp) ? new Date(lastActivity.get(cp)).toISOString() : null,
+      readyState: activeConnections.get(cp)?.readyState,
+    }));
+    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ count: conns.length, connections: conns }));
+    return;
+  }
+
+  // POST /api/trigger-message  body: { chargePointId, requestedMessage, connectorId? }
+  if (req.method === 'POST' && url.pathname === '/api/trigger-message') {
+    if (!checkInternalKey()) return;
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', () => {
+      try {
+        const { chargePointId, requestedMessage, connectorId } = JSON.parse(body);
+        const allowed = ['StatusNotification', 'MeterValues', 'BootNotification', 'Heartbeat', 'DiagnosticsStatusNotification', 'FirmwareStatusNotification'];
+        if (!allowed.includes(requestedMessage)) {
+          res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: `requestedMessage must be one of ${allowed.join(', ')}` }));
+          return;
+        }
+        const ws = activeConnections.get(chargePointId);
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+        const messageId = `trigger-${Date.now()}`;
+        const payload = { requestedMessage };
+        if (typeof connectorId === 'number') payload.connectorId = connectorId;
+        const message = [2, messageId, 'TriggerMessage', payload];
+        ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'TriggerMessage', payload);
+        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'TriggerMessage sent', messageId }));
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
   // 404 for other routes
   res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'Not Found' }));
