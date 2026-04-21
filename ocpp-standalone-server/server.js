@@ -17,6 +17,30 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Armazena conexões ativas por Charge Point ID
 const activeConnections = new Map();
+// Última atividade WebSocket por CP (para detectar conexões "mortas silenciosamente")
+const lastActivity = new Map();
+// Buffer circular de mensagens OCPP por CP (últimas 500)
+const messageBuffer = new Map();
+const MESSAGE_BUFFER_SIZE = 500;
+
+function recordMessage(chargePointId, direction, action, payload) {
+  if (!messageBuffer.has(chargePointId)) {
+    messageBuffer.set(chargePointId, []);
+  }
+  const buf = messageBuffer.get(chargePointId);
+  buf.push({
+    timestamp: new Date().toISOString(),
+    direction, // 'in' | 'out'
+    action,
+    payload,
+  });
+  if (buf.length > MESSAGE_BUFFER_SIZE) {
+    buf.splice(0, buf.length - MESSAGE_BUFFER_SIZE);
+  }
+  lastActivity.set(chargePointId, Date.now());
+}
+
+const OCPP_INTERNAL_KEY = process.env.OCPP_INTERNAL_KEY || '';
 let transactionIdCounter = 1000;
 
 const PORT = process.env.PORT || 8080;
