@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { transactionsApi, commandsApi } from "@/services/api";
+import { transactionsApi, commandsApi, chargersApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
+import { useUserRole } from "@/hooks/useUserRole";
 import { formatCurrency } from "@/utils/formatters";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AdminDiagnosticsPanel } from "@/components/charging/AdminDiagnosticsPanel";
 import type { ChargePoint, Transaction } from "@/types/charger";
 import carTopView from "@/assets/car-top-view.png";
 
