@@ -22,6 +22,18 @@ const lastActivity = new Map();
 // Buffer circular de mensagens OCPP por CP (últimas 500)
 const messageBuffer = new Map();
 const MESSAGE_BUFFER_SIZE = 500;
+// Pending CALLs aguardando CALLRESULT/CALLERROR do CP (messageId -> { resolve, reject, timer })
+const pendingCalls = new Map();
+
+function awaitCallResult(messageId, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pendingCalls.delete(messageId);
+      reject(new Error('Timeout waiting for CP response'));
+    }, timeoutMs);
+    pendingCalls.set(messageId, { resolve, reject, timer });
+  });
+}
 
 function recordMessage(chargePointId, direction, action, payload) {
   if (!messageBuffer.has(chargePointId)) {
