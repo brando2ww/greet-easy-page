@@ -131,25 +131,26 @@ export default function Carregamento() {
   const activeStatuses = ["Charging", "SuspendedEV", "SuspendedEVSE", "Finishing"];
   const isActivelyCharging = !isCompleted && activeStatuses.includes(ocppStatus ?? "");
 
+  // Cronômetro ancorado em session.startedAt (realinhado pelo servidor no primeiro MeterValues real).
+  // Só exibe quando há prova de telemetria real: meterStart setado E (energia já fluiu OU status Charging).
+  const hasMeterStart = (session as any)?.meterStart !== null && (session as any)?.meterStart !== undefined;
+  const showTimer =
+    !isCompleted &&
+    hasMeterStart &&
+    ((energyConsumed ?? 0) > 0 || ocppStatus === "Charging");
+
   useEffect(() => {
-    if (isActivelyCharging) {
-      if (!chargingStartRef.current) {
-        chargingStartRef.current = Date.now();
-      }
-      const tick = () => {
-        const sinceStart = Math.floor((Date.now() - chargingStartRef.current!) / 1000);
-        setElapsed(accumulatedRef.current + sinceStart);
-      };
-      tick();
-      const id = setInterval(tick, 1000);
-      return () => clearInterval(id);
-    } else {
-      if (chargingStartRef.current) {
-        accumulatedRef.current += Math.floor((Date.now() - chargingStartRef.current) / 1000);
-        chargingStartRef.current = null;
-      }
+    const startedAt = (session as any)?.startedAt;
+    if (!showTimer || !startedAt) {
+      setElapsed(0);
+      return;
     }
-  }, [isActivelyCharging]);
+    const startMs = new Date(startedAt).getTime();
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [showTimer, (session as any)?.startedAt]);
 
   useEffect(() => {
     if (balanceStopTriggeredRef.current || !isActivelyCharging) return;
