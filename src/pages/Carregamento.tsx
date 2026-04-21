@@ -364,7 +364,7 @@ export default function Carregamento() {
             )}
             <span className={`text-sm font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
           </div>
-          <p className="text-3xl font-bold tracking-wider font-mono">{formatElapsed(elapsed)}</p>
+          <p className="text-3xl font-bold tracking-wider font-mono">{showTimer ? formatElapsed(elapsed) : "--:--:--"}</p>
         </div>
 
         {/* Battery segments */}
