@@ -1,113 +1,137 @@
+Aqui está o plano final consolidado com os ajustes aplicados, pronto para copiar e colar no Lovable:
 
+---
 
-## Plano: detectar conexão zumbi e forçar reconexão do XIRU
+## Plano: cronômetro só começa quando energia flui de verdade
 
-### Diagnóstico atual
+### Problema
 
-| Campo | Valor |
-|---|---|
-| `ocpp_protocol_status` | `Charging` (stale, do último evento real) |
-| `last_heartbeat` | 17:16:16 — **58 minutos atrás** |
-| `status` | `available` |
+Hoje `started_at` é setado em `Preparing` (plug conectado, sem energia). O cronômetro da UI usa essa base e começa antes da carga real, gerando falso "carregando".
 
-A UI mostra "Carregador offline" corretamente (heartbeat > 2min), mas o servidor OCPP achou que ainda estava conectado e **não limpou o status** quando a WebSocket morreu silenciosamente. O XIRU provavelmente também acha que continua conectado e nunca tentará reconectar até reboot físico.
+### Decisão de design
 
-A causa raiz é a **falta de ping/pong WebSocket** no servidor. Sem isso:
-- TCP keepalive do kernel só dispara após ~2h.
-- Servidor mantém socket morto eternamente.
-- XIRU não percebe que o servidor parou de receber.
-- Único jeito de recuperar é reboot manual do carregador.
+**Sem migração de banco.** Usar `meter_start IS NOT NULL` como proxy do "primeiro MeterValues real recebido". O `StartTransaction` define `meter_start`, então o primeiro `MeterValues` subsequente é o gatilho perfeito para realinhar `started_at`.
 
-## O que vou fazer
+---
 
-### 1. Servidor OCPP — heartbeat WebSocket ping/pong
+### Mudanças
 
-Em `ocpp-standalone-server/server.js`:
+#### 1. `ocpp-standalone-server/server.js` — topo do arquivo
 
-- A cada **30s**, enviar `ws.ping()` para todos os clientes conectados.
-- Marcar `ws.isAlive = false` antes do ping.
-- Ao receber `pong`, marcar `ws.isAlive = true`.
-- No próximo ciclo, se `ws.isAlive === false`: chamar `ws.terminate()` (fecha socket morto imediatamente).
-- Quando socket fecha por terminate, disparar a limpeza no banco:
-  - `ocpp_protocol_status = 'Offline'`
-  - Não muda `status` (mantém `available` se não houver sessão ativa).
-- Log claro: `[OCPP] Terminated zombie connection: ${chargePointId}`.
+Declarar o Set global logo após `const pendingCalls = new Map()`:
 
-### 2. Servidor OCPP — auto-marcar offline por heartbeat stale (defesa em profundidade)
+```js
+// Flag em memória: sessões que já tiveram started_at realinhado neste processo
+const firstMeterRealigned = new Set();
 
-Setinterval a cada **60s** roda no servidor:
-
-- Busca chargers com `ocpp_protocol_status != 'Offline'` e `last_heartbeat < now() - 3 min`.
-- Marca `ocpp_protocol_status = 'Offline'`.
-- Garante que o frontend reflita o estado real mesmo se o ping/pong falhar.
-
-### 3. Frontend — mensagem de erro mais útil
-
-Em `src/hooks/useChargerValidation.tsx`, quando heartbeat stale, mostrar instrução acionável em vez de só "offline":
-
-```text
-Carregador sem resposta
-O ELETROPOSTO XIRU não envia sinal há X minutos.
-Vá até o carregador e:
-1. Desligue e religue o disjuntor
-2. Aguarde 30 segundos
-3. Tente novamente
 ```
 
-Isso transforma erro em ação concreta para o usuário no local.
+---
 
-### 4. Limpeza imediata do estado atual
+#### 2. `ocpp-standalone-server/server.js` — `handleMeterValues`
 
-Marcar o XIRU como `Offline` agora via migration one-shot para refletir a realidade até o reboot:
+Após o bloco que salva as linhas em `meter_values` e antes do bloco que atualiza `energy_consumed`, inserir:
 
-```sql
-UPDATE chargers
-SET ocpp_protocol_status = 'Offline'
-WHERE id = 'cdbaf312-807c-4bb8-a7ed-90e3fef7565f'
-  AND last_heartbeat < now() - interval '3 minutes';
+```js
+// Realinha started_at para o timestamp real do primeiro MeterValues
+// Gate: meter_start !== null (prova que StartTransaction chegou)
+// Sem gate de tempo fixo — meter_start existente é condição suficiente
+if (
+  sessionId &&
+  session &&
+  session.status === 'in_progress' &&
+  session.meter_start !== null &&
+  !firstMeterRealigned.has(sessionId)
+) {
+  const firstMeterTs = rows[0]?.timestamp ?? new Date().toISOString();
+  await supabase
+    .from('charging_sessions')
+    .update({ started_at: firstMeterTs })
+    .eq('id', sessionId);
+  firstMeterRealigned.add(sessionId);
+  console.log(`[OCPP] Realigned started_at for session ${sessionId} → ${firstMeterTs}`);
+}
+
 ```
 
-### 5. Documentar a regra de detecção
+> **Atenção**: o objeto `session` já precisa incluir `meter_start` e `started_at` no select existente. Confirmar que o select está como:
+>
+> ```js
+> .select('id, status, meter_start, started_at, chargers(price_per_kwh)')
+>
+> ```
 
-Adicionar em `mem://decisoes-tecnicas/deteccao-conexao-zumbi-ocpp` registrando a regra: ping a cada 30s, terminate em pong perdido, sweep de 60s para heartbeat > 3min.
+---
 
-## Arquivos afetados
+#### 3. `ocpp-standalone-server/server.js` — `handleStopTransaction`
 
-| Arquivo | Mudança |
-|---|---|
-| `ocpp-standalone-server/server.js` | Ping/pong 30s com terminate em zombie; sweep 60s para auto-offline; cleanup do banco no close |
-| `src/hooks/useChargerValidation.tsx` | Mensagem de erro acionável quando heartbeat stale |
-| Migration | Marcar XIRU atual como Offline |
-| Memória | Registrar regra de detecção de zombie |
+Após o update da sessão no banco, adicionar a limpeza da flag:
 
-## O que NÃO vou fazer
+```js
+// Limpa flag de realinhamento para este session.id
+if (session?.id) {
+  firstMeterRealigned.delete(session.id);
+}
 
-- Não adiciono basic auth WebSocket.
-- Não persisto contadores ou outros itens do hardening completo — apenas o que destrava o problema atual de zombie.
-- Não toco na lógica `awaiting_plug → in_progress` (já está correta).
-
-## Ação manual imediata
-
-Para destravar o XIRU **agora**, antes do deploy:
-1. Desligue o disjuntor do ELETROPOSTO XIRU.
-2. Aguarde 30 segundos.
-3. Religue.
-4. Aguarde 60s para reconectar via WebSocket.
-5. Tente iniciar pelo app.
-
-## Deploy do servidor após o commit
-
-```text
-ssh root@68.183.152.189
-cd /opt/ocpp-server && git pull
-systemctl restart ocpp-server
-journalctl -u ocpp-server -f | grep -E 'ping|pong|zombie|Terminated'
 ```
 
-## Resultado esperado
+Isso garante que se o mesmo `session.id` for reutilizado (edge case), o realinhamento volta a funcionar.
 
-- Conexões mortas detectadas em ≤60s, não mais ≤2h.
-- XIRU forçado a reconectar quando socket cair.
-- Frontend mostra status real, com instrução prática de reset físico se necessário.
-- Próxima carga real vira `in_progress` apenas quando `StartTransaction`/`MeterValues` chegar (mantém regra correta).
+---
 
+#### 4. `src/pages/Carregamento.tsx` — cronômetro ancorado em `session.started_at`
+
+Substituir a lógica local de `chargingStartRef` / `accumulatedRef` por:
+
+```ts
+// Cronômetro ancorado no started_at vindo do servidor
+const elapsed = session?.started_at
+  ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 1000)
+  : 0;
+
+```
+
+Recalcular a cada segundo com `setInterval` enquanto `isActivelyCharging`.
+
+Quando o servidor realinhar `started_at`, o próximo refetch (10s) atualiza automaticamente a âncora e o cronômetro salta para o tempo correto.
+
+---
+
+#### 5. `src/pages/Carregamento.tsx` — ocultar cronômetro até telemetria real
+
+Mostrar `--:--:--` em vez de `00:00:00` enquanto o carregamento ainda não tem dados reais:
+
+```ts
+const showTimer = session?.meter_start !== null && 
+  (session?.energy_consumed > 0 || session?.ocpp_protocol_status === 'Charging');
+
+```
+
+Se `showTimer` for `false`, renderizar `--:--:--` no lugar do cronômetro formatado.
+
+---
+
+### Fluxo completo esperado
+
+1. Plug conectado → `Preparing` → sessão vira `in_progress`, `started_at` provisório, UI mostra **"Plugue detectado"**, cronômetro `--:--:--`
+2. `StartTransaction` chega → `meter_start` setado, cronômetro ainda `--:--:--`
+3. Primeiro `MeterValues` real → servidor realinha `started_at` para o timestamp da telemetria, UI faz refetch e cronômetro começa a partir de `00:00:00` no instante exato em que energia começou a fluir
+4. Próximas leituras apenas atualizam `energy_consumed` / `cost` / `soc`, sem mexer em `started_at`
+
+---
+
+### O que NÃO mudar
+
+- Sem coluna nova no banco
+- Sem alterar a regra de transição `awaiting_plug → in_progress`
+- Sem migration
+
+---
+
+### Arquivos afetados
+
+
+| Arquivo                            | Mudança                                                                                                    |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `ocpp-standalone-server/server.js` | `firstMeterRealigned` Set global; realinhamento no `handleMeterValues`; cleanup no `handleStopTransaction` |
+| `src/pages/Carregamento.tsx`       | Cronômetro ancorado em `session.started_at`; `showTimer` oculta `--:--:--` até telemetria real             |
