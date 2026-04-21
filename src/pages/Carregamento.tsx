@@ -113,9 +113,9 @@ export default function Carregamento() {
   });
 
   const ocppChargePointId =
-    chargerFromState?.ocppChargePointId ??
+    chargerFromState?.chargePointId ??
     chargerStatusRes?.chargePointId ??
-    chargerFull?.ocppChargePointId ??
+    chargerFull?.chargePointId ??
     null;
 
   const ocppStatus = chargerStatusRes?.ocppStatus;
