@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.wallet-api]
 verify_jwt = false
+
+[functions.ocpp-diagnostics]
+verify_jwt = false

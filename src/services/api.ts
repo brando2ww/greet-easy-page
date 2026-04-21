@@ -149,6 +149,23 @@ export const commandsApi = {
       chargerId,
     });
   },
+
+  /**
+   * Force charger to re-send a status notification (OCPP TriggerMessage).
+   * Useful when firmware doesn't notify a plug event.
+   */
+  triggerStatus: async (
+    chargerId: string,
+    requestedMessage: 'StatusNotification' | 'MeterValues' | 'BootNotification' | 'Heartbeat' = 'StatusNotification',
+    connectorId: number = 1,
+  ): Promise<ApiResponse<{ success: boolean; message?: string }>> => {
+    return invokeFunction('charger-commands', {
+      action: 'triggerStatus',
+      chargerId,
+      requestedMessage,
+      connectorId,
+    });
+  },
 };
 
 // ============ Transactions API ============

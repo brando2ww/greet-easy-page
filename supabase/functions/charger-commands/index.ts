@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, chargerId, idTag, transactionId, sessionId } = body;
+    const { action, chargerId, idTag, transactionId, sessionId, requestedMessage, connectorId } = body;
 
     console.log(`[charger-commands] Action: ${action}, User: ${userId}, Charger: ${chargerId}`);
 
@@ -371,6 +371,61 @@ Deno.serve(async (req) => {
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      case 'triggerStatus': {
+        if (!chargerId) {
+          return new Response(JSON.stringify({ error: 'chargerId is required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { data: charger } = await supabaseAdmin
+          .from('chargers')
+          .select('ocpp_charge_point_id')
+          .eq('id', chargerId)
+          .single();
+
+        if (!charger || !charger.ocpp_charge_point_id) {
+          return new Response(JSON.stringify({ error: 'Charger not found or not registered' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (!OCPP_SERVER_URL) {
+          return new Response(JSON.stringify({ error: 'OCPP server not configured' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        try {
+          const r = await fetch(`${OCPP_SERVER_URL}/api/trigger-message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-key': Deno.env.get('OCPP_INTERNAL_KEY')!,
+            },
+            body: JSON.stringify({
+              chargePointId: charger.ocpp_charge_point_id,
+              requestedMessage: requestedMessage || 'StatusNotification',
+              connectorId: typeof connectorId === 'number' ? connectorId : 1,
+            }),
+          });
+          const json = await r.json();
+          return new Response(JSON.stringify(json), {
+            status: r.status,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (e) {
+          console.error('[charger-commands] triggerStatus error:', e);
+          return new Response(JSON.stringify({ success: false, message: 'Failed to reach OCPP server' }), {
+            status: 502,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       default:
