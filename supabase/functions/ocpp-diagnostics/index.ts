@@ -151,7 +151,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Invalid action. Use: messages | connections | trigger | getConfig | changeConfig' }), {
+    if (action === 'reset') {
+      const { chargePointId, type } = body;
+      if (!chargePointId) {
+        return new Response(JSON.stringify({ error: 'chargePointId required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const r = await fetch(`${OCPP_SERVER_URL}/api/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-key': OCPP_INTERNAL_KEY },
+        body: JSON.stringify({ chargePointId, type: type === 'Hard' ? 'Hard' : 'Soft' }),
+      });
+      const json = await r.json();
+      return new Response(JSON.stringify(json), {
+        status: r.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Invalid action. Use: messages | connections | trigger | getConfig | changeConfig | reset' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

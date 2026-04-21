@@ -238,6 +238,20 @@ export const diagnosticsApi = {
       value,
     });
   },
+
+  /**
+   * Send Soft or Hard Reset to the charger (admin only).
+   */
+  reset: async (
+    chargePointId: string,
+    type: 'Soft' | 'Hard' = 'Soft',
+  ): Promise<ApiResponse<{ success: boolean; result?: { status: 'Accepted' | 'Rejected' }; message?: string }>> => {
+    return invokeFunction('ocpp-diagnostics', {
+      action: 'reset',
+      chargePointId,
+      type,
+    });
+  },
 };
 
 // ============ Transactions API ============
