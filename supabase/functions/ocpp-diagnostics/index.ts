@@ -111,7 +111,47 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Invalid action. Use: messages | connections | trigger' }), {
+    if (action === 'getConfig') {
+      const { chargePointId, key } = body;
+      if (!chargePointId) {
+        return new Response(JSON.stringify({ error: 'chargePointId required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const r = await fetch(`${OCPP_SERVER_URL}/api/get-configuration`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-key': OCPP_INTERNAL_KEY },
+        body: JSON.stringify({ chargePointId, key }),
+      });
+      const json = await r.json();
+      return new Response(JSON.stringify(json), {
+        status: r.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'changeConfig') {
+      const { chargePointId, key, value } = body;
+      if (!chargePointId || !key || value === undefined) {
+        return new Response(JSON.stringify({ error: 'chargePointId, key and value required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const r = await fetch(`${OCPP_SERVER_URL}/api/change-configuration`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-key': OCPP_INTERNAL_KEY },
+        body: JSON.stringify({ chargePointId, key, value: String(value) }),
+      });
+      const json = await r.json();
+      return new Response(JSON.stringify(json), {
+        status: r.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Invalid action. Use: messages | connections | trigger | getConfig | changeConfig' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

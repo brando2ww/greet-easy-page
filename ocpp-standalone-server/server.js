@@ -245,6 +245,84 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/get-configuration  body: { chargePointId, key?: string[] }
+  if (req.method === 'POST' && url.pathname === '/api/get-configuration') {
+    if (!checkInternalKey()) return;
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', async () => {
+      try {
+        const { chargePointId, key } = JSON.parse(body);
+        const ws = activeConnections.get(chargePointId);
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+        const messageId = `getconf-${Date.now()}`;
+        const payload = {};
+        if (Array.isArray(key) && key.length > 0) payload.key = key;
+        const message = [2, messageId, 'GetConfiguration', payload];
+        const waitPromise = awaitCallResult(messageId, 10000);
+        ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'GetConfiguration', payload);
+        try {
+          const result = await waitPromise;
+          res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, result }));
+        } catch (waitErr) {
+          res.writeHead(504, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: waitErr.message }));
+        }
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /api/change-configuration  body: { chargePointId, key, value }
+  if (req.method === 'POST' && url.pathname === '/api/change-configuration') {
+    if (!checkInternalKey()) return;
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', async () => {
+      try {
+        const { chargePointId, key, value } = JSON.parse(body);
+        if (!key || value === undefined) {
+          res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'key and value required' }));
+          return;
+        }
+        const ws = activeConnections.get(chargePointId);
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+        const messageId = `changeconf-${Date.now()}`;
+        const payload = { key: String(key), value: String(value) };
+        const message = [2, messageId, 'ChangeConfiguration', payload];
+        const waitPromise = awaitCallResult(messageId, 10000);
+        ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'ChangeConfiguration', payload);
+        try {
+          const result = await waitPromise;
+          res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, result }));
+        } catch (waitErr) {
+          res.writeHead(504, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: waitErr.message }));
+        }
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
   // 404 for other routes
   res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'Not Found' }));
@@ -372,8 +450,20 @@ wss.on('connection', async (ws, req) => {
         }
       } else if (messageType === 3) { // CALLRESULT
         console.log(`[OCPP Server] Received CALLRESULT from ${chargePointId}:`, payload);
+        const pending = pendingCalls.get(messageId);
+        if (pending) {
+          clearTimeout(pending.timer);
+          pendingCalls.delete(messageId);
+          pending.resolve(payload);
+        }
       } else if (messageType === 4) { // CALLERROR
         console.error(`[OCPP Server] Received CALLERROR from ${chargePointId}:`, message);
+        const pending = pendingCalls.get(messageId);
+        if (pending) {
+          clearTimeout(pending.timer);
+          pendingCalls.delete(messageId);
+          pending.reject(new Error(`CALLERROR: ${JSON.stringify(message.slice(2))}`));
+        }
       }
     } catch (error) {
       console.error(`[OCPP Server] Error processing message from ${chargePointId}:`, error.message);
