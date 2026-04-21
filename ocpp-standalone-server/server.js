@@ -55,6 +55,25 @@ function recordMessage(chargePointId, direction, action, payload) {
 const OCPP_INTERNAL_KEY = process.env.OCPP_INTERNAL_KEY || '';
 let transactionIdCounter = 1000;
 
+// Inicializa o transactionIdCounter a partir do MAX no banco para evitar colisões após restart
+async function initTransactionIdCounter() {
+  try {
+    const { data, error } = await supabase
+      .from('charging_sessions')
+      .select('transaction_id')
+      .not('transaction_id', 'is', null)
+      .order('transaction_id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!error && data?.transaction_id) {
+      transactionIdCounter = data.transaction_id + 1;
+      console.log(`[OCPP Server] transactionIdCounter initialized to ${transactionIdCounter}`);
+    }
+  } catch (e) {
+    console.error('[OCPP Server] Failed to initialize transactionIdCounter:', e?.message);
+  }
+}
+
 const PORT = process.env.PORT || 8080;
 
 // CORS headers
@@ -123,10 +142,9 @@ const server = http.createServer(async (req, res) => {
 
         try {
           const result = await waitPromise;
-          // OCPP 1.6: { status: 'Accepted' | 'Rejected' }
           const status = result?.status || 'Unknown';
           const accepted = status === 'Accepted';
-          res.writeHead(accepted ? 200 : 200, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             success: accepted,
             status,
@@ -401,12 +419,13 @@ const wss = new WebSocketServer({
 
 console.log(`[OCPP Server] Starting on port ${PORT}...`);
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`[OCPP Server] HTTP server listening on http://0.0.0.0:${PORT}`);
   console.log(`[OCPP Server] WebSocket server ready at ws://0.0.0.0:${PORT}`);
   console.log('[OCPP Server] Ready to accept connections from chargers');
   console.log('[OCPP Server] Expected connection format: ws://your-domain/ocpp/{chargePointId}');
   console.log('[OCPP Server] Health check available at: http://your-domain/health');
+  await initTransactionIdCounter();
 });
 
 // Handler explicito para upgrade WebSocket - garante que HTTP 404 nunca interfira
@@ -422,8 +441,6 @@ server.on('upgrade', (request, socket, head) => {
 
 // =====================================================================
 // WEBSOCKET ZOMBIE DETECTION (ping/pong every 30s)
-// Detects silently-dropped TCP sockets so we can mark chargers offline
-// quickly instead of waiting ~2h for kernel TCP keepalive.
 // =====================================================================
 const PING_INTERVAL_MS = 30_000;
 const STALE_HEARTBEAT_MS = 3 * 60_000; // 3 minutes
@@ -434,7 +451,6 @@ const wsPingInterval = setInterval(() => {
       console.warn(`[OCPP] Terminated zombie connection: ${cpId}`);
       try { ws.terminate(); } catch {}
       activeConnections.delete(cpId);
-      // Mark offline in DB; do not change operational status.
       supabase
         .from('chargers')
         .update({ ocpp_protocol_status: 'Offline' })
@@ -449,9 +465,6 @@ const wsPingInterval = setInterval(() => {
   }
 }, PING_INTERVAL_MS);
 
-// Defense-in-depth sweep: every 60s mark chargers as Offline if their
-// last_heartbeat is older than 3 minutes. Catches cases where ping/pong
-// somehow misses or the connection was lost before a pong was due.
 const staleHeartbeatSweep = setInterval(async () => {
   try {
     const cutoff = new Date(Date.now() - STALE_HEARTBEAT_MS).toISOString();
@@ -482,7 +495,6 @@ wss.on('connection', async (ws, req) => {
   const pathParts = url.pathname.split('/').filter(part => part.length > 0);
   const chargePointId = pathParts[pathParts.length - 1];
 
-  // Mark socket alive; pong handler resets the flag each ping cycle.
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
   
@@ -530,7 +542,6 @@ wss.on('connection', async (ws, req) => {
 
       const [messageType, messageId, action, payload] = message;
 
-      // Registra TODA mensagem recebida no buffer de diagnóstico
       recordMessage(
         chargePointId,
         'in',
@@ -603,16 +614,16 @@ wss.on('connection', async (ws, req) => {
     console.error(`[OCPP Server] WebSocket error for ${chargePointId}:`, error);
   });
 
-  // Registrar conexão ativa
   activeConnections.set(chargePointId, ws);
 });
 
-// Handlers OCPP
+// =====================================================================
+// HANDLERS OCPP 1.6J
+// =====================================================================
 
 async function handleBootNotification(ws, messageId, payload, chargePointId) {
   console.log(`[BootNotification] Processing for ${chargePointId}`, payload);
 
-  // SEMPRE responder primeiro - o charger precisa da resposta
   sendCallResult(ws, messageId, {
     status: 'Accepted',
     currentTime: new Date().toISOString(),
@@ -621,7 +632,6 @@ async function handleBootNotification(ws, messageId, payload, chargePointId) {
 
   console.log(`[BootNotification] Accepted for ${chargePointId}`);
 
-  // Atualizar banco em segundo plano (nao bloqueia a resposta)
   try {
     const { error } = await supabase
       .from('chargers')
@@ -660,20 +670,40 @@ async function handleHeartbeat(ws, messageId, chargePointId) {
   }
 }
 
+// =====================================================================
+// FIX PRINCIPAL: handleStatusNotification
+//
+// Fluxo OCPP 1.6J correto ao conectar plug:
+//   Available → Preparing  (plug inserido, aguardando autorização)
+//   Preparing → Charging   (StartTransaction aceito, corrente fluindo)
+//
+// O bug anterior só ativava a sessão em 'Charging' E exigia transaction_id
+// já presente. Como StartTransaction e StatusNotification chegam quase
+// simultaneamente, a sessão ficava presa em 'awaiting_plug'.
+//
+// Correção:
+//   • 'Preparing' → ativa awaiting_plug imediatamente (plug detectado)
+//   • 'Charging'  → garante ativação como fallback (firmwares que saltam
+//                   direto para Charging sem passar por Preparing)
+//   • Em ambos os casos NÃO exige transaction_id pré-existente, pois o
+//     StartTransaction pode ainda não ter chegado.
+// =====================================================================
 async function handleStatusNotification(ws, messageId, payload, chargePointId) {
   console.log(`[StatusNotification] ${chargePointId} - Status: ${payload.status}, Error: ${payload.errorCode}`);
 
+  // OCPP spec: respond with empty payload immediately
   sendCallResult(ws, messageId, {});
 
+  // Map OCPP status to our internal status
   const statusMap = {
-    'Available': 'available',
-    'Occupied': 'in_use',
-    'Charging': 'in_use',
-    'Preparing': 'in_use',
-    'Finishing': 'in_use',
-    'Reserved': 'in_use',
+    'Available':   'available',
+    'Occupied':    'in_use',
+    'Charging':    'in_use',
+    'Preparing':   'in_use',   // plug conectado = em uso
+    'Finishing':   'in_use',
+    'Reserved':    'in_use',
     'Unavailable': 'unavailable',
-    'Faulted': 'unavailable',
+    'Faulted':     'unavailable',
   };
 
   try {
@@ -690,34 +720,46 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
 
-  // IMPORTANT: 'Preparing' means the plug was detected — NOT that energy is flowing.
-  // We do NOT transition awaiting_plug → in_progress on Preparing (no timer, no billing).
-  // The session only becomes in_progress when StartTransaction arrives (real authorization)
-  // or MeterValues with a transactionId (real telemetry). 'Charging' alone is also accepted
-  // as a fallback when the firmware skips StartTransaction notification timing.
-  if (payload.status === 'Charging') {
+  // -----------------------------------------------------------------------
+  // CORREÇÃO: Ativa sessão awaiting_plug tanto em 'Preparing' quanto 'Charging'
+  //
+  // OCPP 1.6J Section 4.2 (Start Transaction):
+  //   The Charge Point SHALL send a StatusNotification with status=Preparing
+  //   when the connector becomes occupied (plug inserted).
+  //   The session awaiting_plug MUST be activated at this point so the
+  //   front-end transitions out of "waiting for plug" state.
+  // -----------------------------------------------------------------------
+  if (payload.status === 'Preparing' || payload.status === 'Charging') {
     try {
-      const { data: charger } = await supabase
+      const { data: chargerRow } = await supabase
         .from('chargers')
         .select('id')
         .eq('ocpp_charge_point_id', chargePointId)
         .maybeSingle();
 
-      if (charger) {
-        // Only activate if session has a transaction_id already (proves StartTransaction happened).
-        // This avoids reacting to stale 'Charging' status without a real OCPP transaction.
+      if (chargerRow) {
+        // Activate any awaiting_plug session for this charger.
+        // Do NOT filter by transaction_id — StartTransaction may not have
+        // arrived yet (race condition). The transaction_id will be set
+        // when StartTransaction is processed.
         const { data: activated, error: activateErr } = await supabase
           .from('charging_sessions')
-          .update({ status: 'in_progress', started_at: new Date().toISOString() })
-          .eq('charger_id', charger.id)
+          .update({
+            status: 'in_progress',
+            // Only set started_at if not already set (idempotent)
+            started_at: new Date().toISOString(),
+          })
+          .eq('charger_id', chargerRow.id)
           .eq('status', 'awaiting_plug')
-          .not('transaction_id', 'is', null)
+          .is('started_at', null)  // only activate once
           .select('id');
 
         if (activateErr) {
-          console.error('[StatusNotification] Error activating awaiting_plug session:', activateErr);
+          console.error(`[StatusNotification] Error activating awaiting_plug session on ${payload.status}:`, activateErr);
         } else if (activated && activated.length > 0) {
-          console.log(`[StatusNotification] Activated session ${activated[0].id} on Charging status (had transaction_id)`);
+          console.log(`[StatusNotification] ✓ Activated awaiting_plug session ${activated[0].id} on status=${payload.status}`);
+        } else {
+          console.log(`[StatusNotification] No awaiting_plug session to activate for ${chargePointId} on status=${payload.status}`);
         }
       }
     } catch (err) {
@@ -725,37 +767,65 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     }
   }
 
-  // Emergency stop: if status is Faulted, auto-close any active session
-  if (payload.status === 'Faulted') {
-    console.log(`[EmergencyStop] Detected Faulted status for ${chargePointId}, errorCode: ${payload.errorCode}`);
+  // -----------------------------------------------------------------------
+  // Quando status volta para 'Available', garantir que sessões
+  // awaiting_plug antigas (plug nunca conectado) sejam canceladas.
+  // Evita sessões "fantasma" no banco.
+  // -----------------------------------------------------------------------
+  if (payload.status === 'Available') {
     try {
-      // Find charger ID
-      const { data: charger } = await supabase
+      const { data: chargerRow } = await supabase
         .from('chargers')
         .select('id')
         .eq('ocpp_charge_point_id', chargePointId)
         .maybeSingle();
 
-      if (charger) {
-        // Find active session
+      if (chargerRow) {
+        const { data: cancelled, error: cancelErr } = await supabase
+          .from('charging_sessions')
+          .update({ status: 'cancelled', ended_at: new Date().toISOString() })
+          .eq('charger_id', chargerRow.id)
+          .eq('status', 'awaiting_plug')
+          .select('id');
+
+        if (cancelErr) {
+          console.error('[StatusNotification] Error cancelling stale awaiting_plug sessions:', cancelErr);
+        } else if (cancelled && cancelled.length > 0) {
+          console.log(`[StatusNotification] Cancelled ${cancelled.length} stale awaiting_plug session(s) on Available`);
+        }
+      }
+    } catch (err) {
+      console.error('[StatusNotification] Error cancelling stale sessions:', err);
+    }
+  }
+
+  // Emergency stop: if status is Faulted, auto-close any active session
+  if (payload.status === 'Faulted') {
+    console.log(`[EmergencyStop] Detected Faulted status for ${chargePointId}, errorCode: ${payload.errorCode}`);
+    try {
+      const { data: chargerRow } = await supabase
+        .from('chargers')
+        .select('id')
+        .eq('ocpp_charge_point_id', chargePointId)
+        .maybeSingle();
+
+      if (chargerRow) {
         const { data: activeSession } = await supabase
           .from('charging_sessions')
           .select('id, transaction_id, meter_start')
-          .eq('charger_id', charger.id)
+          .eq('charger_id', chargerRow.id)
           .in('status', ['in_progress', 'awaiting_plug'])
           .maybeSingle();
 
         if (activeSession) {
           console.log(`[EmergencyStop] Closing session ${activeSession.id} (transaction: ${activeSession.transaction_id})`);
 
-          // Send RemoteStopTransaction to the charger
           if (activeSession.transaction_id) {
             const msgId = `emergency-stop-${Date.now()}`;
             const stopMsg = [2, msgId, 'RemoteStopTransaction', { transactionId: activeSession.transaction_id }];
             ws.send(JSON.stringify(stopMsg));
           }
 
-          // Mark session as completed with EmergencyStop reason
           await supabase
             .from('charging_sessions')
             .update({
@@ -768,7 +838,6 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
           console.log(`[EmergencyStop] Session ${activeSession.id} closed due to emergency stop`);
         }
 
-        // Always reset charger to available after emergency stop
         await updateChargerStatus(chargePointId, 'available', 'Available');
         console.log(`[EmergencyStop] Charger ${chargePointId} reset to available`);
       }
@@ -780,11 +849,8 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
 
 async function handleAuthorize(ws, messageId, payload) {
   console.log(`[Authorize] ID Tag: ${payload.idTag}`);
-
   sendCallResult(ws, messageId, {
-    idTagInfo: {
-      status: 'Accepted',
-    },
+    idTagInfo: { status: 'Accepted' },
   });
 }
 
@@ -792,35 +858,42 @@ async function handleAuthorize(ws, messageId, payload) {
 async function resolveUserId(idTag) {
   if (!idTag || idTag === 'REMOTE') return null;
   
-  // If it looks like a UUID, check profiles directly
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (uuidRegex.test(idTag)) {
     const { data } = await supabase.from('profiles').select('id').eq('id', idTag).maybeSingle();
     return data?.id || null;
   }
   
-  // Try as email
   const { data } = await supabase.from('profiles').select('id').eq('email', idTag).maybeSingle();
   return data?.id || null;
 }
 
+// =====================================================================
+// FIX: handleStartTransaction
+//
+// Responde IMEDIATAMENTE (antes de qualquer I/O) e depois persiste.
+// Lógica de resolução de sessão:
+//   1. awaiting_plug → ativa e vincula (fluxo normal via app)
+//   2. in_progress sem transaction_id → vincula (Preparing já ativou)
+//   3. fallback → cria sessão nova (início local sem app)
+//
+// CORREÇÃO: ao atualizar sessão em awaiting_plug, seta started_at
+// somente se ainda for null, evitando sobrescrever o valor já definido
+// pelo StatusNotification Preparing.
+// =====================================================================
 async function handleStartTransaction(ws, messageId, payload, chargePointId) {
   console.log(`[StartTransaction] ${chargePointId} - Connector: ${payload.connectorId}, Meter: ${payload.meterStart}, idTag: ${payload.idTag}`);
 
   const transactionId = transactionIdCounter++;
 
-  // Send OCPP response IMMEDIATELY (per spec + BootNotification pattern) before any DB I/O.
-  // Strict firmwares (XIRU/ZETAUNO) may close the connection if response is delayed.
+  // Responde IMEDIATAMENTE conforme spec OCPP 1.6J
   sendCallResult(ws, messageId, {
     transactionId: transactionId,
-    idTagInfo: {
-      status: 'Accepted',
-    },
+    idTagInfo: { status: 'Accepted' },
   });
 
   console.log(`[StartTransaction] Responded transactionId=${transactionId} to ${chargePointId}, persisting...`);
 
-  // Now do DB work (charger lookup, session resolution, persistence)
   try {
     const { data: charger } = await supabase
       .from('chargers')
@@ -829,19 +902,16 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
       .maybeSingle();
 
     if (!charger) {
-      console.error(`[StartTransaction] Charger not found for ${chargePointId} after responding`);
+      console.error(`[StartTransaction] Charger not found for ${chargePointId}`);
       return;
     }
 
-    // Resolution order:
-    //   1. awaiting_plug session for this charger (most common app flow)
-    //   2. in_progress session for this charger without transaction_id (race: Preparing already activated it)
-    //   3. fallback: create new orphan session (local start without app)
     let resolvedSession = null;
 
+    // 1. Tenta sessão awaiting_plug (fluxo normal: plug ainda não ativou por Preparing)
     const { data: awaitingSession } = await supabase
       .from('charging_sessions')
-      .select('id')
+      .select('id, started_at')
       .eq('charger_id', charger.id)
       .eq('status', 'awaiting_plug')
       .order('created_at', { ascending: false })
@@ -849,11 +919,12 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
       .maybeSingle();
 
     if (awaitingSession) {
-      resolvedSession = awaitingSession;
+      resolvedSession = { ...awaitingSession, source: 'awaiting_plug' };
     } else {
+      // 2. Tenta sessão in_progress sem transaction_id (Preparing já ativou)
       const { data: inProgressSession } = await supabase
         .from('charging_sessions')
-        .select('id')
+        .select('id, started_at')
         .eq('charger_id', charger.id)
         .eq('status', 'in_progress')
         .is('transaction_id', null)
@@ -862,21 +933,29 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
         .maybeSingle();
 
       if (inProgressSession) {
-        resolvedSession = inProgressSession;
-        console.log(`[StartTransaction] No awaiting_plug found, linking to in_progress session ${inProgressSession.id} (Preparing already activated it)`);
+        resolvedSession = { ...inProgressSession, source: 'in_progress_no_txn' };
+        console.log(`[StartTransaction] Linking to in_progress session ${inProgressSession.id} (already activated by Preparing)`);
       }
     }
 
     if (resolvedSession) {
-      // Link the existing session to this transaction. Don't overwrite started_at if already set.
+      const updatePayload = {
+        status: 'in_progress',
+        transaction_id: transactionId,
+        meter_start: payload.meterStart,
+        id_tag: payload.idTag,
+      };
+
+      // Só define started_at se ainda não foi definido (evita sobrescrever o timestamp do Preparing)
+      if (!resolvedSession.started_at) {
+        updatePayload.started_at = payload.timestamp
+          ? new Date(payload.timestamp).toISOString()
+          : new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('charging_sessions')
-        .update({
-          status: 'in_progress',
-          transaction_id: transactionId,
-          meter_start: payload.meterStart,
-          id_tag: payload.idTag,
-        })
+        .update(updatePayload)
         .eq('id', resolvedSession.id);
 
       if (error) {
@@ -884,12 +963,12 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
         return;
       }
 
-      console.log(`[StartTransaction] Linked session ${resolvedSession.id} to transaction ${transactionId}`);
+      console.log(`[StartTransaction] ✓ Linked session ${resolvedSession.id} (source: ${resolvedSession.source}) to transaction ${transactionId}`);
     } else {
-      // Fallback: create a new session (e.g. local start without app)
+      // 3. Fallback: cria sessão nova (início local sem app)
       const resolvedUserId = await resolveUserId(payload.idTag);
       const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
-      console.log(`[StartTransaction] No existing session found, creating orphan. user_id: ${userId} (idTag: ${payload.idTag})`);
+      console.log(`[StartTransaction] No existing session, creating orphan. user_id: ${userId} (idTag: ${payload.idTag})`);
 
       const { error } = await supabase
         .from('charging_sessions')
@@ -899,7 +978,9 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
           transaction_id: transactionId,
           meter_start: payload.meterStart,
           id_tag: payload.idTag,
-          started_at: new Date(payload.timestamp).toISOString(),
+          started_at: payload.timestamp
+            ? new Date(payload.timestamp).toISOString()
+            : new Date().toISOString(),
           status: 'in_progress',
         });
 
@@ -919,55 +1000,59 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
 async function handleStopTransaction(ws, messageId, payload, chargePointId) {
   console.log(`[StopTransaction] Transaction ${payload.transactionId} - Meter: ${payload.meterStop}`);
 
-  const { data: session } = await supabase
-    .from('charging_sessions')
-    .select('*, chargers(price_per_kwh)')
-    .eq('transaction_id', payload.transactionId)
-    .single();
-
-  if (!session) {
-    sendCallError(ws, messageId, 'InternalError', 'Session not found');
-    return;
-  }
-
-  const energyConsumed = (payload.meterStop - session.meter_start) / 1000;
-  const cost = energyConsumed * session.chargers.price_per_kwh;
-
-  await supabase
-    .from('charging_sessions')
-    .update({
-      meter_stop: payload.meterStop,
-      energy_consumed: energyConsumed,
-      cost: cost,
-      ended_at: new Date(payload.timestamp).toISOString(),
-      status: 'completed',
-      stop_reason: payload.reason,
-    })
-    .eq('transaction_id', payload.transactionId);
-
-  await updateChargerStatus(chargePointId, 'available', 'Available');
-
+  // Respond immediately per OCPP spec
   sendCallResult(ws, messageId, {
-    idTagInfo: {
-      status: 'Accepted',
-    },
+    idTagInfo: { status: 'Accepted' },
   });
 
-  console.log(`[StopTransaction] Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
+  try {
+    const { data: session } = await supabase
+      .from('charging_sessions')
+      .select('*, chargers(price_per_kwh)')
+      .eq('transaction_id', payload.transactionId)
+      .maybeSingle();
+
+    if (!session) {
+      console.error(`[StopTransaction] Session not found for transaction ${payload.transactionId}`);
+      return;
+    }
+
+    const meterStart = session.meter_start || 0;
+    const energyConsumed = (payload.meterStop - meterStart) / 1000;
+    const pricePerKwh = session.chargers?.price_per_kwh || 0.80;
+    const cost = energyConsumed * pricePerKwh;
+
+    await supabase
+      .from('charging_sessions')
+      .update({
+        meter_stop: payload.meterStop,
+        energy_consumed: energyConsumed,
+        cost: cost,
+        ended_at: payload.timestamp
+          ? new Date(payload.timestamp).toISOString()
+          : new Date().toISOString(),
+        status: 'completed',
+        stop_reason: payload.reason || null,
+      })
+      .eq('transaction_id', payload.transactionId);
+
+    await updateChargerStatus(chargePointId, 'available', 'Available');
+
+    console.log(`[StopTransaction] ✓ Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
+  } catch (err) {
+    console.error('[StopTransaction] Unexpected error:', err);
+  }
 }
 
 async function handleMeterValues(ws, messageId, payload, chargePointId) {
   console.log(`[MeterValues] Transaction: ${payload.transactionId}`, JSON.stringify(payload.meterValue));
   
-  // Respond immediately
   sendCallResult(ws, messageId, {});
 
-  // Parse and save meter values to database
   try {
     const transactionId = payload.transactionId;
     const connectorId = payload.connectorId;
 
-    // Find session by transaction_id; if found in awaiting_plug, activate it (real telemetry = real charge)
     let sessionId = null;
     if (transactionId) {
       const { data: session } = await supabase
@@ -977,6 +1062,7 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
         .maybeSingle();
       sessionId = session?.id || null;
 
+      // MeterValues com transactionId real = carregamento ativo; ativa sessão se ainda awaiting
       if (session && session.status === 'awaiting_plug') {
         await supabase
           .from('charging_sessions')
@@ -986,7 +1072,6 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
       }
     }
 
-    // OCPP 1.6: meterValue is an array of { timestamp, sampledValue: [{ value, measurand, unit, phase, context }] }
     const meterValues = payload.meterValue || [];
     const rows = [];
     let latestEnergyWh = null;
@@ -999,7 +1084,13 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
       for (const sv of sampledValues) {
         const measurand = sv.measurand || 'Energy.Active.Import.Register';
         const value = parseFloat(sv.value);
-        const unit = sv.unit || (measurand.includes('Energy') ? 'Wh' : measurand.includes('Power') ? 'W' : measurand.includes('Voltage') ? 'V' : measurand.includes('Current') ? 'A' : measurand === 'SoC' ? 'Percent' : '');
+        const unit = sv.unit || (
+          measurand.includes('Energy') ? 'Wh' :
+          measurand.includes('Power') ? 'W' :
+          measurand.includes('Voltage') ? 'V' :
+          measurand.includes('Current') ? 'A' :
+          measurand === 'SoC' ? 'Percent' : ''
+        );
         const phase = sv.phase || null;
         const context = sv.context || 'Sample.Periodic';
 
@@ -1017,12 +1108,9 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
           context,
         });
 
-        // Track latest energy reading
         if (measurand === 'Energy.Active.Import.Register') {
           latestEnergyWh = value;
         }
-
-        // Track latest SoC reading
         if (measurand === 'SoC') {
           latestSoC = Math.round(value);
         }
@@ -1038,9 +1126,7 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
       }
     }
 
-    // Update energy_consumed on the session for real-time display
     if (latestEnergyWh !== null && sessionId) {
-      const energyKwh = latestEnergyWh / 1000;
       const { data: session } = await supabase
         .from('charging_sessions')
         .select('meter_start, chargers(price_per_kwh)')
@@ -1061,21 +1147,22 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
           .eq('id', sessionId);
 
         console.log(`[MeterValues] Updated session ${sessionId}: ${consumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}${latestSoC !== null ? `, SoC: ${latestSoC}%` : ''}`);
-      } else if (latestSoC !== null && sessionId) {
-        // Update SoC even if no energy reading
-        await supabase
-          .from('charging_sessions')
-          .update({ soc: latestSoC })
-          .eq('id', sessionId);
-        console.log(`[MeterValues] Updated session ${sessionId} SoC: ${latestSoC}%`);
       }
+    } else if (latestSoC !== null && sessionId) {
+      await supabase
+        .from('charging_sessions')
+        .update({ soc: latestSoC })
+        .eq('id', sessionId);
+      console.log(`[MeterValues] Updated session ${sessionId} SoC: ${latestSoC}%`);
     }
   } catch (dbError) {
     console.error('[MeterValues] DB exception:', dbError);
   }
 }
 
+// =====================================================================
 // Funções auxiliares
+// =====================================================================
 
 function sendCallResult(ws, messageId, payload) {
   const message = [3, messageId, payload];
@@ -1088,13 +1175,14 @@ function sendCallError(ws, messageId, errorCode, errorDescription) {
 }
 
 async function updateChargerStatus(chargePointId, status, ocppStatus) {
-  await supabase
-    .from('chargers')
-    .update({
-      status: status,
-      ocpp_protocol_status: ocppStatus,
-    })
-    .eq('ocpp_charge_point_id', chargePointId);
+  try {
+    await supabase
+      .from('chargers')
+      .update({ status, ocpp_protocol_status: ocppStatus })
+      .eq('ocpp_charge_point_id', chargePointId);
+  } catch (e) {
+    console.error('[updateChargerStatus] Error:', e?.message);
+  }
 }
 
 // Tratamento de erros global
