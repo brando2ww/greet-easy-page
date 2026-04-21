@@ -573,8 +573,10 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
     console.error('[StatusNotification] DB exception:', dbError);
   }
 
-  // Activate awaiting_plug sessions when charger starts charging
-  if (payload.status === 'Charging') {
+  // Activate awaiting_plug sessions when charger detects plug (Preparing) or starts charging.
+  // XIRU/ZETAUNO firmware transitions to "Preparing" on plug-in but may never reach "Charging"
+  // until StartTransaction is accepted, so we activate on either trigger (idempotent — first wins).
+  if (payload.status === 'Preparing' || payload.status === 'Charging') {
     try {
       const { data: charger } = await supabase
         .from('chargers')
@@ -583,18 +585,19 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
         .maybeSingle();
 
       if (charger) {
+        // Idempotency guard: only update sessions still in awaiting_plug.
+        // Once activated (status=in_progress), subsequent Preparing/Charging events are no-ops.
         const { data: activated, error: activateErr } = await supabase
           .from('charging_sessions')
           .update({ status: 'in_progress', started_at: new Date().toISOString() })
           .eq('charger_id', charger.id)
           .eq('status', 'awaiting_plug')
-          .is('started_at', null)
           .select('id');
 
         if (activateErr) {
           console.error('[StatusNotification] Error activating awaiting_plug session:', activateErr);
         } else if (activated && activated.length > 0) {
-          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on Charging status`);
+          console.log(`[StatusNotification] Activated awaiting_plug session ${activated[0].id} on ${payload.status} status`);
         }
       }
     } catch (err) {
@@ -682,77 +685,12 @@ async function resolveUserId(idTag) {
 }
 
 async function handleStartTransaction(ws, messageId, payload, chargePointId) {
-  console.log(`[StartTransaction] ${chargePointId} - Connector: ${payload.connectorId}, Meter: ${payload.meterStart}`);
-
-  const { data: charger } = await supabase
-    .from('chargers')
-    .select('id, price_per_kwh')
-    .eq('ocpp_charge_point_id', chargePointId)
-    .single();
-
-  if (!charger) {
-    sendCallError(ws, messageId, 'InternalError', 'Charger not found');
-    return;
-  }
+  console.log(`[StartTransaction] ${chargePointId} - Connector: ${payload.connectorId}, Meter: ${payload.meterStart}, idTag: ${payload.idTag}`);
 
   const transactionId = transactionIdCounter++;
 
-  // Try to find an existing awaiting_plug session for this charger
-  const { data: awaitingSession } = await supabase
-    .from('charging_sessions')
-    .select('id')
-    .eq('charger_id', charger.id)
-    .eq('status', 'awaiting_plug')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (awaitingSession) {
-    // Activate the existing session
-    const { error } = await supabase
-      .from('charging_sessions')
-      .update({
-        status: 'in_progress',
-        started_at: new Date(payload.timestamp).toISOString(),
-        transaction_id: transactionId,
-        meter_start: payload.meterStart,
-      })
-      .eq('id', awaitingSession.id);
-
-    if (error) {
-      console.error('[StartTransaction] DB update error:', error);
-      sendCallError(ws, messageId, 'InternalError', 'Failed to activate session');
-      return;
-    }
-
-    console.log(`[StartTransaction] Activated awaiting_plug session ${awaitingSession.id} as transaction ${transactionId}`);
-  } else {
-    // Fallback: create a new session (e.g. local start without app)
-    const resolvedUserId = await resolveUserId(payload.idTag);
-    const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
-    console.log(`[StartTransaction] No awaiting_plug session found, creating new. Resolved user_id: ${userId} (from idTag: ${payload.idTag})`);
-
-    const { error } = await supabase
-      .from('charging_sessions')
-      .insert({
-        charger_id: charger.id,
-        user_id: userId,
-        transaction_id: transactionId,
-        meter_start: payload.meterStart,
-        id_tag: payload.idTag,
-        started_at: new Date(payload.timestamp).toISOString(),
-        status: 'in_progress',
-      });
-
-    if (error) {
-      console.error('[StartTransaction] Database error:', error);
-      sendCallError(ws, messageId, 'InternalError', 'Failed to create session');
-      return;
-    }
-  }
-
-  await updateChargerStatus(chargePointId, 'in_use', 'Charging');
-
+  // Send OCPP response IMMEDIATELY (per spec + BootNotification pattern) before any DB I/O.
+  // Strict firmwares (XIRU/ZETAUNO) may close the connection if response is delayed.
   sendCallResult(ws, messageId, {
     transactionId: transactionId,
     idTagInfo: {
@@ -760,7 +698,102 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
     },
   });
 
-  console.log(`[StartTransaction] Transaction ${transactionId} ready for ${chargePointId}`);
+  console.log(`[StartTransaction] Responded transactionId=${transactionId} to ${chargePointId}, persisting...`);
+
+  // Now do DB work (charger lookup, session resolution, persistence)
+  try {
+    const { data: charger } = await supabase
+      .from('chargers')
+      .select('id, price_per_kwh')
+      .eq('ocpp_charge_point_id', chargePointId)
+      .maybeSingle();
+
+    if (!charger) {
+      console.error(`[StartTransaction] Charger not found for ${chargePointId} after responding`);
+      return;
+    }
+
+    // Resolution order:
+    //   1. awaiting_plug session for this charger (most common app flow)
+    //   2. in_progress session for this charger without transaction_id (race: Preparing already activated it)
+    //   3. fallback: create new orphan session (local start without app)
+    let resolvedSession = null;
+
+    const { data: awaitingSession } = await supabase
+      .from('charging_sessions')
+      .select('id')
+      .eq('charger_id', charger.id)
+      .eq('status', 'awaiting_plug')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (awaitingSession) {
+      resolvedSession = awaitingSession;
+    } else {
+      const { data: inProgressSession } = await supabase
+        .from('charging_sessions')
+        .select('id')
+        .eq('charger_id', charger.id)
+        .eq('status', 'in_progress')
+        .is('transaction_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (inProgressSession) {
+        resolvedSession = inProgressSession;
+        console.log(`[StartTransaction] No awaiting_plug found, linking to in_progress session ${inProgressSession.id} (Preparing already activated it)`);
+      }
+    }
+
+    if (resolvedSession) {
+      // Link the existing session to this transaction. Don't overwrite started_at if already set.
+      const { error } = await supabase
+        .from('charging_sessions')
+        .update({
+          status: 'in_progress',
+          transaction_id: transactionId,
+          meter_start: payload.meterStart,
+          id_tag: payload.idTag,
+        })
+        .eq('id', resolvedSession.id);
+
+      if (error) {
+        console.error('[StartTransaction] DB update error linking session:', error);
+        return;
+      }
+
+      console.log(`[StartTransaction] Linked session ${resolvedSession.id} to transaction ${transactionId}`);
+    } else {
+      // Fallback: create a new session (e.g. local start without app)
+      const resolvedUserId = await resolveUserId(payload.idTag);
+      const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
+      console.log(`[StartTransaction] No existing session found, creating orphan. user_id: ${userId} (idTag: ${payload.idTag})`);
+
+      const { error } = await supabase
+        .from('charging_sessions')
+        .insert({
+          charger_id: charger.id,
+          user_id: userId,
+          transaction_id: transactionId,
+          meter_start: payload.meterStart,
+          id_tag: payload.idTag,
+          started_at: new Date(payload.timestamp).toISOString(),
+          status: 'in_progress',
+        });
+
+      if (error) {
+        console.error('[StartTransaction] Database error creating orphan session:', error);
+        return;
+      }
+    }
+
+    await updateChargerStatus(chargePointId, 'in_use', 'Charging');
+    console.log(`[StartTransaction] Transaction ${transactionId} ready for ${chargePointId}`);
+  } catch (err) {
+    console.error('[StartTransaction] Unexpected error during persistence:', err);
+  }
 }
 
 async function handleStopTransaction(ws, messageId, payload, chargePointId) {
