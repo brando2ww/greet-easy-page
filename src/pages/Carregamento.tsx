@@ -7,7 +7,8 @@ import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { formatCurrency } from "@/utils/formatters";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, DollarSign, Zap, WifiOff, Square } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Zap, WifiOff, Square, AlertTriangle, RefreshCw, X } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -47,7 +48,10 @@ export default function Carregamento() {
   const [elapsed, setElapsed] = useState(0);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [awaitingPlugTimeout, setAwaitingPlugTimeout] = useState(false);
+  const [isTriggering, setIsTriggering] = useState(false);
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const awaitingPlugStartRef = useRef<number | null>(null);
   const balanceStopTriggeredRef = useRef(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
@@ -159,6 +163,48 @@ export default function Carregamento() {
     };
   }, [isActivelyCharging]);
 
+  // Timeout de 90s em awaiting_plug sem progresso
+  useEffect(() => {
+    if (!isAwaitingPlug || isCompleted) {
+      awaitingPlugStartRef.current = null;
+      setAwaitingPlugTimeout(false);
+      return;
+    }
+    if (!awaitingPlugStartRef.current) {
+      awaitingPlugStartRef.current = Date.now();
+    }
+    const check = () => {
+      if (awaitingPlugStartRef.current && Date.now() - awaitingPlugStartRef.current >= 90000) {
+        setAwaitingPlugTimeout(true);
+      }
+    };
+    check();
+    const id = setInterval(check, 5000);
+    return () => clearInterval(id);
+  }, [isAwaitingPlug, isCompleted]);
+
+  const handleTriggerStatus = async () => {
+    if (!chargerId || isTriggering) return;
+    setIsTriggering(true);
+    try {
+      const res = await commandsApi.triggerStatus(chargerId, "StatusNotification", 1);
+      if (res.error) {
+        toast({ title: "Falha ao consultar carregador", description: res.error, variant: "destructive" });
+      } else if ((res.data as any)?.success === false) {
+        toast({ title: "Carregador não respondeu", description: (res.data as any)?.message || "Tente novamente em alguns segundos.", variant: "destructive" });
+      } else {
+        toast({ title: "Verificação enviada", description: "Aguardando resposta do carregador..." });
+        // reset timeout para dar nova chance
+        awaitingPlugStartRef.current = Date.now();
+        setAwaitingPlugTimeout(false);
+      }
+    } catch {
+      toast({ title: "Erro inesperado", variant: "destructive" });
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
   const handleStop = async () => {
     if (!session || !sessionId) return;
     setIsStopping(true);
@@ -211,6 +257,40 @@ export default function Carregamento() {
         <div className="mx-4 mb-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2">
           <WifiOff className="h-4 w-4 text-red-400" />
           <span className="text-sm font-medium text-red-400">Sem conexão com a internet</span>
+        </div>
+      )}
+
+      {/* Awaiting-plug timeout warning */}
+      {awaitingPlugTimeout && !isCompleted && (
+        <div className="mx-4 mb-2">
+          <Alert className="bg-yellow-50 border-yellow-200 text-yellow-900">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-900">Carregador não detectou o plug</AlertTitle>
+            <AlertDescription className="text-yellow-800">
+              Verifique se o cabo está bem encaixado no veículo. Se já estiver, force uma verificação ou cancele a sessão.
+            </AlertDescription>
+            <div className="mt-3 flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTriggerStatus}
+                disabled={isTriggering}
+                className="border-yellow-300 bg-white hover:bg-yellow-100 text-yellow-900"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isTriggering ? "animate-spin" : ""}`} />
+                {isTriggering ? "Verificando..." : "Forçar verificação"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowStopConfirm(true)}
+                className="border-red-300 bg-white hover:bg-red-50 text-red-700"
+              >
+                <X className="h-3.5 w-3.5 mr-1.5" />
+                Cancelar sessão
+              </Button>
+            </div>
+          </Alert>
         </div>
       )}
 

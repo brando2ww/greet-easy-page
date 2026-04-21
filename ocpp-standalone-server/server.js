@@ -17,6 +17,30 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Armazena conexões ativas por Charge Point ID
 const activeConnections = new Map();
+// Última atividade WebSocket por CP (para detectar conexões "mortas silenciosamente")
+const lastActivity = new Map();
+// Buffer circular de mensagens OCPP por CP (últimas 500)
+const messageBuffer = new Map();
+const MESSAGE_BUFFER_SIZE = 500;
+
+function recordMessage(chargePointId, direction, action, payload) {
+  if (!messageBuffer.has(chargePointId)) {
+    messageBuffer.set(chargePointId, []);
+  }
+  const buf = messageBuffer.get(chargePointId);
+  buf.push({
+    timestamp: new Date().toISOString(),
+    direction, // 'in' | 'out'
+    action,
+    payload,
+  });
+  if (buf.length > MESSAGE_BUFFER_SIZE) {
+    buf.splice(0, buf.length - MESSAGE_BUFFER_SIZE);
+  }
+  lastActivity.set(chargePointId, Date.now());
+}
+
+const OCPP_INTERNAL_KEY = process.env.OCPP_INTERNAL_KEY || '';
 let transactionIdCounter = 1000;
 
 const PORT = process.env.PORT || 8080;
@@ -79,8 +103,10 @@ const server = http.createServer(async (req, res) => {
         }
 
         const messageId = `remote-start-${Date.now()}`;
-        const message = [2, messageId, 'RemoteStartTransaction', { connectorId, idTag: idTag || 'REMOTE' }];
+        const payload = { connectorId, idTag: idTag || 'REMOTE' };
+        const message = [2, messageId, 'RemoteStartTransaction', payload];
         ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'RemoteStartTransaction', payload);
 
         res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'RemoteStartTransaction sent' }));
@@ -108,11 +134,97 @@ const server = http.createServer(async (req, res) => {
         }
 
         const messageId = `remote-stop-${Date.now()}`;
-        const message = [2, messageId, 'RemoteStopTransaction', { transactionId }];
+        const payload = { transactionId };
+        const message = [2, messageId, 'RemoteStopTransaction', payload];
         ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'RemoteStopTransaction', payload);
 
         res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'RemoteStopTransaction sent' }));
+      } catch (err) {
+        res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      }
+    });
+    return;
+  }
+
+  // ============ Diagnóstico interno (protegido por x-internal-key) ============
+  function checkInternalKey() {
+    const key = req.headers['x-internal-key'];
+    if (!OCPP_INTERNAL_KEY || key !== OCPP_INTERNAL_KEY) {
+      res.writeHead(401, { ...corsHeaders, 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return false;
+    }
+    return true;
+  }
+
+  // GET /admin/messages?cp=140515&limit=100
+  if (req.method === 'GET' && url.pathname === '/admin/messages') {
+    if (!checkInternalKey()) return;
+    const cp = url.searchParams.get('cp');
+    const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+    if (!cp) {
+      res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'cp param required' }));
+      return;
+    }
+    const buf = messageBuffer.get(cp) || [];
+    const slice = buf.slice(-limit);
+    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      chargePointId: cp,
+      total: buf.length,
+      returned: slice.length,
+      messages: slice,
+    }));
+    return;
+  }
+
+  // GET /admin/active-connections
+  if (req.method === 'GET' && url.pathname === '/admin/active-connections') {
+    if (!checkInternalKey()) return;
+    const now = Date.now();
+    const conns = Array.from(activeConnections.keys()).map((cp) => ({
+      chargePointId: cp,
+      lastActivityMs: lastActivity.get(cp) ? now - lastActivity.get(cp) : null,
+      lastActivityAt: lastActivity.get(cp) ? new Date(lastActivity.get(cp)).toISOString() : null,
+      readyState: activeConnections.get(cp)?.readyState,
+    }));
+    res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ count: conns.length, connections: conns }));
+    return;
+  }
+
+  // POST /api/trigger-message  body: { chargePointId, requestedMessage, connectorId? }
+  if (req.method === 'POST' && url.pathname === '/api/trigger-message') {
+    if (!checkInternalKey()) return;
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', () => {
+      try {
+        const { chargePointId, requestedMessage, connectorId } = JSON.parse(body);
+        const allowed = ['StatusNotification', 'MeterValues', 'BootNotification', 'Heartbeat', 'DiagnosticsStatusNotification', 'FirmwareStatusNotification'];
+        if (!allowed.includes(requestedMessage)) {
+          res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: `requestedMessage must be one of ${allowed.join(', ')}` }));
+          return;
+        }
+        const ws = activeConnections.get(chargePointId);
+        if (!ws) {
+          res.writeHead(404, { ...corsHeaders, 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Charger not connected' }));
+          return;
+        }
+        const messageId = `trigger-${Date.now()}`;
+        const payload = { requestedMessage };
+        if (typeof connectorId === 'number') payload.connectorId = connectorId;
+        const message = [2, messageId, 'TriggerMessage', payload];
+        ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'TriggerMessage', payload);
+        res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'TriggerMessage sent', messageId }));
       } catch (err) {
         res.writeHead(400, { ...corsHeaders, 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, message: err.message }));
@@ -206,9 +318,18 @@ wss.on('connection', async (ws, req) => {
     try {
       const raw = data.toString();
       console.log(`[OCPP Server] Raw message from ${chargePointId}:`, raw);
+      lastActivity.set(chargePointId, Date.now());
       const message = JSON.parse(raw);
 
       const [messageType, messageId, action, payload] = message;
+
+      // Registra TODA mensagem recebida no buffer de diagnóstico
+      recordMessage(
+        chargePointId,
+        'in',
+        messageType === 2 ? action : (messageType === 3 ? 'CALLRESULT' : (messageType === 4 ? 'CALLERROR' : `type:${messageType}`)),
+        messageType === 2 ? payload : message.slice(2),
+      );
 
       if (messageType === 2) { // CALL
         switch (action) {
