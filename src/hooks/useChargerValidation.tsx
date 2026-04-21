@@ -57,12 +57,16 @@ export const useChargerValidation = () => {
 
       // Check heartbeat freshness (must be within last 2 minutes)
       const lastHeartbeat = charger.lastHeartbeat ? new Date(charger.lastHeartbeat) : null;
-      const isConnected = lastHeartbeat ? (Date.now() - lastHeartbeat.getTime()) < 120000 : false;
+      const ageMs = lastHeartbeat ? Date.now() - lastHeartbeat.getTime() : Infinity;
+      const isConnected = ageMs < 120000;
 
       if (!isConnected) {
+        const ageMin = Number.isFinite(ageMs) ? Math.max(1, Math.round(ageMs / 60000)) : null;
         toast({
-          title: "Carregador offline",
-          description: "O carregador não está respondendo. Verifique a conexão e tente novamente.",
+          title: "Carregador sem resposta",
+          description: ageMin
+            ? `Sem sinal há ${ageMin} min. Vá até o carregador, desligue e religue o disjuntor, aguarde 30s e tente novamente.`
+            : "O carregador não está enviando sinal. Vá até o carregador, desligue e religue o disjuntor, aguarde 30s e tente novamente.",
           variant: "destructive",
         });
         setIsLoading(false);
