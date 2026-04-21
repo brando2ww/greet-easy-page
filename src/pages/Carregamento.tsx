@@ -7,7 +7,8 @@ import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { formatCurrency } from "@/utils/formatters";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, DollarSign, Zap, WifiOff, Square } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Zap, WifiOff, Square, AlertTriangle, RefreshCw, X } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -47,7 +48,10 @@ export default function Carregamento() {
   const [elapsed, setElapsed] = useState(0);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [awaitingPlugTimeout, setAwaitingPlugTimeout] = useState(false);
+  const [isTriggering, setIsTriggering] = useState(false);
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const awaitingPlugStartRef = useRef<number | null>(null);
   const balanceStopTriggeredRef = useRef(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
