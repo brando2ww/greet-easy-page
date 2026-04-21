@@ -46,6 +46,7 @@ export default function Carregamento() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { balance } = useWalletBalance();
+  const { isAdmin } = useUserRole();
   const [isStopping, setIsStopping] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
