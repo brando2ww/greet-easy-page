@@ -1,98 +1,112 @@
 
 
-## Plano: investigar por que XIRU não envia `StartTransaction` mesmo com cabo plugado
+## Plano: aplicar protocolo OCPP 1.6 corretamente para destravar o XIRU
 
-## Estado confirmado
+Após ler a spec oficial OCPP 1.6 (OASIS) e OCPP-J 1.6 (OCA), descobri que **algumas hipóteses anteriores eram erradas** e a causa real do silêncio do XIRU é provavelmente uma combinação de configuração `AuthorizeRemoteTxRequests` + payload do `RemoteStartTransaction` não-conforme.
 
-- Cabo plugado no carro **agora**.
-- Servidor recebeu `RemoteStartTransaction` e respondeu `success: true` (logs Edge Function 16:36:20).
-- Sessão `58986af6...` continua `awaiting_plug`, `transaction_id` NULL.
-- Zero `meter_values`. Zero `StartTransaction`. Zero `StatusNotification(Preparing/Charging)` chegou ao servidor desde o RemoteStart.
-- `ocpp_protocol_status` ainda `Available` — o XIRU **não está reportando que detectou o plug**.
+## Descobertas oficiais da spec
 
-Isto não é problema de software nosso — o XIRU está silencioso após o RemoteStart. Precisamos de visibilidade direta no que ele envia (ou não envia) via WebSocket para diagnosticar.
-
-## O que fazer (modo default)
-
-### 1. Adicionar logging detalhado e endpoints de diagnóstico no servidor OCPP
-
-Em `ocpp-standalone-server/server.js`:
-
-- **Buffer em memória** com últimas 500 mensagens OCPP por charge point: `{ timestamp, direction (in/out), action, payload }`.
-- Logar **toda** mensagem que chega de cada CP, antes de qualquer handler — assim vemos se XIRU sequer envia algo.
-- **Endpoint `GET /admin/messages?cp=140515&limit=100`** protegido por header `x-internal-key`.
-- **Endpoint `GET /admin/active-connections`** mostrando CPs conectados e tempo do último frame recebido.
-
-### 2. Adicionar endpoint `TriggerMessage` para forçar XIRU a falar
-
-Carregadores OCPP 1.6 suportam o comando `TriggerMessage` que força o CP a reenviar `StatusNotification`, `MeterValues` ou `Heartbeat`. Útil para destravar firmwares preguiçosos.
-
-- Em `server.js`: novo endpoint `POST /api/trigger-message` recebendo `{ chargePointId, requestedMessage, connectorId }`.
-- Suportar `requestedMessage`: `StatusNotification`, `MeterValues`, `BootNotification`.
-
-### 3. Edge Function `ocpp-diagnostics`
-
-Nova `supabase/functions/ocpp-diagnostics/index.ts`:
-
-- Valida JWT + role admin via `has_role`.
-- Faz proxy para os endpoints do servidor OCPP usando `OCPP_INTERNAL_KEY`.
-- Actions suportadas: `messages`, `connections`, `trigger`.
-- Registrar em `supabase/config.toml` com `verify_jwt = false` (validação manual interna).
-
-### 4. Aplicar `TriggerMessage(StatusNotification)` agora no XIRU
-
-Após deploy, eu chamo `ocpp-diagnostics` com action `trigger` para forçar o XIRU a enviar o status atual do conector. Cenários:
-
-| Resposta XIRU | Significado | Ação |
+| Item | Spec oficial | Implicação |
 |---|---|---|
-| `Available` | Cabo plugado mas firmware não detectou | Bug do firmware; testar `connectorId: 0` no RemoteStart |
-| `Preparing` | Cabo detectado, esperando autorização | Reenviar `Authorize` ou ajustar `idTag` |
-| `Charging` | Já está carregando, só não notificou | Bug servidor — não processou `StatusNotification` anterior |
-| `Faulted` + errorCode | Falha física | Mostrar erro ao usuário no app |
-| Sem resposta | XIRU travado ou WebSocket morto silenciosamente | Reiniciar fisicamente o XIRU |
+| `connectorId` em `RemoteStartTransaction.req` | **SHALL be > 0** (seção 6.33) | Hipótese anterior de testar `connectorId: 0` está **errada** — XIRU rejeitaria como inválido |
+| `AuthorizeRemoteTxRequests` (config padrão) | Se `true`, CP envia `Authorize.req` antes de iniciar transação (seção 5.11) | Se nosso servidor responde lento/errado ao `Authorize`, fluxo trava sem erro visível |
+| Transição A2 (Available→Preparing) | Disparada por "receipt of a RemoteStartTransaction.req" entre outros (seção 4.7) | XIRU deveria mudar para `Preparing` ao receber RemoteStart — não está fazendo, indica rejeição interna |
+| `TriggerMessage.req` connectorId | **> 0** ou omitido (significa "todos os conectores + main") | Para forçar status do conector 1, mandar `connectorId: 1`. Para diagnóstico amplo, omitir. |
+| `MinimumStatusDuration` | Pode atrasar `StatusNotification.req` propositalmente | Setar para `0` durante diagnóstico |
 
-### 5. Ajustar UI para timeout em `awaiting_plug`
+## O que vou fazer (em ordem)
 
-Em `src/pages/Carregamento.tsx`:
+### 1. Validar conexão e ler buffer real do XIRU
 
-- Após **90 segundos** em `awaiting_plug` sem progresso, mostrar alerta: "Carregador não detectou o plug. Verifique o cabo ou cancele a sessão."
-- Botão "Cancelar e tentar novamente" que chama `commandsApi.stopCharge` e volta para Estações.
-- Botão "Forçar verificação" que chama nova action `triggerStatus` na Edge Function `charger-commands` (usa o `ocpp-diagnostics`).
+- Chamar `ocpp-diagnostics` action `connections` → confirma se XIRU está na lista de WebSockets ativos do servidor.
+- Chamar action `messages` para `cp=140515` → ver tudo que o XIRU enviou/recebeu nos últimos minutos. Esta é a fonte primária de verdade — sem isto estamos chutando.
 
-### 6. Documentar deploy manual no Droplet
+### 2. Forçar `TriggerMessage(StatusNotification)` sem connectorId
 
-Após o código ser commitado, **você precisa rodar no servidor**:
+Chamada `trigger` **omitindo `connectorId`** (interpretado como "para todos os conectores + main"). XIRU deve responder com:
+- `TriggerMessage.conf` com `status: Accepted` (ou `Rejected`/`NotImplemented`).
+- Em seguida, múltiplos `StatusNotification.req` (um por conector + um para id 0).
 
-```text
-ssh root@68.183.152.189
-cd /opt/ocpp-server && git pull
-systemctl restart ocpp-server
-journalctl -u ocpp-server -f
-```
+Isto nos diz o status real interno do XIRU **agora**, sem ambiguidade.
 
-A Edge Function deploya sozinha.
+### 3. Ler configuração `AuthorizeRemoteTxRequests` do XIRU
+
+Adicionar nova action no servidor OCPP: **`GetConfiguration`** (mensagem OCPP padrão).
+
+- Endpoint `POST /api/get-configuration` no `ocpp-standalone-server/server.js`.
+- Recebe `{ chargePointId, key: ['AuthorizeRemoteTxRequests', 'MinimumStatusDuration', 'AuthorizationCacheEnabled', 'LocalAuthListEnabled', 'StopTransactionOnEVSideDisconnect'] }`.
+- Encaminha como CALL OCPP `[2, msgId, "GetConfiguration", { key: [...] }]`.
+- Edge function `ocpp-diagnostics` ganha action `getConfig`.
+
+Saber esses valores diz exatamente o caminho a tomar:
+
+| `AuthorizeRemoteTxRequests` | Diagnóstico | Próximo passo |
+|---|---|---|
+| `true` | XIRU espera autorizar idTag antes de iniciar | Verificar se `Authorize.req` chega ao servidor; garantir resposta `Accepted` rápida |
+| `false` | XIRU deveria iniciar direto | Bug é outro — investigar handlers internos |
+
+### 4. Forçar `AuthorizeRemoteTxRequests = false` se preciso
+
+Se diagnóstico mostrar `true` e estiver travando no Authorize:
+
+- Endpoint `POST /api/change-configuration` no servidor OCPP.
+- Envia CALL `[2, msgId, "ChangeConfiguration", { key: "AuthorizeRemoteTxRequests", value: "false" }]`.
+- Após XIRU responder `Accepted`, refazer RemoteStart.
+
+### 5. Garantir resposta correta ao `Authorize.req` do XIRU
+
+Inspecionar `ocpp-standalone-server/server.js` handler de `Authorize` (linha ~435 hoje, retorna `Accepted` cego). Confirmar:
+- Resposta no formato exato: `[3, msgId, { idTagInfo: { status: "Accepted" } }]`.
+- Sem campos extras que firmwares estritos rejeitem.
+- Resposta enviada **imediatamente**, antes de qualquer DB I/O (mesmo padrão do `BootNotification`, já documentado em `mem://decisoes-tecnicas/garantia-resposta-bootnotification`).
+
+### 6. Corrigir payload do `RemoteStartTransaction.req` no servidor
+
+Inspecionar atual em `server.js` (~linha 82 conforme buffer mental). Garantir conformidade com spec 6.33:
+- `connectorId` é **opcional** mas **se enviado deve ser > 0**. Hoje envia `1` que é correto. **Manter.**
+- `idTag` obrigatório, IdToken (string até 20 chars). Verificar se nosso idTag (provavelmente `user_id` UUID) cabe e é aceito pelo XIRU.
+- `chargingProfile` opcional. Não enviar.
+- Verificar que NÃO enviamos campos extras (alguns firmwares rejeitam por strict schema).
+
+Se o `idTag` for muito longo (UUID = 36 chars > limite IdToken de 20), o XIRU rejeita silenciosamente. **Provável causa raiz.** Se for o caso:
+- Truncar/hashear para ≤20 chars determinísticos por usuário.
+- Ou usar um `idTag` curto fixo como `"REMOTE"` para sessões iniciadas pelo app, e mapear sessão por `transactionId` posterior.
+
+### 7. Atualizar UI para mostrar diagnóstico ao admin
+
+Em `src/pages/Carregamento.tsx`, no alerta de timeout `awaiting_plug`, adicionar (apenas para admin, via `useUserRole`):
+- Botão "Ver buffer OCPP" → modal mostrando últimas 50 mensagens do CP.
+- Botão "Ler config XIRU" → mostra `AuthorizeRemoteTxRequests`, `MinimumStatusDuration`, etc.
+- Botão "Trocar para AuthorizeRemoteTxRequests=false" → executa `ChangeConfiguration`.
+
+Para usuário comum, manter apenas "Forçar verificação" e "Cancelar sessão".
 
 ## Arquivos afetados
 
 | Arquivo | Mudança |
 |---|---|
-| `ocpp-standalone-server/server.js` | + buffer de mensagens, endpoints `/admin/messages`, `/admin/active-connections`, `/api/trigger-message` |
-| `supabase/functions/ocpp-diagnostics/index.ts` | nova função (proxy + auth admin) |
-| `supabase/functions/charger-commands/index.ts` | + action `triggerStatus` |
-| `supabase/config.toml` | + entrada `[functions.ocpp-diagnostics]` |
-| `src/services/api.ts` | + `commandsApi.triggerStatus()` |
-| `src/pages/Carregamento.tsx` | + timeout 90s, alerta, botões cancelar/forçar |
+| `ocpp-standalone-server/server.js` | + endpoints `/api/get-configuration`, `/api/change-configuration`. Validar handler `Authorize` responde rápido e em formato estrito. |
+| `supabase/functions/ocpp-diagnostics/index.ts` | + actions `getConfig`, `changeConfig` |
+| `supabase/functions/charger-commands/index.ts` | Validar `idTag` ≤20 chars no payload do RemoteStart; truncar/hashear se preciso |
+| `src/pages/Carregamento.tsx` | + painel admin com 3 botões de diagnóstico (modal de buffer, ler config, trocar config) |
+| `src/services/api.ts` | + `commandsApi.getConfig()`, `commandsApi.changeConfig()` |
 
-## O que não vou mexer agora
+## O que NÃO vou fazer (corrigindo plano anterior)
 
-- Lógica do `ZETA UNO` (que funciona) — todas as adições são novas/aditivas, sem alterar handlers existentes.
-- RLS, banco, secrets — todos já configurados.
-- Subprotocolo OCPP — XIRU já conecta, problema é pós-conexão.
+- **Não vou** testar `connectorId: 0` no RemoteStart — spec proíbe (`connectorId SHALL be > 0`).
+- **Não vou** mexer em handlers que funcionam para o ZETA UNO.
+- **Não vou** alterar subprotocolo nem handshake (XIRU já conecta).
 
 ## Próximos passos após implementação
 
-1. Você roda `git pull` + `systemctl restart` no Droplet.
-2. Eu chamo `ocpp-diagnostics?action=messages&cp=140515` e mostro tudo que XIRU enviou nos últimos minutos.
-3. Eu chamo `trigger` para forçar `StatusNotification` e vemos a resposta real.
-4. Conforme resultado da tabela acima, aplicamos correção específica (provavelmente `connectorId: 0` ou reset físico).
+1. Você roda `cd /opt/ocpp-server && git pull && systemctl restart ocpp-server` no Droplet.
+2. Eu chamo `getConfig` para ler `AuthorizeRemoteTxRequests` e cia do XIRU.
+3. Eu chamo `messages` para ver o buffer real do que XIRU disse.
+4. Conforme valor de `AuthorizeRemoteTxRequests` + tamanho do idTag, aplicamos correção: ou trocar config para `false`, ou encurtar idTag, ou ambos.
+5. Refazer teste do plug.
+
+## Documentação consultada
+
+- OCPP 1.6 (OASIS, FINAL 2015-10-08): seções 4.7 (StatusNotification + máquina de estados), 5.11 (RemoteStart), 5.17 (TriggerMessage), 6.33 (RemoteStartTransaction.req schema), 6.51 (TriggerMessage.req schema).
+- OCPP-J 1.6 Specification (Open Charge Alliance): handshake WebSocket, formato CALL/CALLRESULT/CALLERROR.
 
