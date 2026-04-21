@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { diagnosticsApi } from "@/services/api";
-import { Bug, FileText, Settings, ToggleLeft, RefreshCw } from "lucide-react";
+import { Bug, FileText, Settings, ToggleLeft, RefreshCw, Activity, RotateCw } from "lucide-react";
 
 interface AdminDiagnosticsPanelProps {
   chargePointId: string | null | undefined;
@@ -30,6 +30,8 @@ export function AdminDiagnosticsPanel({ chargePointId }: AdminDiagnosticsPanelPr
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [togglingAuth, setTogglingAuth] = useState(false);
+  const [triggeringMeter, setTriggeringMeter] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [messages, setMessages] = useState<Array<{ timestamp: string; direction: string; action: string; payload: unknown }>>([]);
   const [configRows, setConfigRows] = useState<Array<{ key: string; readonly: boolean; value?: string }>>([]);
   const [unknownKeys, setUnknownKeys] = useState<string[]>([]);
