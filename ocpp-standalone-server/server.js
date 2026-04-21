@@ -1040,6 +1040,11 @@ async function handleStopTransaction(ws, messageId, payload, chargePointId) {
 
     await updateChargerStatus(chargePointId, 'available', 'Available');
 
+    // Limpa flag de realinhamento para este session.id
+    if (session?.id) {
+      firstMeterRealigned.delete(session.id);
+    }
+
     console.log(`[StopTransaction] ✓ Completed transaction ${payload.transactionId} - ${energyConsumed.toFixed(2)} kWh, R$ ${cost.toFixed(2)}`);
   } catch (err) {
     console.error('[StopTransaction] Unexpected error:', err);
