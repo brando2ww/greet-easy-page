@@ -103,8 +103,10 @@ const server = http.createServer(async (req, res) => {
         }
 
         const messageId = `remote-start-${Date.now()}`;
-        const message = [2, messageId, 'RemoteStartTransaction', { connectorId, idTag: idTag || 'REMOTE' }];
+        const payload = { connectorId, idTag: idTag || 'REMOTE' };
+        const message = [2, messageId, 'RemoteStartTransaction', payload];
         ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'RemoteStartTransaction', payload);
 
         res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'RemoteStartTransaction sent' }));
@@ -132,8 +134,10 @@ const server = http.createServer(async (req, res) => {
         }
 
         const messageId = `remote-stop-${Date.now()}`;
-        const message = [2, messageId, 'RemoteStopTransaction', { transactionId }];
+        const payload = { transactionId };
+        const message = [2, messageId, 'RemoteStopTransaction', payload];
         ws.send(JSON.stringify(message));
+        recordMessage(chargePointId, 'out', 'RemoteStopTransaction', payload);
 
         res.writeHead(200, { ...corsHeaders, 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'RemoteStopTransaction sent' }));
