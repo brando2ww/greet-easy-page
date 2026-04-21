@@ -1130,6 +1130,24 @@ async function handleMeterValues(ws, messageId, payload, chargePointId) {
       }
     }
 
+    // Realinha started_at para o timestamp real do primeiro MeterValues
+    // Gate: meter_start !== null (prova que StartTransaction chegou)
+    if (
+      sessionId &&
+      sessionRow &&
+      sessionRow.status === 'in_progress' &&
+      sessionRow.meter_start !== null &&
+      !firstMeterRealigned.has(sessionId)
+    ) {
+      const firstMeterTs = rows[0]?.timestamp ?? new Date().toISOString();
+      await supabase
+        .from('charging_sessions')
+        .update({ started_at: firstMeterTs })
+        .eq('id', sessionId);
+      firstMeterRealigned.add(sessionId);
+      console.log(`[OCPP] Realigned started_at for session ${sessionId} → ${firstMeterTs}`);
+    }
+
     if (latestEnergyWh !== null && sessionId) {
       const { data: session } = await supabase
         .from('charging_sessions')
