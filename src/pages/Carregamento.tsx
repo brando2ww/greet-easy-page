@@ -260,6 +260,40 @@ export default function Carregamento() {
         </div>
       )}
 
+      {/* Awaiting-plug timeout warning */}
+      {awaitingPlugTimeout && !isCompleted && (
+        <div className="mx-4 mb-2">
+          <Alert className="bg-yellow-50 border-yellow-200 text-yellow-900">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-900">Carregador não detectou o plug</AlertTitle>
+            <AlertDescription className="text-yellow-800">
+              Verifique se o cabo está bem encaixado no veículo. Se já estiver, force uma verificação ou cancele a sessão.
+            </AlertDescription>
+            <div className="mt-3 flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTriggerStatus}
+                disabled={isTriggering}
+                className="border-yellow-300 bg-white hover:bg-yellow-100 text-yellow-900"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isTriggering ? "animate-spin" : ""}`} />
+                {isTriggering ? "Verificando..." : "Forçar verificação"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowStopConfirm(true)}
+                className="border-red-300 bg-white hover:bg-red-50 text-red-700"
+              >
+                <X className="h-3.5 w-3.5 mr-1.5" />
+                Cancelar sessão
+              </Button>
+            </div>
+          </Alert>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col items-center px-4 pb-28 overflow-y-auto">
         {/* Car + circular progress */}
         <div className="relative flex items-center justify-center my-6" style={{ width: 280, height: 280 }}>
