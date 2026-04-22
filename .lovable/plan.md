@@ -1,137 +1,94 @@
-Aqui está o plano final consolidado com os ajustes aplicados, pronto para copiar e colar no Lovable:
 
----
 
-## Plano: cronômetro só começa quando energia flui de verdade
+## Escopo aprovado: corrigir rollback agressivo no `charger-commands`
 
-### Problema
+Apenas a Edge Function. **Não mexer no `server.js`.**
 
-Hoje `started_at` é setado em `Preparing` (plug conectado, sem energia). O cronômetro da UI usa essa base e começa antes da carga real, gerando falso "carregando".
+### Mudanças em `supabase/functions/charger-commands/index.ts`
 
-### Decisão de design
+#### 1. Log explícito do INSERT da sessão (após linhas 158-170)
 
-**Sem migração de banco.** Usar `meter_start IS NOT NULL` como proxy do "primeiro MeterValues real recebido". O `StartTransaction` define `meter_start`, então o primeiro `MeterValues` subsequente é o gatilho perfeito para realinhar `started_at`.
+Adicionar log de sucesso logo após o check de erro:
 
----
-
-### Mudanças
-
-#### 1. `ocpp-standalone-server/server.js` — topo do arquivo
-
-Declarar o Set global logo após `const pendingCalls = new Map()`:
-
-```js
-// Flag em memória: sessões que já tiveram started_at realinhado neste processo
-const firstMeterRealigned = new Set();
-
-```
-
----
-
-#### 2. `ocpp-standalone-server/server.js` — `handleMeterValues`
-
-Após o bloco que salva as linhas em `meter_values` e antes do bloco que atualiza `energy_consumed`, inserir:
-
-```js
-// Realinha started_at para o timestamp real do primeiro MeterValues
-// Gate: meter_start !== null (prova que StartTransaction chegou)
-// Sem gate de tempo fixo — meter_start existente é condição suficiente
-if (
-  sessionId &&
-  session &&
-  session.status === 'in_progress' &&
-  session.meter_start !== null &&
-  !firstMeterRealigned.has(sessionId)
-) {
-  const firstMeterTs = rows[0]?.timestamp ?? new Date().toISOString();
-  await supabase
-    .from('charging_sessions')
-    .update({ started_at: firstMeterTs })
-    .eq('id', sessionId);
-  firstMeterRealigned.add(sessionId);
-  console.log(`[OCPP] Realigned started_at for session ${sessionId} → ${firstMeterTs}`);
+```text
+if (sessionError) {
+  console.error('[charger-commands] Session INSERT FAILED:', sessionError);
+  return new Response(JSON.stringify({ error: 'Failed to create session' }), { status: 500, ... });
 }
-
+console.log('[charger-commands] Session INSERT OK:', session.id, 'status:', session.status, 'charger:', chargerId);
 ```
 
-> **Atenção**: o objeto `session` já precisa incluir `meter_start` e `started_at` no select existente. Confirmar que o select está como:
->
-> ```js
-> .select('id, status, meter_start, started_at, chargers(price_per_kwh)')
->
-> ```
+#### 2. Trocar DELETE por UPDATE `cancelled` quando OCPP responde `success: false` (linhas 197-205)
 
----
-
-#### 3. `ocpp-standalone-server/server.js` — `handleStopTransaction`
-
-Após o update da sessão no banco, adicionar a limpeza da flag:
-
-```js
-// Limpa flag de realinhamento para este session.id
-if (session?.id) {
-  firstMeterRealigned.delete(session.id);
-}
-
+**Antes:**
+```text
+await supabaseAdmin.from('charging_sessions').delete().eq('id', session.id);
+await supabaseAdmin.from('chargers').update({ status: 'available' }).eq('id', chargerId);
 ```
 
-Isso garante que se o mesmo `session.id` for reutilizado (edge case), o realinhamento volta a funcionar.
+**Depois:**
+```text
+await supabaseAdmin
+  .from('charging_sessions')
+  .update({
+    status: 'cancelled',
+    ended_at: new Date().toISOString(),
+    stop_reason: `RemoteStart ${remoteResult.status || 'Unknown'}: ${remoteResult.message || 'no detail'}`,
+  })
+  .eq('id', session.id);
 
----
+await supabaseAdmin.from('chargers').update({ status: 'available' }).eq('id', chargerId);
 
-#### 4. `src/pages/Carregamento.tsx` — cronômetro ancorado em `session.started_at`
-
-Substituir a lógica local de `chargingStartRef` / `accumulatedRef` por:
-
-```ts
-// Cronômetro ancorado no started_at vindo do servidor
-const elapsed = session?.started_at
-  ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 1000)
-  : 0;
-
+console.log('[charger-commands] Session marked cancelled (RemoteStart rejected):', session.id, 'reason:', remoteResult.status);
 ```
 
-Recalcular a cada segundo com `setInterval` enquanto `isActivelyCharging`.
+#### 3. Trocar DELETE por UPDATE `cancelled` no `catch (fetchError)` (linhas 228-235)
 
-Quando o servidor realinhar `started_at`, o próximo refetch (10s) atualiza automaticamente a âncora e o cronômetro salta para o tempo correto.
-
----
-
-#### 5. `src/pages/Carregamento.tsx` — ocultar cronômetro até telemetria real
-
-Mostrar `--:--:--` em vez de `00:00:00` enquanto o carregamento ainda não tem dados reais:
-
-```ts
-const showTimer = session?.meter_start !== null && 
-  (session?.energy_consumed > 0 || session?.ocpp_protocol_status === 'Charging');
-
+**Antes:**
+```text
+await supabaseAdmin.from('charging_sessions').delete().eq('id', session.id);
 ```
 
-Se `showTimer` for `false`, renderizar `--:--:--` no lugar do cronômetro formatado.
+**Depois:**
+```text
+await supabaseAdmin
+  .from('charging_sessions')
+  .update({
+    status: 'cancelled',
+    ended_at: new Date().toISOString(),
+    stop_reason: 'OCPP server unreachable',
+  })
+  .eq('id', session.id);
 
----
+console.log('[charger-commands] Session marked cancelled (OCPP unreachable):', session.id);
+```
 
-### Fluxo completo esperado
+### O que NÃO será alterado
 
-1. Plug conectado → `Preparing` → sessão vira `in_progress`, `started_at` provisório, UI mostra **"Plugue detectado"**, cronômetro `--:--:--`
-2. `StartTransaction` chega → `meter_start` setado, cronômetro ainda `--:--:--`
-3. Primeiro `MeterValues` real → servidor realinha `started_at` para o timestamp da telemetria, UI faz refetch e cronômetro começa a partir de `00:00:00` no instante exato em que energia começou a fluir
-4. Próximas leituras apenas atualizam `energy_consumed` / `cost` / `soc`, sem mexer em `started_at`
+- `ocpp-standalone-server/server.js` — fora do escopo, versão em produção está estável.
+- Lógica de validação de saldo, status OCPP, heartbeat — mantida.
+- Resposta HTTP para o cliente em caso de falha — continua `400`/`502` com mensagem amigável.
+- Schema do banco — nenhuma migration.
 
----
+### Arquivo afetado
 
-### O que NÃO mudar
+| Arquivo | Mudança |
+|---|---|
+| `supabase/functions/charger-commands/index.ts` | Log do INSERT; 2× DELETE → UPDATE `cancelled` com `stop_reason` |
 
-- Sem coluna nova no banco
-- Sem alterar a regra de transição `awaiting_plug → in_progress`
-- Sem migration
+### Validação pós-deploy
 
----
+Edge function faz redeploy automático. Após implantar:
 
-### Arquivos afetados
+1. Iniciar uma sessão pelo app.
+2. Verificar logs do `charger-commands`: deve aparecer `Session INSERT OK: <uuid>`.
+3. Consultar `charging_sessions`:
+   - Se XIRU aceitar → registro com `status = 'awaiting_plug'` permanece.
+   - Se rejeitar → registro com `status = 'cancelled'` e `stop_reason` populado (auditoria preservada).
 
+### Resultado esperado
 
-| Arquivo                            | Mudança                                                                                                    |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `ocpp-standalone-server/server.js` | `firstMeterRealigned` Set global; realinhamento no `handleMeterValues`; cleanup no `handleStopTransaction` |
-| `src/pages/Carregamento.tsx`       | Cronômetro ancorado em `session.started_at`; `showTimer` oculta `--:--:--` até telemetria real             |
+- Toda tentativa de iniciar carga deixa rastro em `charging_sessions`.
+- Rejeições do XIRU ficam visíveis com motivo no `stop_reason`.
+- Sucessos seguem o fluxo normal `awaiting_plug → in_progress`.
+
