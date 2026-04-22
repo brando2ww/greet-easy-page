@@ -998,7 +998,7 @@ if (error) {
   console.error('[StartTransaction] Database error creating orphan session:', error);
   return;
 }
-
+}
     await updateChargerStatus(chargePointId, 'in_use', 'Charging');
     console.log(`[StartTransaction] Transaction ${transactionId} ready for ${chargePointId}`);
   } catch (err) {
