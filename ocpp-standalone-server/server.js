@@ -542,7 +542,24 @@ wss.on('connection', async (ws, req) => {
       lastActivity.set(chargePointId, Date.now());
       const message = JSON.parse(raw);
 
-      const [messageType, messageId, action, payload] = message;
+      // OCPP message framing:
+      //   CALL:        [2, messageId, action, payload]        (4 elements)
+      //   CALLRESULT:  [3, messageId, payload]                (3 elements)
+      //   CALLERROR:   [4, messageId, errCode, errDesc, errDetails] (5 elements)
+      // Destructuring as 4 elements unconditionally caused CALLRESULT payloads
+      // to be assigned to `action` while `payload` became undefined, breaking
+      // RemoteStartTransaction (status "Accepted" was lost → reported as Unknown).
+      const messageType = message[0];
+      const messageId = message[1];
+      let action;
+      let payload;
+      if (messageType === 2) {
+        action = message[2];
+        payload = message[3];
+      } else {
+        // CALLRESULT / CALLERROR carry payload at index 2
+        payload = message[2];
+      }
 
       recordMessage(
         chargePointId,
