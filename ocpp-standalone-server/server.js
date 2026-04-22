@@ -967,30 +967,37 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
 
       console.log(`[StartTransaction] ✓ Linked session ${resolvedSession.id} (source: ${resolvedSession.source}) to transaction ${transactionId}`);
     } else {
-      // 3. Fallback: cria sessão nova (início local sem app)
-      const resolvedUserId = await resolveUserId(payload.idTag);
-      const userId = resolvedUserId || '00000000-0000-0000-0000-000000000000';
-      console.log(`[StartTransaction] No existing session, creating orphan. user_id: ${userId} (idTag: ${payload.idTag})`);
+      
+      // 3. Fallback: cria sessão nova apenas se o idTag for um usuário real.
+// idTags desconhecidos (tokens internos do firmware) são ignorados para
+// evitar violação de foreign key no banco.
+const resolvedUserId = await resolveUserId(payload.idTag);
 
-      const { error } = await supabase
-        .from('charging_sessions')
-        .insert({
-          charger_id: charger.id,
-          user_id: userId,
-          transaction_id: transactionId,
-          meter_start: payload.meterStart,
-          id_tag: payload.idTag,
-          started_at: payload.timestamp
-            ? new Date(payload.timestamp).toISOString()
-            : new Date().toISOString(),
-          status: 'in_progress',
-        });
+if (!resolvedUserId) {
+  console.log(`[StartTransaction] Unknown idTag "${payload.idTag}" — not a registered user, skipping orphan session`);
+  return;
+}
 
-      if (error) {
-        console.error('[StartTransaction] Database error creating orphan session:', error);
-        return;
-      }
-    }
+console.log(`[StartTransaction] No existing session, creating orphan for user ${resolvedUserId} (idTag: ${payload.idTag})`);
+
+const { error } = await supabase
+  .from('charging_sessions')
+  .insert({
+    charger_id: charger.id,
+    user_id: resolvedUserId,
+    transaction_id: transactionId,
+    meter_start: payload.meterStart,
+    id_tag: payload.idTag,
+    started_at: payload.timestamp
+      ? new Date(payload.timestamp).toISOString()
+      : new Date().toISOString(),
+    status: 'in_progress',
+  });
+
+if (error) {
+  console.error('[StartTransaction] Database error creating orphan session:', error);
+  return;
+}
 
     await updateChargerStatus(chargePointId, 'in_use', 'Charging');
     console.log(`[StartTransaction] Transaction ${transactionId} ready for ${chargePointId}`);
