@@ -161,12 +161,13 @@ Deno.serve(async (req) => {
           .single();
 
         if (sessionError) {
-          console.error('[charger-commands] Session creation error:', sessionError);
+          console.error('[charger-commands] Session INSERT FAILED:', sessionError);
           return new Response(JSON.stringify({ error: 'Failed to create session' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
+        console.log('[charger-commands] Session INSERT OK:', session.id, 'status:', session.status, 'charger:', chargerId);
 
         // Call OCPP server to send RemoteStartTransaction (sync — waits for CP response)
         if (OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
@@ -197,13 +198,19 @@ Deno.serve(async (req) => {
             if (!remoteResult.success) {
               await supabaseAdmin
                 .from('charging_sessions')
-                .delete()
+                .update({
+                  status: 'cancelled',
+                  ended_at: new Date().toISOString(),
+                  stop_reason: `RemoteStart ${remoteResult.status || 'Unknown'}: ${remoteResult.message || 'no detail'}`,
+                })
                 .eq('id', session.id);
 
               await supabaseAdmin
                 .from('chargers')
                 .update({ status: 'available' })
                 .eq('id', chargerId);
+
+              console.log('[charger-commands] Session marked cancelled (RemoteStart rejected):', session.id, 'reason:', remoteResult.status);
 
               const status = remoteResult.status || 'Unknown';
               const friendlyMessage =
@@ -226,11 +233,17 @@ Deno.serve(async (req) => {
             // when StartTransaction or real MeterValues arrives.
           } catch (fetchError) {
             console.error('[charger-commands] OCPP API error:', fetchError);
-            // Network failure to OCPP server — rollback to avoid orphan session
+            // Network failure to OCPP server — mark session as cancelled (preserve audit trail)
             await supabaseAdmin
               .from('charging_sessions')
-              .delete()
+              .update({
+                status: 'cancelled',
+                ended_at: new Date().toISOString(),
+                stop_reason: 'OCPP server unreachable',
+              })
               .eq('id', session.id);
+
+            console.log('[charger-commands] Session marked cancelled (OCPP unreachable):', session.id);
 
             return new Response(JSON.stringify({
               error: 'OCPP server unreachable',
