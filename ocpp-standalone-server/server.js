@@ -445,7 +445,7 @@ server.on('upgrade', (request, socket, head) => {
 // WEBSOCKET ZOMBIE DETECTION (ping/pong every 30s)
 // =====================================================================
 const PING_INTERVAL_MS = 30_000;
-const STALE_HEARTBEAT_MS = 3 * 60_000; // 3 minutes
+const STALE_HEARTBEAT_MS = 10 * 60_000; // 10 minutes
 
 const wsPingInterval = setInterval(() => {
   for (const [cpId, ws] of activeConnections.entries()) {

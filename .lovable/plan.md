@@ -1,98 +1,68 @@
 
 
-## Diagnóstico: o bug está no `server.js`, não no edge function
+## Eliminar necessidade do UPDATE manual após cada teste
 
-### Evidência cruzada dos logs
+### Diagnóstico
 
-**Servidor OCPP (13:19:39):**
-```text
-Raw message from 140515: [3,"remote-start-1776863979549",{"status":"Accepted"}]
-Received CALLRESULT from 140515: undefined          ← payload veio undefined!
+Você roda este UPDATE toda vez:
+```sql
+UPDATE chargers SET status='available', ocpp_protocol_status='Available', last_heartbeat=NOW()
+WHERE ocpp_charge_point_id='140515';
 ```
 
-**Edge function (mesma sequência):**
-```text
-Remote start result: { success: false, status: "Unknown", message: "RemoteStartTransaction Unknown by charger" }
-Session marked cancelled (RemoteStart rejected)
-```
+Estado real do XIRU agora: `status=available, ocpp_protocol_status=Available, last_heartbeat=2.4 min atrás`. Ou seja, **o servidor ESTÁ atualizando** quando o carregador envia heartbeat/StatusNotification. O problema é quando algo ATRASA e o sweep agressivo marca offline antes do próximo heartbeat chegar.
 
-O XIRU **realmente** respondeu `Accepted`. O servidor recebeu a mensagem bruta correta. Mas extraiu `payload = undefined` antes de resolver a Promise. Por isso o `/api/remote-start` retorna `success: false, status: "Unknown"` — e o edge function, agindo corretamente sobre essa resposta, cancela a sessão.
+Causas dos três campos ficarem "errados":
 
-### Causa raiz exata (server.js linha 545)
+1. **`ocpp_protocol_status='Offline'`** ← causada pelo sweep em `server.js` linha 472-476: se `last_heartbeat > 3 min` marca Offline. **3 min é curto demais** — o intervalo OCPP padrão de heartbeat do XIRU é 4-5 min, e qualquer atraso de rede empurra pra cima de 3.
+2. **`status='in_use'` travado** ← sessões antigas que terminaram mal (testes interrompidos, falha de RemoteStop, processo de teste matado). O servidor só reseta para `available` via mapeamento do StatusNotification quando o XIRU envia `Available`, mas se a sessão fica órfã o `chargers.status` segue `in_use`.
+3. **`last_heartbeat` velho** ← consequência natural quando o XIRU desliga entre testes. Não é bug, mas o sweep age sobre isso.
+
+### Mudanças propostas
+
+#### 1. `ocpp-standalone-server/server.js` linha 448
 
 ```js
-const [messageType, messageId, action, payload] = message;
-```
-
-Esse destructuring assume **sempre 4 elementos** (formato CALL: `[2, id, action, payload]`).
-
-Mas CALLRESULT tem **3 elementos**: `[3, id, payload]`.
-
-Resultado:
-- `action` recebe `{status: "Accepted"}` (o payload real)
-- `payload` recebe `undefined`
-
-Aí na linha 587:
-```js
-pending.resolve(payload);   // resolve com undefined
-```
-
-E o handler do `/api/remote-start` (linha 147) faz `result?.status || 'Unknown'` → cai no fallback.
-
-### Por que o edge function NÃO é o problema
-
-Na linha 198 do `charger-commands/index.ts`:
-```ts
-if (!remoteResult.success) { ... cancel ... }
-```
-
-Está correto. O servidor enviou literalmente `success: false`, então o cancelamento é o comportamento certo dado o input. Adicionar mais logs no edge function não muda nada — o defeito está upstream.
-
-### Conflito com a restrição "não mexer no server.js"
-
-A última instrução foi "não mexer no server.js, versão em produção está estável". Mas a versão em produção **não está estável** para este caso: ela aceita o CALLRESULT do XIRU, registra `Received CALLRESULT: undefined`, e responde `success: false` ao edge function. Toda tentativa real de iniciar carga vai falhar até isso ser corrigido.
-
-A correção é mínima e cirúrgica:
-
-```js
-// ANTES (linha 545)
-const [messageType, messageId, action, payload] = message;
+// ANTES
+const STALE_HEARTBEAT_MS = 3 * 60_000; // 3 minutes
 
 // DEPOIS
-const messageType = message[0];
-const messageId   = message[1];
-let action, payload;
-if (messageType === 2) {        // CALL: [2, id, action, payload]
-  action  = message[2];
-  payload = message[3];
-} else {                        // CALLRESULT [3, id, payload] / CALLERROR [4, id, errCode, errDesc, errDetails]
-  payload = message[2];
-}
+const STALE_HEARTBEAT_MS = 10 * 60_000; // 10 minutes
 ```
 
-Nada mais muda. O `recordMessage` (linhas 547-552) já trata `messageType !== 2` separadamente e continua funcionando. Os handlers de CALL (`switch(action)`) só rodam quando `messageType === 2`, onde `action` está corretamente populado.
+A camada primária de detecção de zumbi continua sendo o **ping/pong WebSocket de 30s** (linhas ~440-460), que é instantâneo e confiável. O sweep de heartbeat é só defesa em profundidade — 10 min é folga suficiente pro intervalo de heartbeat do XIRU + variação de rede, sem perder a função de limpar conexões realmente mortas.
 
-### Decisão necessária do usuário
+#### 2. Auto-fix do `chargers.status` órfão (sem mudança de código necessária — já existe!)
 
-| Opção | Consequência |
-|---|---|
-| **A. Corrigir `server.js`** (recomendado) | Resolve o bug de fato. Exige redeploy manual no Droplet (`git pull && systemctl restart ocpp-server`). Mudança de 8 linhas, baixo risco. |
-| **B. Não tocar no `server.js`** | Bug permanece. Toda sessão será cancelada com `RemoteStart Unknown` mesmo o XIRU aceitando. |
-| **C. Workaround no edge function** | Tratar `status: 'Unknown'` como sucesso? **Não recomendado**: mascararia falhas reais e quebraria o tratamento de `Rejected`/`Timeout` legítimos. |
+O `charger-commands/index.ts` linhas 75-95 e 295-310 **já tem** lógica de auto-fix: quando você tenta iniciar carga ou consulta status, se `chargers.status='in_use'` mas não há sessão ativa, ele zera para `available`. Isso significa que o `status='in_use'` travado se conserta sozinho na próxima tentativa — você não precisa do SQL pra isso.
 
-### Arquivo afetado (Opção A)
+Se mesmo assim quiser forçar limpeza periódica (ex.: 1x por minuto sem precisar de tentativa do app), podemos adicionar no sweep do `server.js` (linhas ~470-480) um update extra:
 
-| Arquivo | Mudança |
-|---|---|
-| `ocpp-standalone-server/server.js` linha 545 | Destructuring condicional por `messageType` (CALL vs CALLRESULT/CALLERROR) |
+```js
+// Reset chargers.status to 'available' when no active session exists
+await supabase.rpc('reset_orphan_charger_status'); // ou inline SQL
+```
+
+Mas honestamente, dado que o auto-fix já roda no fluxo crítico (start/status), **isso é opcional**. Recomendo só fazer a mudança #1 e ver se o problema some.
+
+### Resumo da mudança
+
+| Arquivo | Linha | Mudança |
+|---|---|---|
+| `ocpp-standalone-server/server.js` | 448 | `STALE_HEARTBEAT_MS`: 3 min → 10 min |
+
+Mudança de uma linha. Baixíssimo risco. Mantém detecção rápida (ping/pong 30s) intacta.
+
+### Atualização de memória
+
+Atualizar `mem://decisoes-tecnicas/deteccao-conexao-zumbi-ocpp` para refletir os novos 10 min.
 
 ### Validação pós-deploy
 
-1. SSH no Droplet, `git pull && systemctl restart ocpp-server`.
-2. Iniciar sessão pelo app.
-3. Log esperado no servidor: `Received CALLRESULT from 140515: { status: 'Accepted' }` (não mais `undefined`).
-4. Log esperado no edge function: `Remote start result: { success: true, status: "Accepted", ... }`.
-5. `charging_sessions` mantém registro com `status = 'awaiting_plug'` até o plug conectar.
+1. SSH no Droplet: `git pull && systemctl restart ocpp-server`.
+2. Fazer um teste, encerrar a carga, esperar 4-5 min sem mexer.
+3. Conferir no banco: `ocpp_protocol_status` deve seguir `Available` (não cair pra `Offline`).
+4. Próximo teste deve iniciar sem precisar do UPDATE manual.
 
-**Confirme se posso aplicar a Opção A.**
+Confirma a aplicação?
 
