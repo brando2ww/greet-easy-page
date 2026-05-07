@@ -1,65 +1,111 @@
-## Diagnóstico — nova hipótese
+## Diagnóstico
 
-Confirmado pelos logs do Droplet: após o restart, o XIRU **não reconectou** ao OCPP server. Não tem `[OCPP Server] New connection attempt` nenhum. Toda vez que o server reinicia (deploy, reboot, crash), o charger fica fora até alguém ir lá fisicamente.
+Fluxo OCPP 1.6J completo está conforme spec — o XIRU 40 kW reportou tudo certinho:
 
-Pior: nosso app valida online/offline lendo `chargers.last_heartbeat` e `ocpp_protocol_status` do DB. Quem escreve essas colunas é o OCPP server. Se o server cair / a WS morrer / o pong-refresh quebrar / um deploy não pegar, o DB congela e o app trava em "Estação offline" — exigindo o `UPDATE` manual.
+```
+BootNotification ✅ Accepted
+StatusNotification ✅ Available → Preparing → Charging
+RemoteStartTransaction ✅ Accepted
+StartTransaction ✅ Accepted (transactionId 1009)
+MeterValues ✅ entregando a cada 20s
+StopTransaction ✅ Accepted
+```
 
-A causa raiz não é o tamanho da janela de heartbeat nem o sweep — é **dependência única e frágil entre OCPP server e DB**. Precisamos de uma fonte de verdade independente e auto-curativa.
+**Mas:** `Power.Active.Import = 0.00 W` e medidor parado em `77825 Wh` do início ao fim. O charger "achou" que estava carregando, mas o contator/módulo de potência DC não liberou energia.
 
-## Solução: live-status + auto-cura via cron
+Como é um **carregador DC de 40 kW** (provavelmente CCS2 ou GB/T), há duas hipóteses de software que são MUITO comuns nesses chargers chineses (ZETAUNO/XIRU/Z1D60) e que valem testar antes de chamar técnico:
 
-### 1. Nova edge function `ocpp-live-status`
+1. Firmware exige `chargingProfile` no `RemoteStartTransaction` — sem ele, alguns ficam em "Charging fictício".
+2. Firmware exige resposta completa em `Authorize` (`expiryDate` + `parentIdTag`) para liberar o contator.
 
-`supabase/functions/ocpp-live-status/index.ts`:
-- Aceita `{ chargePointId }`.
-- Chama `GET ${OCPP_SERVER_URL}/api/connections` com `x-internal-key`.
-- Retorna `{ isLive, ocppStatus, lastHeartbeat }`.
-- **Side-effect:** se `isLive=true` mas DB diz `Offline`, faz `UPDATE chargers SET last_heartbeat=NOW(), ocpp_protocol_status='Available' WHERE ocpp_charge_point_id=$1 AND ocpp_protocol_status='Offline'` — auto-cura silenciosa.
+## Mudanças propostas
 
-Configurar `verify_jwt = true` em `supabase/config.toml`.
+### 1. Servidor OCPP — `chargingProfile` no RemoteStart (DC, 40 kW)
 
-### 2. Nova edge function `ocpp-sync-status` (cron, sem JWT)
+`ocpp-standalone-server/server.js`, endpoint `/api/remote-start`:
 
-- Busca lista completa de connections do OCPP server.
-- Para cada CP conectado: refresca `last_heartbeat` e promove `Offline → Available` (sem tocar `Charging`/`Preparing`).
-- Para CPs no DB com WebSocket NÃO listada e `last_heartbeat > 10 min`: marca `Offline`.
-- Protegida por `x-internal-key` no header (chamada só pelo pg_cron).
+```js
+const payload = {
+  connectorId,
+  idTag: idTag || 'REMOTE',
+  chargingProfile: {
+    chargingProfileId: 1,
+    stackLevel: 0,
+    chargingProfilePurpose: 'TxProfile',
+    chargingProfileKind: 'Relative',
+    chargingSchedule: {
+      chargingRateUnit: 'W',           // Watts (DC)
+      chargingSchedulePeriod: [
+        { startPeriod: 0, limit: 40000 } // 40.000 W = 40 kW
+      ]
+    }
+  }
+};
+```
 
-### 3. Migration: pg_cron a cada 1 min
+Para DC a unidade correta é `W` (não `A`). 40 kW = 40000 W.
 
-Habilitar `pg_cron` + `pg_net`, criar job que faz `net.http_post` para `ocpp-sync-status` a cada minuto. Garante que mesmo sem o pong-refresh do server, o DB volte a refletir realidade em ≤60s.
+### 2. Servidor OCPP — `SetChargingProfile` redundante após StartTransaction
 
-### 4. `useChargerValidation.tsx` e edge `charger-commands` — fallback live-status
+1 segundo depois de aceitar o `StartTransaction`, mandar um `SetChargingProfile` separado no mesmo connector com o mesmo limite. Defesa em profundidade — se o profile do RemoteStart foi ignorado, este pega.
 
-Antes de bloquear com "Estação offline":
-- Chamar `ocpp-live-status`.
-- Se `isLive=true`, prosseguir mesmo que DB diga ofline (a chamada já curou).
-- Se `isLive=false`, aí sim bloquear, com mensagem clara: "Carregador desconectado. Vá até a estação, desligue e religue o disjuntor."
+### 3. Servidor OCPP — `Authorize` com resposta completa
 
-Mesma lógica replicada na validação final de `charger-commands → start`.
+Atualmente `handleAuthorize` retorna só `{ status: 'Accepted' }`. Adicionar:
 
-### 5. (Opcional, defesa em profundidade) `connector_id` + reconnect hint no XIRU
+```js
+sendCallResult(ws, messageId, {
+  idTagInfo: {
+    status: 'Accepted',
+    expiryDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+    parentIdTag: payload.idTag
+  }
+});
+```
 
-Não dá pra forçar o XIRU a reconectar via software. Mas vamos adicionar log no `[OCPP Server]` quando uma WS cair, mostrando "aguardando reconexão do CP X — se não voltar em 60s, religar disjuntor" — pra futuros diagnósticos via `journalctl`.
+### 4. App — detector "carga sem energia" em `src/pages/Carregamento.tsx`
+
+Após 90s em status `Charging` com `Power.Active.Import` = 0 e `energyConsumed` = 0:
+
+- Banner amarelo: "O carregador reporta que está carregando, mas nenhuma energia está fluindo. Verifique o cabo CCS/GB-T no veículo."
+- Botões "Forçar verificação" e "Encerrar sessão"
+
+Reaproveita o mesmo padrão visual do `awaitingPlugTimeout` que já existe.
+
+### 5. Admin — mostrar potência instantânea no `AdminDiagnosticsPanel`
+
+Card adicional "Última leitura de potência" lendo o `Power.Active.Import` mais recente de `meter_values`. Facilita identificar de longe sessões com Power=0.
+
+## Atualizar configuração do carregador no DB
+
+Confirmar/atualizar no registro do XIRU (cdbaf312…):
+
+- `power_kw`: 40
+- `connector_type`: CCS2 ou GB/T (qual exatamente?)
+
+Se ainda estiver com 7 kW (default antigo do app), precisa ajustar — isso afeta estimativa de custo na drawer e cálculo de saldo mínimo.
 
 ## O que NÃO muda
 
-- `ocpp-standalone-server/server.js` — fixes anteriores (sweep skipping live CPs, pong-refresh) ficam. São primeira linha de defesa; só não dependemos exclusivamente deles.
-- Tabelas existentes — sem schema novo.
-
-## Por que isso resolve definitivamente
-
-- DB pode "mentir" — o app/edge function sempre tem como confirmar via OCPP server direto.
-- OCPP server pode reiniciar / quebrar pong-refresh — o cron de 60s reconcilia em 1 min.
-- Único caso restante: charger fisicamente desconectado (igual agora). Aí a mensagem é acionável: "religar disjuntor" — não tem solução por software.
-
-## Para resolver AGORA (estado atual)
-
-Aplicaremos um `UPDATE` via migration imediato pra restaurar o 140515 enquanto o XIRU não reconecta — assim você abre o app e funciona. Quando o charger reconectar (manualmente religando o disjuntor desta vez), a infra nova mantém ele saudável dali pra frente.
+- Edge functions de auth/RLS — nada toca
+- Fluxo `awaiting_plug` — igual
+- Frontend de iniciar carga / scanner — igual
 
 ## Validação pós-deploy
 
-1. Migration aplicada → 140515 fica `Available` no DB.
-2. Cron de 1 min começa a rodar → após religar o disjuntor, em ≤60s o status reflete realidade.
-3. Encerrar uma sessão de teste → esperar 5 min → abrir app → continua online sem `UPDATE` manual.
-4. Restart do Droplet → após o XIRU reconectar, em ≤60s o status volta sem intervenção.
+1. Religar disjuntor do XIRU → confirmar reconexão (`journalctl -u ocpp-server -f`)
+2. Iniciar uma carga real
+3. Conferir nos logs se o `RemoteStartTransaction` agora vai com `chargingProfile { limit: 40000 W }`
+4. Conferir nos `MeterValues` se `Power.Active.Import` > 0
+5. Se ainda vier 0 após esses 3 ajustes, é definitivamente hardware (módulo de potência DC, contator, ou recusa do veículo). O banner do app já avisa o usuário.
+
+## Observações finais
+
+Se mesmo com tudo isso o `Power.Active.Import` continuar em 0, será necessária inspeção física no XIRU:
+
+- Disjuntor de entrada AC trifásico fechado e com as 3 fases?
+- Display do XIRU mostra alguma falha (E01, E02…)?
+- Veículo aceita carga DC nessa estação? (alguns BMS recusam por temperatura/SOC)
+- Contator DC faz "click" audível ao iniciar?
+
+Posso prosseguir com as 5 mudanças?

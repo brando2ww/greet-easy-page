@@ -135,12 +135,70 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // Lookup charger power (kW) from DB to build a TxProfile that liberates energy.
+        // Some chinese DC chargers (XIRU/ZETAUNO) need an explicit chargingProfile to close
+        // the contactor — without it they accept RemoteStart but never deliver power.
+        let powerKw = 40;
+        try {
+          const { data: chargerRow } = await supabase
+            .from('chargers')
+            .select('power')
+            .eq('ocpp_charge_point_id', chargePointId)
+            .maybeSingle();
+          if (chargerRow?.power && Number(chargerRow.power) > 0) {
+            powerKw = Number(chargerRow.power);
+          }
+        } catch (e) {
+          console.warn('[RemoteStart] Failed to fetch charger power, using default 40kW:', e?.message);
+        }
+        const limitW = Math.round(powerKw * 1000);
+
         const messageId = `remote-start-${Date.now()}`;
-        const payload = { connectorId, idTag: idTag || 'REMOTE' };
+        const payload = {
+          connectorId,
+          idTag: idTag || 'REMOTE',
+          chargingProfile: {
+            chargingProfileId: 1,
+            stackLevel: 0,
+            chargingProfilePurpose: 'TxProfile',
+            chargingProfileKind: 'Relative',
+            chargingSchedule: {
+              chargingRateUnit: 'W',
+              chargingSchedulePeriod: [{ startPeriod: 0, limit: limitW }],
+            },
+          },
+        };
         const message = [2, messageId, 'RemoteStartTransaction', payload];
         const waitPromise = awaitCallResult(messageId, 12000);
         ws.send(JSON.stringify(message));
         recordMessage(chargePointId, 'out', 'RemoteStartTransaction', payload);
+
+        // Defense-in-depth: 1.5s after RemoteStart, send a SetChargingProfile too.
+        // If the charger ignored the inline profile, this redundant one will pick it up.
+        setTimeout(() => {
+          try {
+            const setMsgId = `setprofile-${Date.now()}`;
+            const setPayload = {
+              connectorId,
+              csChargingProfiles: {
+                chargingProfileId: 1,
+                stackLevel: 0,
+                chargingProfilePurpose: 'TxDefaultProfile',
+                chargingProfileKind: 'Relative',
+                chargingSchedule: {
+                  chargingRateUnit: 'W',
+                  chargingSchedulePeriod: [{ startPeriod: 0, limit: limitW }],
+                },
+              },
+            };
+            const setMsg = [2, setMsgId, 'SetChargingProfile', setPayload];
+            ws.send(JSON.stringify(setMsg));
+            recordMessage(chargePointId, 'out', 'SetChargingProfile', setPayload);
+            console.log(`[RemoteStart] Redundant SetChargingProfile sent to ${chargePointId} (${limitW}W)`);
+          } catch (e) {
+            console.warn('[RemoteStart] Redundant SetChargingProfile failed:', e?.message);
+          }
+        }, 1500);
 
         try {
           const result = await waitPromise;
@@ -895,8 +953,14 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
 
 async function handleAuthorize(ws, messageId, payload) {
   console.log(`[Authorize] ID Tag: ${payload.idTag}`);
+  // Some firmwares require a complete idTagInfo (with expiryDate + parentIdTag)
+  // before they'll close the contactor on the next StartTransaction.
   sendCallResult(ws, messageId, {
-    idTagInfo: { status: 'Accepted' },
+    idTagInfo: {
+      status: 'Accepted',
+      expiryDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      parentIdTag: payload.idTag,
+    },
   });
 }
 
@@ -935,7 +999,11 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
   // Responde IMEDIATAMENTE conforme spec OCPP 1.6J
   sendCallResult(ws, messageId, {
     transactionId: transactionId,
-    idTagInfo: { status: 'Accepted' },
+    idTagInfo: {
+      status: 'Accepted',
+      expiryDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      parentIdTag: payload.idTag,
+    },
   });
 
   console.log(`[StartTransaction] Responded transactionId=${transactionId} to ${chargePointId}, persisting...`);

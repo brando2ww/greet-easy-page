@@ -54,8 +54,10 @@ export default function Carregamento() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [awaitingPlugTimeout, setAwaitingPlugTimeout] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
+  const [noEnergyFlowing, setNoEnergyFlowing] = useState(false);
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const awaitingPlugStartRef = useRef<number | null>(null);
+  const chargingStartRef = useRef<number | null>(null);
   const balanceStopTriggeredRef = useRef(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
@@ -205,6 +207,29 @@ export default function Carregamento() {
     return () => clearInterval(id);
   }, [isAwaitingPlug, isCompleted]);
 
+  // Detector "carga sem energia": status Charging há > 90s mas energyConsumed = 0.
+  // Indica que o carregador reportou início mas o contator não fechou (problema físico).
+  useEffect(() => {
+    if (isCompleted || ocppStatus !== "Charging") {
+      chargingStartRef.current = null;
+      setNoEnergyFlowing(false);
+      return;
+    }
+    if (!chargingStartRef.current) chargingStartRef.current = Date.now();
+    if (energyConsumed > 0) {
+      setNoEnergyFlowing(false);
+      return;
+    }
+    const check = () => {
+      if (chargingStartRef.current && Date.now() - chargingStartRef.current >= 90000 && energyConsumed === 0) {
+        setNoEnergyFlowing(true);
+      }
+    };
+    check();
+    const id = setInterval(check, 5000);
+    return () => clearInterval(id);
+  }, [ocppStatus, energyConsumed, isCompleted]);
+
   const handleTriggerStatus = async () => {
     if (!chargerId || isTriggering) return;
     setIsTriggering(true);
@@ -310,6 +335,40 @@ export default function Carregamento() {
               >
                 <X className="h-3.5 w-3.5 mr-1.5" />
                 Cancelar sessão
+              </Button>
+            </div>
+          </Alert>
+        </div>
+      )}
+
+      {/* Carga sem energia — Charging mas sem fluxo de energia */}
+      {noEnergyFlowing && !isCompleted && (
+        <div className="mx-4 mb-2">
+          <Alert className="bg-yellow-50 border-yellow-200 text-yellow-900">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-900">Sem energia fluindo</AlertTitle>
+            <AlertDescription className="text-yellow-800">
+              O carregador reporta que está carregando, mas nenhuma energia chegou ao veículo nos últimos 90 segundos. Verifique o cabo e o veículo.
+            </AlertDescription>
+            <div className="mt-3 flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTriggerStatus}
+                disabled={isTriggering}
+                className="border-yellow-300 bg-white hover:bg-yellow-100 text-yellow-900"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isTriggering ? "animate-spin" : ""}`} />
+                {isTriggering ? "Verificando..." : "Forçar verificação"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowStopConfirm(true)}
+                className="border-red-300 bg-white hover:bg-red-50 text-red-700"
+              >
+                <X className="h-3.5 w-3.5 mr-1.5" />
+                Encerrar sessão
               </Button>
             </div>
           </Alert>
