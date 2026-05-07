@@ -58,7 +58,7 @@ export const useChargerValidation = () => {
       // Check heartbeat freshness (must be within last 2 minutes)
       const lastHeartbeat = charger.lastHeartbeat ? new Date(charger.lastHeartbeat) : null;
       const ageMs = lastHeartbeat ? Date.now() - lastHeartbeat.getTime() : Infinity;
-      const isConnected = ageMs < 120000;
+      const isConnected = ageMs < 600000; // 10 min — pong refreshes last_heartbeat every 60s
 
       if (!isConnected) {
         const ageMin = Number.isFinite(ageMs) ? Math.max(1, Math.round(ageMs / 60000)) : null;

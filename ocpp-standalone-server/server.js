@@ -469,13 +469,19 @@ const wsPingInterval = setInterval(() => {
 
 const staleHeartbeatSweep = setInterval(async () => {
   try {
+    const aliveCps = Array.from(activeConnections.keys());
     const cutoff = new Date(Date.now() - STALE_HEARTBEAT_MS).toISOString();
-    const { data, error } = await supabase
+    let q = supabase
       .from('chargers')
       .update({ ocpp_protocol_status: 'Offline' })
       .neq('ocpp_protocol_status', 'Offline')
-      .lt('last_heartbeat', cutoff)
-      .select('id, ocpp_charge_point_id');
+      .lt('last_heartbeat', cutoff);
+    // Não marcar Offline carregadores com WebSocket viva — ping/pong é a verdade
+    if (aliveCps.length > 0) {
+      const list = aliveCps.map((id) => `"${String(id).replace(/"/g, '')}"`).join(',');
+      q = q.not('ocpp_charge_point_id', 'in', `(${list})`);
+    }
+    const { data, error } = await q.select('id, ocpp_charge_point_id');
     if (error) {
       console.error('[OCPP] Stale heartbeat sweep error:', error.message);
     } else if (data && data.length > 0) {
@@ -486,6 +492,9 @@ const staleHeartbeatSweep = setInterval(async () => {
     console.error('[OCPP] Stale heartbeat sweep crash:', e?.message);
   }
 }, 60_000);
+
+// Throttle por CP para refresh de last_heartbeat via pong (evita flood no DB)
+const lastDbHeartbeatPush = new Map();
 
 wss.on('close', () => {
   clearInterval(wsPingInterval);
@@ -498,7 +507,25 @@ wss.on('connection', async (ws, req) => {
   const chargePointId = pathParts[pathParts.length - 1];
 
   ws.isAlive = true;
-  ws.on('pong', () => { ws.isAlive = true; });
+  ws.on('pong', () => {
+    ws.isAlive = true;
+    // Refresh last_heartbeat no DB (throttled 60s) e promove Offline -> Available
+    const now = Date.now();
+    const last = lastDbHeartbeatPush.get(chargePointId) || 0;
+    if (now - last > 60_000) {
+      lastDbHeartbeatPush.set(chargePointId, now);
+      const ts = new Date().toISOString();
+      supabase.from('chargers')
+        .update({ last_heartbeat: ts })
+        .eq('ocpp_charge_point_id', chargePointId)
+        .then(() => {}, (e) => console.error('[pong] heartbeat refresh failed:', e?.message));
+      supabase.from('chargers')
+        .update({ ocpp_protocol_status: 'Available' })
+        .eq('ocpp_charge_point_id', chargePointId)
+        .eq('ocpp_protocol_status', 'Offline')
+        .then(() => {}, () => {});
+    }
+  });
   
   console.log(`[OCPP Server] New connection attempt from Charge Point ID: ${chargePointId}`);
   console.log(`[OCPP Server] Full URL: ${req.url}`);
