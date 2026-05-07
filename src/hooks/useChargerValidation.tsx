@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { chargersApi } from "@/services/api";
+import { chargersApi, commandsApi } from "@/services/api";
 
 export const useChargerValidation = () => {
   const [isLoading, setIsLoading] = useState(false);
