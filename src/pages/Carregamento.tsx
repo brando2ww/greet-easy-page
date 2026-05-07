@@ -54,8 +54,10 @@ export default function Carregamento() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [awaitingPlugTimeout, setAwaitingPlugTimeout] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
+  const [noEnergyFlowing, setNoEnergyFlowing] = useState(false);
   const offlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const awaitingPlugStartRef = useRef<number | null>(null);
+  const chargingStartRef = useRef<number | null>(null);
   const balanceStopTriggeredRef = useRef(false);
 
   const chargerFromState = location.state?.charger as ChargePoint | undefined;
