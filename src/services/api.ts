@@ -166,6 +166,15 @@ export const commandsApi = {
       connectorId,
     });
   },
+
+  /**
+   * Live status from OCPP server (independent of DB) — auto-heals DB if charger is alive.
+   */
+  liveStatus: async (
+    chargerId: string,
+  ): Promise<ApiResponse<{ chargePointId: string; isLive: boolean; serverReachable: boolean; ocppStatus: string | null; lastHeartbeat: string | null }>> => {
+    return invokeFunction('ocpp-live-status', { chargerId });
+  },
 };
 
 // ============ OCPP Diagnostics API (admin only) ============

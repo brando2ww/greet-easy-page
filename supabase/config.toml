@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.ocpp-diagnostics]
 verify_jwt = false
+
+[functions.ocpp-live-status]
+verify_jwt = false
+
+[functions.ocpp-sync-status]
+verify_jwt = false

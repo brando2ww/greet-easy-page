@@ -104,26 +104,42 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Check OCPP connection
+        // Check OCPP connection — DB first, then live fallback to OCPP server
         const validOcppStatuses = ['Available', 'Preparing'];
-        if (!validOcppStatuses.includes(charger.ocpp_protocol_status || '')) {
-          return new Response(JSON.stringify({ 
-            error: 'Charger offline',
-            message: 'O carregador não está conectado via OCPP' 
-          }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+        const dbOcppOk = validOcppStatuses.includes(charger.ocpp_protocol_status || '');
+        const lastHeartbeat = charger.last_heartbeat ? new Date(charger.last_heartbeat) : null;
+        const dbFresh = lastHeartbeat ? (Date.now() - lastHeartbeat.getTime()) < 600000 : false;
+
+        let isLive = dbOcppOk && dbFresh;
+        if (!isLive && OCPP_SERVER_URL && charger.ocpp_charge_point_id) {
+          try {
+            const r = await fetch(`${OCPP_SERVER_URL}/api/connections`, {
+              headers: { 'x-internal-key': Deno.env.get('OCPP_INTERNAL_KEY')! },
+            });
+            if (r.ok) {
+              const json = await r.json();
+              const list: string[] = Array.isArray(json?.connections) ? json.connections.map(String) : [];
+              if (list.includes(String(charger.ocpp_charge_point_id))) {
+                isLive = true;
+                // Auto-heal DB
+                await supabaseAdmin
+                  .from('chargers')
+                  .update({ last_heartbeat: new Date().toISOString(), ocpp_protocol_status: 'Available' })
+                  .eq('id', chargerId);
+                charger.ocpp_protocol_status = 'Available';
+                charger.last_heartbeat = new Date().toISOString();
+                console.log('[charger-commands] Auto-healed live charger:', charger.ocpp_charge_point_id);
+              }
+            }
+          } catch (e) {
+            console.error('[charger-commands] Live check failed:', (e as Error).message);
+          }
         }
 
-        // Check heartbeat freshness (must be within last 2 minutes)
-        const lastHeartbeat = charger.last_heartbeat ? new Date(charger.last_heartbeat) : null;
-        const isConnected = lastHeartbeat ? (Date.now() - lastHeartbeat.getTime()) < 120000 : false;
-
-        if (!isConnected) {
-          return new Response(JSON.stringify({ 
+        if (!isLive) {
+          return new Response(JSON.stringify({
             error: 'Charger offline',
-            message: 'O carregador não está respondendo. Verifique a conexão e tente novamente.'
+            message: 'Carregador desconectado. Vá até a estação, desligue e religue o disjuntor.'
           }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

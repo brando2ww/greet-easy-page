@@ -1,121 +1,65 @@
-## Acabar com o "Estação offline" toda manhã
+## Diagnóstico — nova hipótese
 
-### Diagnóstico (nova hipótese — diferente das anteriores)
+Confirmado pelos logs do Droplet: após o restart, o XIRU **não reconectou** ao OCPP server. Não tem `[OCPP Server] New connection attempt` nenhum. Toda vez que o server reinicia (deploy, reboot, crash), o charger fica fora até alguém ir lá fisicamente.
 
-Aumentamos `STALE_HEARTBEAT_MS` de 3 → 10 min, mas o problema persiste porque **a causa raiz não é o tamanho da janela**. É que o servidor tem duas fontes independentes de "vida" do carregador, e elas não se conversam:
+Pior: nosso app valida online/offline lendo `chargers.last_heartbeat` e `ocpp_protocol_status` do DB. Quem escreve essas colunas é o OCPP server. Se o server cair / a WS morrer / o pong-refresh quebrar / um deploy não pegar, o DB congela e o app trava em "Estação offline" — exigindo o `UPDATE` manual.
 
-| Camada | Atualiza | Quando |
-|---|---|---|
-| OCPP Heartbeat (`handleHeartbeat`) | `chargers.last_heartbeat` | a cada ~5 min (intervalo default do XIRU) |
-| WebSocket ping/pong (30s) | só `ws.isAlive` em memória | a cada 30s |
+A causa raiz não é o tamanho da janela de heartbeat nem o sweep — é **dependência única e frágil entre OCPP server e DB**. Precisamos de uma fonte de verdade independente e auto-curativa.
 
-Quando o app fica fechado uma noite, o XIRU continua com a WebSocket viva (ping/pong rodando, `ws.isAlive=true`), mas se demora >10 min para enviar o próximo OCPP Heartbeat, o **stale-heartbeat sweep marca como `Offline`** mesmo com a WebSocket perfeitamente conectada. Daí o app abre de manhã e mostra "Estação offline".
+## Solução: live-status + auto-cura via cron
 
-Evidência: screenshot mostra `"Esta estação não está conectada. Tente outra."` — texto exato do `useChargerValidation` quando `ocpp_protocol_status !== 'Available'/'Preparing'`. Ou seja, o banco tem `Offline` enquanto o WebSocket está vivo.
+### 1. Nova edge function `ocpp-live-status`
 
-Há ainda um agravante: mesmo se o sweep não marcasse Offline, o frontend valida `last_heartbeat < 2 min` (`useChargerValidation.tsx` linha 61). Com Heartbeat OCPP a cada 5 min, qualquer consulta nos minutos 2-5 do ciclo já falha.
+`supabase/functions/ocpp-live-status/index.ts`:
+- Aceita `{ chargePointId }`.
+- Chama `GET ${OCPP_SERVER_URL}/api/connections` com `x-internal-key`.
+- Retorna `{ isLive, ocppStatus, lastHeartbeat }`.
+- **Side-effect:** se `isLive=true` mas DB diz `Offline`, faz `UPDATE chargers SET last_heartbeat=NOW(), ocpp_protocol_status='Available' WHERE ocpp_charge_point_id=$1 AND ocpp_protocol_status='Offline'` — auto-cura silenciosa.
 
-### Mudanças
+Configurar `verify_jwt = true` em `supabase/config.toml`.
 
-#### 1. `ocpp-standalone-server/server.js` — sweep só age em CPs SEM WebSocket viva (linhas 470-488)
+### 2. Nova edge function `ocpp-sync-status` (cron, sem JWT)
 
-```js
-const staleHeartbeatSweep = setInterval(async () => {
-  try {
-    const aliveCps = Array.from(activeConnections.keys());
-    const cutoff = new Date(Date.now() - STALE_HEARTBEAT_MS).toISOString();
-    let q = supabase
-      .from('chargers')
-      .update({ ocpp_protocol_status: 'Offline' })
-      .neq('ocpp_protocol_status', 'Offline')
-      .lt('last_heartbeat', cutoff);
-    if (aliveCps.length > 0) {
-      q = q.not('ocpp_charge_point_id', 'in', `(${aliveCps.map(id => `"${id}"`).join(',')})`);
-    }
-    const { data, error } = await q.select('id, ocpp_charge_point_id');
-    // ... log igual
-  } ...
-}, 60_000);
-```
+- Busca lista completa de connections do OCPP server.
+- Para cada CP conectado: refresca `last_heartbeat` e promove `Offline → Available` (sem tocar `Charging`/`Preparing`).
+- Para CPs no DB com WebSocket NÃO listada e `last_heartbeat > 10 min`: marca `Offline`.
+- Protegida por `x-internal-key` no header (chamada só pelo pg_cron).
 
-WebSocket viva = não é zumbi, ponto. O ping/pong de 30s já é a fonte de verdade pra detectar morte real.
+### 3. Migration: pg_cron a cada 1 min
 
-#### 2. `ocpp-standalone-server/server.js` — atualizar `last_heartbeat` no pong (linha 501)
+Habilitar `pg_cron` + `pg_net`, criar job que faz `net.http_post` para `ocpp-sync-status` a cada minuto. Garante que mesmo sem o pong-refresh do server, o DB volte a refletir realidade em ≤60s.
 
-Quando recebemos pong, refrescar `last_heartbeat` no banco (throttled — uma vez a cada 60s por CP) para o frontend nunca ver "sem sinal" enquanto a WebSocket está viva:
+### 4. `useChargerValidation.tsx` e edge `charger-commands` — fallback live-status
 
-```js
-const lastDbHeartbeatPush = new Map(); // cpId -> timestamp do último update
-ws.on('pong', () => {
-  ws.isAlive = true;
-  const now = Date.now();
-  const last = lastDbHeartbeatPush.get(chargePointId) || 0;
-  if (now - last > 60_000) {
-    lastDbHeartbeatPush.set(chargePointId, now);
-    supabase
-      .from('chargers')
-      .update({ last_heartbeat: new Date().toISOString(), ocpp_protocol_status: 'Available' })
-      .eq('ocpp_charge_point_id', chargePointId)
-      .is('ocpp_protocol_status', null) // não tocar se está em Charging/Preparing/etc
-      .then(() => {}, () => {});
-  }
-});
-```
+Antes de bloquear com "Estação offline":
+- Chamar `ocpp-live-status`.
+- Se `isLive=true`, prosseguir mesmo que DB diga ofline (a chamada já curou).
+- Se `isLive=false`, aí sim bloquear, com mensagem clara: "Carregador desconectado. Vá até a estação, desligue e religue o disjuntor."
 
-Correção: o filtro `.is(... null)` está errado — quero refrescar `last_heartbeat` SEMPRE, mas só promover `ocpp_protocol_status` para `Available` se estiver `Offline` (não sobrescrever Charging/Preparing). Versão correta:
+Mesma lógica replicada na validação final de `charger-commands → start`.
 
-```js
-ws.on('pong', () => {
-  ws.isAlive = true;
-  const now = Date.now();
-  const last = lastDbHeartbeatPush.get(chargePointId) || 0;
-  if (now - last > 60_000) {
-    lastDbHeartbeatPush.set(chargePointId, now);
-    // Refresh heartbeat sempre
-    supabase.from('chargers')
-      .update({ last_heartbeat: new Date().toISOString() })
-      .eq('ocpp_charge_point_id', chargePointId)
-      .then(() => {}, () => {});
-    // Promover Offline → Available (não toca Charging/Preparing/etc)
-    supabase.from('chargers')
-      .update({ ocpp_protocol_status: 'Available' })
-      .eq('ocpp_charge_point_id', chargePointId)
-      .eq('ocpp_protocol_status', 'Offline')
-      .then(() => {}, () => {});
-  }
-});
-```
+### 5. (Opcional, defesa em profundidade) `connector_id` + reconnect hint no XIRU
 
-Com isso, mesmo sem o XIRU emitir OCPP Heartbeat, o `last_heartbeat` no banco é refrescado a cada 60s enquanto a WebSocket estiver viva. E se em algum momento ele caiu pra Offline incorretamente (sweep antigo, race no boot), o pong promove de volta.
+Não dá pra forçar o XIRU a reconectar via software. Mas vamos adicionar log no `[OCPP Server]` quando uma WS cair, mostrando "aguardando reconexão do CP X — se não voltar em 60s, religar disjuntor" — pra futuros diagnósticos via `journalctl`.
 
-#### 3. `src/hooks/useChargerValidation.tsx` — relaxar a janela de 2 min (linha 61)
+## O que NÃO muda
 
-A janela de 2 min é muito agressiva. O OCPP Heartbeat default do XIRU é 5 min. Subir para 10 min:
+- `ocpp-standalone-server/server.js` — fixes anteriores (sweep skipping live CPs, pong-refresh) ficam. São primeira linha de defesa; só não dependemos exclusivamente deles.
+- Tabelas existentes — sem schema novo.
 
-```ts
-const isConnected = ageMs < 600_000; // 10 minutos
-```
+## Por que isso resolve definitivamente
 
-E ajustar a mensagem proporcional. Como o item #2 já vai refrescar `last_heartbeat` a cada 60s pelo pong, na prática essa janela quase nunca será atingida — mas mantém defesa em profundidade.
+- DB pode "mentir" — o app/edge function sempre tem como confirmar via OCPP server direto.
+- OCPP server pode reiniciar / quebrar pong-refresh — o cron de 60s reconcilia em 1 min.
+- Único caso restante: charger fisicamente desconectado (igual agora). Aí a mensagem é acionável: "religar disjuntor" — não tem solução por software.
 
-### O que NÃO muda
+## Para resolver AGORA (estado atual)
 
-- `STALE_HEARTBEAT_MS = 10 min` — fica como está.
-- Lógica de OCPP Heartbeat / StatusNotification — intactas.
-- Edge function `charger-commands` — intacta (ela já valida 2 min, mas isso só afeta o momento de iniciar carga; com o pong refrescando a cada 60s, sempre passa).
+Aplicaremos um `UPDATE` via migration imediato pra restaurar o 140515 enquanto o XIRU não reconecta — assim você abre o app e funciona. Quando o charger reconectar (manualmente religando o disjuntor desta vez), a infra nova mantém ele saudável dali pra frente.
 
-### Por que isso resolve definitivamente
+## Validação pós-deploy
 
-- WebSocket viva → pong a cada 30s → `last_heartbeat` no DB sempre <60s → sweep nunca marca Offline.
-- WebSocket morre → ping/pong falha em 1 ciclo → `ws.terminate()` + DB `Offline` (linha 452-460, já existe).
-- Carregador desliga → WebSocket cai → mesmo caminho acima.
-- Não tem mais necessidade do `UPDATE` manual.
-
-### Validação pós-deploy
-
-1. SSH no Droplet: `git pull && systemctl restart ocpp-server`.
-2. `journalctl -u ocpp-server -f` — observar pongs chegando do XIRU a cada 30s.
-3. Conferir no banco a cada 1-2 min: `SELECT ocpp_charge_point_id, last_heartbeat, ocpp_protocol_status FROM chargers WHERE ocpp_charge_point_id='140515';` — `last_heartbeat` deve avançar a cada ~60s, `ocpp_protocol_status` ficar `Available`.
-4. Fechar o app por horas, reabrir → estação deve aparecer online sem UPDATE manual.
-
-Confirma aplicação?
+1. Migration aplicada → 140515 fica `Available` no DB.
+2. Cron de 1 min começa a rodar → após religar o disjuntor, em ≤60s o status reflete realidade.
+3. Encerrar uma sessão de teste → esperar 5 min → abrir app → continua online sem `UPDATE` manual.
+4. Restart do Droplet → após o XIRU reconectar, em ≤60s o status volta sem intervenção.
