@@ -1,76 +1,121 @@
-## Novo fluxo: aguardar plug ANTES do RemoteStart
+## Acabar com o "Estação offline" toda manhã
 
-### Fluxo atual (com bug de timing)
+### Diagnóstico (nova hipótese — diferente das anteriores)
 
+Aumentamos `STALE_HEARTBEAT_MS` de 3 → 10 min, mas o problema persiste porque **a causa raiz não é o tamanho da janela**. É que o servidor tem duas fontes independentes de "vida" do carregador, e elas não se conversam:
+
+| Camada | Atualiza | Quando |
+|---|---|---|
+| OCPP Heartbeat (`handleHeartbeat`) | `chargers.last_heartbeat` | a cada ~5 min (intervalo default do XIRU) |
+| WebSocket ping/pong (30s) | só `ws.isAlive` em memória | a cada 30s |
+
+Quando o app fica fechado uma noite, o XIRU continua com a WebSocket viva (ping/pong rodando, `ws.isAlive=true`), mas se demora >10 min para enviar o próximo OCPP Heartbeat, o **stale-heartbeat sweep marca como `Offline`** mesmo com a WebSocket perfeitamente conectada. Daí o app abre de manhã e mostra "Estação offline".
+
+Evidência: screenshot mostra `"Esta estação não está conectada. Tente outra."` — texto exato do `useChargerValidation` quando `ocpp_protocol_status !== 'Available'/'Preparing'`. Ou seja, o banco tem `Offline` enquanto o WebSocket está vivo.
+
+Há ainda um agravante: mesmo se o sweep não marcasse Offline, o frontend valida `last_heartbeat < 2 min` (`useChargerValidation.tsx` linha 61). Com Heartbeat OCPP a cada 5 min, qualquer consulta nos minutos 2-5 do ciclo já falha.
+
+### Mudanças
+
+#### 1. `ocpp-standalone-server/server.js` — sweep só age em CPs SEM WebSocket viva (linhas 470-488)
+
+```js
+const staleHeartbeatSweep = setInterval(async () => {
+  try {
+    const aliveCps = Array.from(activeConnections.keys());
+    const cutoff = new Date(Date.now() - STALE_HEARTBEAT_MS).toISOString();
+    let q = supabase
+      .from('chargers')
+      .update({ ocpp_protocol_status: 'Offline' })
+      .neq('ocpp_protocol_status', 'Offline')
+      .lt('last_heartbeat', cutoff);
+    if (aliveCps.length > 0) {
+      q = q.not('ocpp_charge_point_id', 'in', `(${aliveCps.map(id => `"${id}"`).join(',')})`);
+    }
+    const { data, error } = await q.select('id, ocpp_charge_point_id');
+    // ... log igual
+  } ...
+}, 60_000);
 ```
-QR scan → startCharge() → cria awaiting_plug + RemoteStart
-                       ↘ Preparing pode chegar antes do INSERT no banco
-                          → activate-on-Preparing falha → sessão fica órfã
+
+WebSocket viva = não é zumbi, ponto. O ping/pong de 30s já é a fonte de verdade pra detectar morte real.
+
+#### 2. `ocpp-standalone-server/server.js` — atualizar `last_heartbeat` no pong (linha 501)
+
+Quando recebemos pong, refrescar `last_heartbeat` no banco (throttled — uma vez a cada 60s por CP) para o frontend nunca ver "sem sinal" enquanto a WebSocket está viva:
+
+```js
+const lastDbHeartbeatPush = new Map(); // cpId -> timestamp do último update
+ws.on('pong', () => {
+  ws.isAlive = true;
+  const now = Date.now();
+  const last = lastDbHeartbeatPush.get(chargePointId) || 0;
+  if (now - last > 60_000) {
+    lastDbHeartbeatPush.set(chargePointId, now);
+    supabase
+      .from('chargers')
+      .update({ last_heartbeat: new Date().toISOString(), ocpp_protocol_status: 'Available' })
+      .eq('ocpp_charge_point_id', chargePointId)
+      .is('ocpp_protocol_status', null) // não tocar se está em Charging/Preparing/etc
+      .then(() => {}, () => {});
+  }
+});
 ```
 
-### Fluxo novo
+Correção: o filtro `.is(... null)` está errado — quero refrescar `last_heartbeat` SEMPRE, mas só promover `ocpp_protocol_status` para `Available` se estiver `Offline` (não sobrescrever Charging/Preparing). Versão correta:
 
+```js
+ws.on('pong', () => {
+  ws.isAlive = true;
+  const now = Date.now();
+  const last = lastDbHeartbeatPush.get(chargePointId) || 0;
+  if (now - last > 60_000) {
+    lastDbHeartbeatPush.set(chargePointId, now);
+    // Refresh heartbeat sempre
+    supabase.from('chargers')
+      .update({ last_heartbeat: new Date().toISOString() })
+      .eq('ocpp_charge_point_id', chargePointId)
+      .then(() => {}, () => {});
+    // Promover Offline → Available (não toca Charging/Preparing/etc)
+    supabase.from('chargers')
+      .update({ ocpp_protocol_status: 'Available' })
+      .eq('ocpp_charge_point_id', chargePointId)
+      .eq('ocpp_protocol_status', 'Offline')
+      .then(() => {}, () => {});
+  }
+});
 ```
-QR scan → tela "Conecte o plug"
-       → polling em chargers.ocpp_protocol_status
-       → quando = 'Preparing': habilita botão "Iniciar Carregamento"
-       → user toca → startCharge() → awaiting_plug + RemoteStart
-       → XIRU aceita → StartTransaction → in_progress (cronômetro)
-```
 
-A sessão só nasce DEPOIS que o Preparing já está persistido no banco. Elimina race condition.
+Com isso, mesmo sem o XIRU emitir OCPP Heartbeat, o `last_heartbeat` no banco é refrescado a cada 60s enquanto a WebSocket estiver viva. E se em algum momento ele caiu pra Offline incorretamente (sweep antigo, race no boot), o pong promove de volta.
 
-### Mudanças por arquivo
+#### 3. `src/hooks/useChargerValidation.tsx` — relaxar a janela de 2 min (linha 61)
 
-#### 1. `src/hooks/useChargerValidation.tsx`
-Parar de chamar `commandsApi.startCharge`. Após validar (charger existe, available, online, heartbeat fresco), apenas navegar para a nova tela passando o charger no state:
+A janela de 2 min é muito agressiva. O OCPP Heartbeat default do XIRU é 5 min. Subir para 10 min:
 
 ```ts
-navigate(`/aguardando-plug/${charger.id}`, { state: { charger } });
+const isConnected = ageMs < 600_000; // 10 minutos
 ```
 
-Remover toda a lógica de tratamento de erro de `startCharge` (passa para a nova tela).
-
-#### 2. Nova página `src/pages/AguardandoPlug.tsx`
-Nova rota `/aguardando-plug/:chargerId`. Responsabilidades:
-
-- Exibe nome do carregador + ilustração do carro + instrução "Conecte o plug ao seu veículo".
-- Polling a cada 3s via `commandsApi.getStatus(chargerId)`:
-  - `ocppStatus === 'Available'` → "Aguardando conexão do plug" (botão desabilitado)
-  - `ocppStatus === 'Preparing'` → "Plug detectado!" (botão "Iniciar Carregamento" habilitado, com pulse)
-  - `ocppStatus === 'Charging'` → carregamento já em andamento por outro caminho; redireciona para `/` com toast
-  - heartbeat > 2min ou status inválido → mostrar alerta "Estação sem resposta" + botão "Voltar"
-- Botão "Iniciar Carregamento":
-  - chama `commandsApi.startCharge(chargerId)`
-  - sucesso → `navigate('/carregamento/' + sessionId, { state: { charger, sessionId } })`
-  - erro → toast com mensagem específica (insuficiência de saldo, offline, rejected, etc.) — copiar tratamento do hook atual
-- Botão "Cancelar" no header → volta para `/`
-- Timeout: se ficar 3min em `Available` (sem chegar Preparing), exibir alerta sugerindo verificar o plug.
-
-#### 3. `src/App.tsx`
-Adicionar a rota `/aguardando-plug/:chargerId` apontando para o novo componente, dentro do `ProtectedRoute`.
-
-#### 4. `src/pages/Carregamento.tsx`
-Limpeza pequena: remover o ramo `Preparing` do label inicial, pois quando essa página abrir já vamos estar pelo menos em `awaiting_plug` pós-RemoteStart, e Preparing aqui é só transição curta. Mantém o tratamento existente para robustez (sem mudança funcional necessária).
+E ajustar a mensagem proporcional. Como o item #2 já vai refrescar `last_heartbeat` a cada 60s pelo pong, na prática essa janela quase nunca será atingida — mas mantém defesa em profundidade.
 
 ### O que NÃO muda
 
-- **Backend (`charger-commands` start)**: continua igual. Cria `awaiting_plug` + RemoteStart sync. A diferença é que agora ele só é chamado quando o XIRU já está em `Preparing`.
-- **OCPP server (`server.js`)**: nenhuma mudança. O `handleStatusNotification` já atualiza `chargers.ocpp_protocol_status` em todos os transitions — é exatamente isso que a nova tela poda. A lógica de "ativar awaiting_plug em Preparing/Charging" continua útil como fallback caso o XIRU emita outro Preparing após o RemoteStart.
-- **Validação de saldo, heartbeat, status no edge function**: intacta.
+- `STALE_HEARTBEAT_MS = 10 min` — fica como está.
+- Lógica de OCPP Heartbeat / StatusNotification — intactas.
+- Edge function `charger-commands` — intacta (ela já valida 2 min, mas isso só afeta o momento de iniciar carga; com o pong refrescando a cada 60s, sempre passa).
+
+### Por que isso resolve definitivamente
+
+- WebSocket viva → pong a cada 30s → `last_heartbeat` no DB sempre <60s → sweep nunca marca Offline.
+- WebSocket morre → ping/pong falha em 1 ciclo → `ws.terminate()` + DB `Offline` (linha 452-460, já existe).
+- Carregador desliga → WebSocket cai → mesmo caminho acima.
+- Não tem mais necessidade do `UPDATE` manual.
 
 ### Validação pós-deploy
 
-1. Sem deploy de servidor — é puramente frontend.
-2. QR scan → deve abrir tela "Conecte o plug" com botão desativado.
-3. Plugar o cabo no carro → em poucos segundos botão fica ativo (pulsando).
-4. Tocar "Iniciar" → tela de carregamento abre com cronômetro `--:--:--` até StartTransaction → cronômetro começa.
-5. Não deve mais ocorrer `stop_reason: "RemoteStart Unknown"` por race condition.
-
-### Trade-offs
-
-- **Ganho**: elimina o bug de Preparing-antes-da-sessão; UX fica explícita ("Conecte o plug" vs imediato).
-- **Custo**: usuário tem um passo extra (precisa apertar "Iniciar" depois de plugar). Aceitável e consistente com Tesla/EVgo apps.
-- **Fallback**: se o XIRU pular direto Available→Charging (raro, mas spec OCPP 1.6 permite), o usuário fica preso na tela "Aguardando plug". Mitigação: o polling também detecta `Charging` e nesse caso assumimos que outra sessão tomou o carregador — redirecionamos.
+1. SSH no Droplet: `git pull && systemctl restart ocpp-server`.
+2. `journalctl -u ocpp-server -f` — observar pongs chegando do XIRU a cada 30s.
+3. Conferir no banco a cada 1-2 min: `SELECT ocpp_charge_point_id, last_heartbeat, ocpp_protocol_status FROM chargers WHERE ocpp_charge_point_id='140515';` — `last_heartbeat` deve avançar a cada ~60s, `ocpp_protocol_status` ficar `Available`.
+4. Fechar o app por horas, reabrir → estação deve aparecer online sem UPDATE manual.
 
 Confirma aplicação?
