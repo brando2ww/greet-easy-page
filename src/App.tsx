@@ -16,6 +16,7 @@ import Dicas from "./pages/Dicas";
 import Carteira from "./pages/Carteira";
 import CarteiraSucesso from "./pages/CarteiraSucesso";
 import IniciarCarga from "./pages/IniciarCarga";
+import AguardandoPlug from "./pages/AguardandoPlug";
 import Veiculos from "./pages/Veiculos";
 import Perfil from "./pages/Perfil";
 import InformacoesCobranca from "./pages/InformacoesCobranca";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/carteira" element={<ProtectedRoute><Carteira /></ProtectedRoute>} />
               <Route path="/carteira/sucesso" element={<ProtectedRoute><CarteiraSucesso /></ProtectedRoute>} />
               <Route path="/iniciar-carga" element={<ProtectedRoute><IniciarCarga /></ProtectedRoute>} />
+              <Route path="/aguardando-plug/:chargerId" element={<ProtectedRoute><AguardandoPlug /></ProtectedRoute>} />
               <Route path="/carregamento/:sessionId" element={<ProtectedRoute><Carregamento /></ProtectedRoute>} />
               <Route path="/veiculos" element={<ProtectedRoute><Veiculos /></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
