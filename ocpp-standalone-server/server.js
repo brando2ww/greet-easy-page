@@ -953,8 +953,14 @@ async function handleStatusNotification(ws, messageId, payload, chargePointId) {
 
 async function handleAuthorize(ws, messageId, payload) {
   console.log(`[Authorize] ID Tag: ${payload.idTag}`);
+  // Some firmwares require a complete idTagInfo (with expiryDate + parentIdTag)
+  // before they'll close the contactor on the next StartTransaction.
   sendCallResult(ws, messageId, {
-    idTagInfo: { status: 'Accepted' },
+    idTagInfo: {
+      status: 'Accepted',
+      expiryDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      parentIdTag: payload.idTag,
+    },
   });
 }
 
