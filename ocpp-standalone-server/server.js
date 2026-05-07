@@ -174,15 +174,15 @@ const server = http.createServer(async (req, res) => {
                 chargingProfilePurpose: 'TxDefaultProfile',
                 chargingProfileKind: 'Relative',
                 chargingSchedule: {
-                  chargingRateUnit: 'W',
-                  chargingSchedulePeriod: [{ startPeriod: 0, limit: limitW }],
+                  chargingRateUnit: 'A',
+                  chargingSchedulePeriod: [{ startPeriod: 0, limit: limitA }],
                 },
               },
             };
             const setMsg = [2, setMsgId, 'SetChargingProfile', setPayload];
             ws.send(JSON.stringify(setMsg));
             recordMessage(chargePointId, 'out', 'SetChargingProfile', setPayload);
-            console.log(`[RemoteStart] Redundant SetChargingProfile sent to ${chargePointId} (${limitW}W)`);
+            console.log(`[RemoteStart] Redundant SetChargingProfile sent to ${chargePointId} (${limitA}A)`);
           } catch (e) {
             console.warn('[RemoteStart] Redundant SetChargingProfile failed:', e?.message);
           }
