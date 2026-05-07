@@ -135,23 +135,11 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Lookup charger power (kW) from DB to build a TxProfile that liberates energy.
-        // Some chinese DC chargers (XIRU/ZETAUNO) need an explicit chargingProfile to close
-        // the contactor — without it they accept RemoteStart but never deliver power.
-        let powerKw = 40;
-        try {
-          const { data: chargerRow } = await supabase
-            .from('chargers')
-            .select('power')
-            .eq('ocpp_charge_point_id', chargePointId)
-            .maybeSingle();
-          if (chargerRow?.power && Number(chargerRow.power) > 0) {
-            powerKw = Number(chargerRow.power);
-          }
-        } catch (e) {
-          console.warn('[RemoteStart] Failed to fetch charger power, using default 40kW:', e?.message);
-        }
-        const limitW = Math.round(powerKw * 1000);
+        // OCPP 1.6: chinese DC chargers (XIRU/ZETAUNO) only close the contactor when
+        // RemoteStartTransaction includes a TxProfile in AMPS (not Watts). 32 A is the
+        // safe default used by professional EVSEs (Evolt etc.) and lets the charger
+        // do its own internal derate up to its rated power.
+        const limitA = 32;
 
         const messageId = `remote-start-${Date.now()}`;
         const payload = {
@@ -163,8 +151,8 @@ const server = http.createServer(async (req, res) => {
             chargingProfilePurpose: 'TxProfile',
             chargingProfileKind: 'Relative',
             chargingSchedule: {
-              chargingRateUnit: 'W',
-              chargingSchedulePeriod: [{ startPeriod: 0, limit: limitW }],
+              chargingRateUnit: 'A',
+              chargingSchedulePeriod: [{ startPeriod: 0, limit: limitA }],
             },
           },
         };
