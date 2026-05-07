@@ -1,111 +1,88 @@
-## Diagnóstico
+## Contexto
 
-Fluxo OCPP 1.6J completo está conforme spec — o XIRU 40 kW reportou tudo certinho:
+Você está certo — o código do servidor está correto e suficiente. As mudanças que acabamos de fazer (chargingProfile, SetChargingProfile redundante, Authorize completo) são tentativas de "destravar" firmwares chineses chatos, mas a forma certa de avançar agora é **diagnóstico, não mais código novo**.
+
+O log que vimos do XIRU mostrou TODA a sequência ideal acontecendo:
 
 ```
-BootNotification ✅ Accepted
-StatusNotification ✅ Available → Preparing → Charging
-RemoteStartTransaction ✅ Accepted
-StartTransaction ✅ Accepted (transactionId 1009)
-MeterValues ✅ entregando a cada 20s
-StopTransaction ✅ Accepted
+out RemoteStartTransaction → in CALLRESULT Accepted ✅
+in StatusNotification Preparing ✅
+in StartTransaction → out CALLRESULT transactionId=1009 ✅
+in StatusNotification Charging ✅
+in MeterValues (mas com Power=0 e energia constante) ⚠️
 ```
 
-**Mas:** `Power.Active.Import = 0.00 W` e medidor parado em `77825 Wh` do início ao fim. O charger "achou" que estava carregando, mas o contator/módulo de potência DC não liberou energia.
+Ou seja, **não para em nenhum dos pontos da sua checklist**. O charger executa o protocolo completo até "Charging", mas o módulo de potência DC não entrega corrente. Isso aponta com força para hardware/configuração do próprio XIRU — não para nosso software.
 
-Como é um **carregador DC de 40 kW** (provavelmente CCS2 ou GB/T), há duas hipóteses de software que são MUITO comuns nesses chargers chineses (ZETAUNO/XIRU/Z1D60) e que valem testar antes de chamar técnico:
+## Próximos passos (sem novo código)
 
-1. Firmware exige `chargingProfile` no `RemoteStartTransaction` — sem ele, alguns ficam em "Charging fictício".
-2. Firmware exige resposta completa em `Authorize` (`expiryDate` + `parentIdTag`) para liberar o contator.
+### 1. Religar o XIRU e validar as 3 mudanças que acabamos de subir
 
-## Mudanças propostas
-
-### 1. Servidor OCPP — `chargingProfile` no RemoteStart (DC, 40 kW)
-
-`ocpp-standalone-server/server.js`, endpoint `/api/remote-start`:
-
-```js
-const payload = {
-  connectorId,
-  idTag: idTag || 'REMOTE',
-  chargingProfile: {
-    chargingProfileId: 1,
-    stackLevel: 0,
-    chargingProfilePurpose: 'TxProfile',
-    chargingProfileKind: 'Relative',
-    chargingSchedule: {
-      chargingRateUnit: 'W',           // Watts (DC)
-      chargingSchedulePeriod: [
-        { startPeriod: 0, limit: 40000 } // 40.000 W = 40 kW
-      ]
-    }
-  }
-};
+```bash
+ssh root@68.183.152.189
+cd /opt/ocpp-server      # ajustar path se diferente
+git pull
+systemctl restart ocpp-server
+journalctl -u ocpp-server -f
 ```
 
-Para DC a unidade correta é `W` (não `A`). 40 kW = 40000 W.
+Religar disjuntor do XIRU → esperar `BootNotification` → tentar uma carga real pelo app.
 
-### 2. Servidor OCPP — `SetChargingProfile` redundante após StartTransaction
+No log, confirmar que o `RemoteStartTransaction` agora sai com:
 
-1 segundo depois de aceitar o `StartTransaction`, mandar um `SetChargingProfile` separado no mesmo connector com o mesmo limite. Defesa em profundidade — se o profile do RemoteStart foi ignorado, este pega.
-
-### 3. Servidor OCPP — `Authorize` com resposta completa
-
-Atualmente `handleAuthorize` retorna só `{ status: 'Accepted' }`. Adicionar:
-
-```js
-sendCallResult(ws, messageId, {
-  idTagInfo: {
-    status: 'Accepted',
-    expiryDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-    parentIdTag: payload.idTag
-  }
-});
+```json
+{
+  "connectorId": 1,
+  "idTag": "...",
+  "chargingProfile": { "chargingSchedule": { "chargingRateUnit": "W", "chargingSchedulePeriod": [{ "limit": 40000 }] } }
+}
 ```
 
-### 4. App — detector "carga sem energia" em `src/pages/Carregamento.tsx`
+### 2. Usar o painel admin de diagnóstico que já existe
 
-Após 90s em status `Charging` com `Power.Active.Import` = 0 e `energyConsumed` = 0:
+Na tela `/iniciar-carga` da sessão (modo admin), o `AdminDiagnosticsPanel` já tem 5 botões prontos:
 
-- Banner amarelo: "O carregador reporta que está carregando, mas nenhuma energia está fluindo. Verifique o cabo CCS/GB-T no veículo."
-- Botões "Forçar verificação" e "Encerrar sessão"
+- **Ver buffer OCPP** → mostra exatamente a sequência mensagem-a-mensagem (entrada/saída) — equivalente ao seu `/admin/messages`
+- **Ler config** → faz `GetConfiguration` e lista `AuthorizeRemoteTxRequests`, `MeterValueSampleInterval`, `ConnectionTimeOut`, etc.
+- **AuthRemoteTx=false** → manda `ChangeConfiguration` setando essa chave (a mais comum a "destravar" RemoteStart)
+- **Trigger MeterValues** → força o charger a mandar uma leitura agora
+- **Soft Reset** → reinicia o firmware do charger
 
-Reaproveita o mesmo padrão visual do `awaitingPlugTimeout` que já existe.
+**Próxima carga de teste, abrir esse painel e:**
+1. Clicar **"Ler config"** — anotar valor de `AuthorizeRemoteTxRequests`. Se for `true`, clicar **"AuthRemoteTx=false"** e tentar de novo.
+2. Durante a carga, clicar **"Trigger MeterValues"** — confirmar nos logs do Droplet se chega `Power.Active.Import` > 0.
+3. Se nada mudar, ler o **buffer OCPP** completo para a sessão e me trazer o JSON.
 
-### 5. Admin — mostrar potência instantânea no `AdminDiagnosticsPanel`
+### 3. Atualizar `power_kw` do XIRU no banco se ainda estiver com 7
 
-Card adicional "Última leitura de potência" lendo o `Power.Active.Import` mais recente de `meter_values`. Facilita identificar de longe sessões com Power=0.
+Sem isso, o `chargingProfile` que mandamos vai limitar em 7000 W mesmo no XIRU de 40 kW — no admin web (`/admin/carregadores`), abrir o XIRU e setar `power = 40`.
 
-## Atualizar configuração do carregador no DB
+### 4. Caso o `AuthorizeRemoteTxRequests` esteja em `true` E mudar para `false` não resolver
 
-Confirmar/atualizar no registro do XIRU (cdbaf312…):
+Aí vale testar com `idTag` fixo conhecido — alguns firmwares mantêm uma whitelist local. Para testar isso sem mexer em código, dá para fazer manualmente via curl direto no Droplet:
 
-- `power_kw`: 40
-- `connector_type`: CCS2 ou GB/T (qual exatamente?)
+```bash
+curl -X POST http://localhost:8080/api/remote-start \
+  -H "x-internal-key: $OCPP_INTERNAL_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"chargePointId":"140515","idTag":"APP001","connectorId":1}'
+```
 
-Se ainda estiver com 7 kW (default antigo do app), precisa ajustar — isso afeta estimativa de custo na drawer e cálculo de saldo mínimo.
+Se `APP001` funcionar e UUID não, descobrimos a causa.
 
-## O que NÃO muda
+### 5. Sequência de eliminação física (se software estiver 100%)
 
-- Edge functions de auth/RLS — nada toca
-- Fluxo `awaiting_plug` — igual
-- Frontend de iniciar carga / scanner — igual
+- Display do XIRU mostra erro (E01, E02…) durante a tentativa?
+- Contator interno faz "click" audível ao receber RemoteStart?
+- Tensão de saída no conector com multímetro durante a sessão = 0?
+- Veículo aceita carga DC nesta estação? (testar outro veículo se possível)
 
-## Validação pós-deploy
+## O que NÃO vou fazer agora
 
-1. Religar disjuntor do XIRU → confirmar reconexão (`journalctl -u ocpp-server -f`)
-2. Iniciar uma carga real
-3. Conferir nos logs se o `RemoteStartTransaction` agora vai com `chargingProfile { limit: 40000 W }`
-4. Conferir nos `MeterValues` se `Power.Active.Import` > 0
-5. Se ainda vier 0 após esses 3 ajustes, é definitivamente hardware (módulo de potência DC, contator, ou recusa do veículo). O banner do app já avisa o usuário.
+- Mais alterações no servidor OCPP — o código está bom, qualquer mudança extra é chute
+- Mais alterações no app — o detector "carga sem energia" já cobre o feedback ao usuário
+- Não vou mexer em RLS, autenticação, nem outras edge functions
 
-## Observações finais
+## Resumo
 
-Se mesmo com tudo isso o `Power.Active.Import` continuar em 0, será necessária inspeção física no XIRU:
-
-- Disjuntor de entrada AC trifásico fechado e com as 3 fases?
-- Display do XIRU mostra alguma falha (E01, E02…)?
-- Veículo aceita carga DC nessa estação? (alguns BMS recusam por temperatura/SOC)
-- Contator DC faz "click" audível ao iniciar?
-
-Posso prosseguir com as 5 mudanças?
+O caminho é: deploy → religar XIRU → painel admin para confirmar config OCPP do charger e ver o buffer real. Posso te ajudar a interpretar os resultados quando você rodar esses passos. Se quiser, posso adicionar um botão extra de teste no painel admin agora (ex: "Testar com idTag APP001"), ou seguimos só com diagnóstico.
