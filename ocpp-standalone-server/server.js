@@ -999,7 +999,11 @@ async function handleStartTransaction(ws, messageId, payload, chargePointId) {
   // Responde IMEDIATAMENTE conforme spec OCPP 1.6J
   sendCallResult(ws, messageId, {
     transactionId: transactionId,
-    idTagInfo: { status: 'Accepted' },
+    idTagInfo: {
+      status: 'Accepted',
+      expiryDate: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      parentIdTag: payload.idTag,
+    },
   });
 
   console.log(`[StartTransaction] Responded transactionId=${transactionId} to ${chargePointId}, persisting...`);
