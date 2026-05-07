@@ -73,59 +73,8 @@ export const useChargerValidation = () => {
         return;
       }
 
-      // Start charging session via API
-      const startResult = await commandsApi.startCharge(charger.id);
-
-      if (startResult.error || !startResult.data?.success) {
-        const errorMessage = startResult.data?.message || startResult.error || 'Erro ao iniciar sessão';
-        
-        // Handle specific errors
-        if (errorMessage.includes('Insufficient balance')) {
-          toast({
-            title: "Saldo insuficiente",
-            description: "Adicione créditos à sua carteira para carregar",
-            variant: "destructive",
-          });
-        } else if (errorMessage.includes('Authentication required')) {
-          toast({
-            title: "Erro de autenticação",
-            description: "Faça login para iniciar o carregamento",
-            variant: "destructive",
-          });
-          navigate('/auth');
-        } else if (errorMessage.includes('não está respondendo') || errorMessage.includes('offline') || errorMessage.includes('not connected') || errorMessage.includes('não está conectado')) {
-          toast({
-            title: "Carregador offline",
-            description: "O carregador não está respondendo. Verifique a conexão e tente novamente.",
-            variant: "destructive",
-          });
-        } else if (errorMessage.includes('Remote start failed')) {
-          toast({
-            title: "Falha ao iniciar",
-            description: "Não foi possível iniciar o carregamento remotamente. Tente novamente.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro ao iniciar sessão",
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-        setIsLoading(false);
-        return;
-      }
-
-      // Success! Show toast and navigate
-      toast({
-        title: "Carregamento iniciado!",
-        description: `Conectado em ${charger.name}`,
-      });
-
-      // Navigate to active charging page with session data
-      navigate(`/carregamento/${startResult.data.sessionId}`, {
-        state: { charger, sessionId: startResult.data.sessionId }
-      });
+      // Navigate to "awaiting plug" screen — RemoteStart only fires after Preparing detected
+      navigate(`/aguardando-plug/${charger.id}`, { state: { charger } });
 
     } catch (error) {
       console.error('Validation error:', error);
