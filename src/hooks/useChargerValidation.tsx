@@ -43,30 +43,26 @@ export const useChargerValidation = () => {
         return;
       }
 
-      // Check OCPP connection status
-      const validOcppStatuses = ['Available', 'Preparing'];
-      if (!validOcppStatuses.includes(charger.ocppProtocolStatus || '')) {
-        toast({
-          title: "Estação offline",
-          description: "Esta estação não está conectada. Tente outra.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+      // Live check via OCPP server (independent of DB freshness, auto-heals)
+      let isLive = false;
+      try {
+        const live = await chargersApi.liveStatus
+          ? await (chargersApi as any).liveStatus(charger.id)
+          : null;
+        isLive = !!live?.data?.isLive;
+      } catch {}
 
-      // Check heartbeat freshness (must be within last 2 minutes)
+      // Fallback to DB heartbeat freshness if live check inconclusive
+      const validOcppStatuses = ['Available', 'Preparing'];
+      const dbOk = validOcppStatuses.includes(charger.ocppProtocolStatus || '');
       const lastHeartbeat = charger.lastHeartbeat ? new Date(charger.lastHeartbeat) : null;
       const ageMs = lastHeartbeat ? Date.now() - lastHeartbeat.getTime() : Infinity;
-      const isConnected = ageMs < 600000; // 10 min — pong refreshes last_heartbeat every 60s
+      const dbFresh = ageMs < 600000;
 
-      if (!isConnected) {
-        const ageMin = Number.isFinite(ageMs) ? Math.max(1, Math.round(ageMs / 60000)) : null;
+      if (!isLive && !(dbOk && dbFresh)) {
         toast({
-          title: "Carregador sem resposta",
-          description: ageMin
-            ? `Sem sinal há ${ageMin} min. Vá até o carregador, desligue e religue o disjuntor, aguarde 30s e tente novamente.`
-            : "O carregador não está enviando sinal. Vá até o carregador, desligue e religue o disjuntor, aguarde 30s e tente novamente.",
+          title: "Carregador desconectado",
+          description: "Vá até a estação, desligue e religue o disjuntor, aguarde 30s e tente novamente.",
           variant: "destructive",
         });
         setIsLoading(false);
