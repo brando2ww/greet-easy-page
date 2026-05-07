@@ -207,6 +207,29 @@ export default function Carregamento() {
     return () => clearInterval(id);
   }, [isAwaitingPlug, isCompleted]);
 
+  // Detector "carga sem energia": status Charging há > 90s mas energyConsumed = 0.
+  // Indica que o carregador reportou início mas o contator não fechou (problema físico).
+  useEffect(() => {
+    if (isCompleted || ocppStatus !== "Charging") {
+      chargingStartRef.current = null;
+      setNoEnergyFlowing(false);
+      return;
+    }
+    if (!chargingStartRef.current) chargingStartRef.current = Date.now();
+    if (energyConsumed > 0) {
+      setNoEnergyFlowing(false);
+      return;
+    }
+    const check = () => {
+      if (chargingStartRef.current && Date.now() - chargingStartRef.current >= 90000 && energyConsumed === 0) {
+        setNoEnergyFlowing(true);
+      }
+    };
+    check();
+    const id = setInterval(check, 5000);
+    return () => clearInterval(id);
+  }, [ocppStatus, energyConsumed, isCompleted]);
+
   const handleTriggerStatus = async () => {
     if (!chargerId || isTriggering) return;
     setIsTriggering(true);
