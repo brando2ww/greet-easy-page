@@ -46,9 +46,7 @@ export const useChargerValidation = () => {
       // Live check via OCPP server (independent of DB freshness, auto-heals)
       let isLive = false;
       try {
-        const live = await chargersApi.liveStatus
-          ? await (chargersApi as any).liveStatus(charger.id)
-          : null;
+        const live = await commandsApi.liveStatus(charger.id);
         isLive = !!live?.data?.isLive;
       } catch {}
 
